@@ -1,0 +1,87 @@
+
+
+
+<view class="top_bar flex-row " style=" padding-top: {{statusBarHeight}}rpx;" >
+    <image src='/images/back.png' class="top_back_img" bindtap="toBack"></image>
+    <view class="flex-column">
+      <text class="top_bar_title_small">订货用户</text>
+    </view>
+  </view>
+
+
+<view class="whiteBack " id="mjltest" style="margin-top: {{90 + statusBarHeight}}rpx;">
+
+
+	<view class="flex-column">
+
+		<view class="flex-row-between with-border-bottom whiteBack with-padding" wx:for="{{userArr}}"
+			wx:key="nxDepartmentUserId">
+			<view class="flex-row-default with-padding ">
+					<image src='{{url + item.nxDuWxAvartraUrl}}' class="member_url margin-right"></image>	
+        <view class="flex-row">
+					<text class="middle">{{item.nxDuWxNickName}}</text>
+					<text wx:if="{{item.nxDepartmentUserId == userInfo.nxDepartmentUserId}}">(你自己)</text>
+				</view>
+			</view>
+      <view class="btnClick flex-column-center" bindtap="openOperation" data-id="{{item.nxDepartmentUserId}}" hover-class="hover">
+					<image src="/images/points.png" class="icon"></image>
+				</view>
+		</view>
+	</view>
+
+</view>
+
+
+
+
+<view class='mask {{showOperation ? "is-active" : ""}}' catchtouchmove='ture' catchtap="hideMask"
+	style="height:{{maskHeight < windowHeight ? windowHeight : maskHeight}}rpx;" catchtouchmove='ture'>
+	<view class="flex-column nnn whiteBack ">
+		<!--    -->
+
+		<view wx:if="{{selectUserId == userInfo.nxDepartmentUserId}}" class="flex-row  operation_row" bindtap="editUser">
+			<image src="../../images/ashbin_48.png" class="operation_icon"></image>
+			<text class=" margin-right">修改用户信息</text>
+		</view>
+
+		<view wx:else class="flex-row  operation_row" bindtap="delUser">
+			<image src="../../images/ashbin_48.png" class="operation_icon"></image>
+			<text class=" margin-right">删除用户</text>
+		</view>
+
+	</view>
+</view>
+
+
+<!--  -->
+
+
+
+<view class="mask {{isTishi ? 'is-active' : ''}}">
+
+	<view class="whiteBack"
+		style="margin-top:{{(windowHeight - 440)/2 }}rpx;margin-left: 50rpx; width:{{windowWidth - 100}}rpx;">
+		<view class="margin_bottom  flex-column-center">
+
+			<view class="tishiView"
+				style="width:{{windowWidth/5}}rpx; height:{{windowWidth/5}}rpx; margin-top:-{{windowWidth/10 + 10}}rpx; z-index: 9999;border-radius: 50%;">
+				<image src="../../images/aixin.png" class="tishi_icon"
+					style="width:{{windowWidth/5 -80}}rpx; height:{{windowWidth/5 - 80}}rpx;  border-radius: 50%; margin-top:40rpx; margin-left: 40rpx;">
+				</image>
+			</view>
+
+			<view class="flex-column-center sentence">
+				<text class="small with-padding">收到邀请注册成功的用户</text>
+				<text class="normal ">将显示在“订货组”</text>
+			</view>
+			<view class="with-padding flex-row">
+				<view class="iknow mainBack with-padding" bindtap="closeMask"
+					style="width:{{windowWidth / 3}}rpx; text-align: center;" hover-class="hover">
+					我知道了
+				</view>
+
+			</view>
+		</view>
+
+	</view>
+</view>

@@ -1,0 +1,29 @@
+
+<view class="top_bar flex-row  with-border-bottom" style=" padding-top: {{statusBarHeight}}rpx;">
+  <view class="flex-column-center with-lr-padding with-s-padding" bindtap="toBack">
+    <image src='/images/arrow-left-bold.png' class="show_icon "></image>
+  </view>
+</view>
+
+<!-- 表格部分 -->
+<view class="with-padding" style="margin-top: 220rpx;">
+  <!-- address -->
+  <view class="flex-column-center " >
+    <image src="/images/logo.png" mode="aspectFill" class="customerUrl"/>
+    <text class="with-padding normal gray margin_top">提前下单，为您节省时间！</text>
+  </view>
+
+  
+  
+  <!-- 登陆按钮 -->
+    <view class="btn">
+      
+      <button class="saveAddress is-active" type="default"  style="background-color: #fb0; width: {{windowWidth - 80}}rpx;" open-type="getPhoneNumber" bindgetphonenumber="getPhone" class="">手机号快速绑定</button>
+    </view>
+
+    <view class="flex-column-center" bindtap="toBack" style="position: absolute;bottom: 200rpx; width: 100%; color: rgb(80, 148, 250);">
+        取消注册
+     </view>
+
+</view>
+

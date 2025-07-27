@@ -1,0 +1,13 @@
+{
+  "navigationBarTitleText": "商品",
+  "usingComponents": {
+    "main-navbar": "/components/main-navbar/main-navbar",
+    "myDismodal": "/components/myDismodal/myDismodal",
+    "depGoodsImg": "/components/depGoodsImg/depGoodsImg",
+    "myIndependent": "/components/myIndependent/myIndependent",
+    "addOrder": "/components/addOrder/addOrder",
+    "addOrderDep": "/components/addOrderDep/addOrderDep",
+    "myDismodalCashSingle": "/components/myDismodalCashSingle/myDismodalCashSingle",
+    "delWarnModal": "/components/delWarnModal/delWarnModal"
+  }
+}

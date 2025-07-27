@@ -1,0 +1,88 @@
+<wxs src="../../utils/fn.wxs" module="tool" />
+
+
+<view class="top_bar_back flex-row " style=" padding-top: {{statusBarHeight}}rpx;">
+  <image src='/images/back-white.png' class="top_back_img" bindtap="toBack"></image>
+  <view class="flex-column">
+    <text class="top_bar_title_small">订单</text>
+  </view>
+</view>
+
+
+<view style="margin-top: {{90 + statusBarHeight}}rpx;">
+
+	<!--  -->
+	<view class="emptyView {{totalArr > 0  ? 'hidden' : ''}}" style="height: {{windowHeight - 760}}rpx; text-align:center;">
+		<view class="empty_view flex-column-center">
+			<image class="empty_image" src="../../images/dh.png"></image>
+			<text class="big">无现结小票</text>
+		</view>
+	</view>
+
+		<view class="flex-column bg-white" wx:for="{{accountBillArr}}" wx:for-item="month" wx:for-index="index">
+			<view wx:if="{{month.arr.length > 0}}">
+				<view class="flex-column with-border-bottom with-padding ">
+					<text class="normal">{{month.month}}月</text>
+					<!-- <view class="flex-row gray small">
+						<text class="margin-l-right">全部账单</text>
+						<text class="margin-l-right">{{month.arr.length}}个</text>
+						<text class="margin-l-right">未结账单</text>
+						<text>{{month.unSettleTotal}}个</text>
+					</view> -->
+				</view>
+
+				<view class="flex-row-between with-padding with-border-bottom" wx:for="{{month.arr}}" wx:for-item="item" style="width: {{windowWidth - 40}}rpx; " hover-class="hover" bindtap="toSettleBills" data-id="{{item.nxDepartmentBillId}}">
+
+					<view class="flex-column">
+						<!-- <view class="flex-row">
+							<text class="margin-right">{{item.nxDbDate}}</text>
+							<text>{{item.nxDbWeek}}</text>
+						</view>
+						<view class="flex-row extremeSmall gray">
+							<text>单号:</text>
+							<text>{{item.nxDbTradeNo}}</text>
+						</view>
+						<view class="flex-row extremeSmall gray">
+							<text>打印:</text>
+							<text>{{item.nxDbTime}}</text>
+						</view> -->
+						<view class="flex-column">
+						<view class="flex-row">
+            <text class="margin-l-right">配送日期:</text>
+							<text class="margin-right">{{tool.getAttrDate(item.nxDbDate)}}</text>
+							<text>{{item.nxDbDay}}</text>
+						</view>
+						<view class="flex-row excreamSmall gray">
+							<text>单号:</text>
+							<text>{{item.nxDbTradeNo}}</text>
+						</view>
+						<!-- <view class="flex-row extreamSmall gray">
+							<text>结账完成:</text>
+							<text>{{item.nxDbTime}}</text>
+						</view> -->
+					</view>
+
+					</view>
+
+					<view class="flex-row with-margin-right">
+						<view class="flex-column">
+							<view class="flex-row">
+								<text class="big ">{{item.nxDbTotal}}</text>
+								<text class="small">元</text>
+							</view>
+							<!-- <text wx:if="{{item.nxDbStatus == 0}}" class=" extremeSmall red">未结账</text>
+							<text wx:elif="{{item.nxDbStatus == 1}}" class="extremeSmall gray">已结账</text> -->
+						</view>
+						<view>
+							<image src="../../images/arrow-right-3.png" class="iconsmall with-lr-padding"></image>
+						</view>
+					</view>
+				</view>
+			</view>
+		</view>
+	<!-- ./jizhang账单 -->
+
+	<view class="gray extremeSmall with-padding  " style="text-align:center;">显示最近3个月的账单</view>
+
+
+</view>

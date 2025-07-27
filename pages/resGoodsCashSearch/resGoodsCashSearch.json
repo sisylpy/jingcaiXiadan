@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "商品",
+  "usingComponents": {
+   
+    "myIndependent": "/components/myIndependent/myIndependent",
+    "myDismodalCashSingle": "/components/myDismodalCashSingle/myDismodalCashSingle",
+    "delWarnModal": "/components/delWarnModal/delWarnModal"
+  }
+}

@@ -1,0 +1,173 @@
+<view class="flex flex-column height-100">
+
+
+  <back-navbar style="height: {{navBarHeight}}rpx;" title="添加商品" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
+
+	<view class="p-20 flex-row-between" style="margin-top: {{100 + statusBarHeight}}rpx;">
+	<view >必填:</view>
+		<view class="flex-column-center">
+		<view class="addBtn {{canSave ? 'is-active' : ''}}" bindtap="saveDisGoods">添加
+		</view>
+	</view>
+	</view>
+
+	<view class="bg-white p-20 font-md flex-column">
+	
+  	<!-- <view class=" flex-row with-l-margin-bottom">
+			<view class="flex-row shrink_fix ">
+				<text class="gray margin-l-right">所属大类:</text>
+			</view>
+      <view class="flex-row" bindtap="toGreatGrandGoods" 
+				style="width: {{windowWidth - 100}}rpx;" hover-class="hover">
+      	<input class="goodsInput p-10" disabled="true" value="{{fatherName}}" ></input>
+        <image src="../../../../images/arrow-right-3.png" class="icon"></image>
+      </view> 
+		
+		</view> -->
+  
+  	<view class="flex-row border-bottom p-20">
+			<view class="flex-row flex-fixed ">
+				<text class="text-secondary mr-20">新商品名称:</text>
+			</view>
+			<input class="goodsInput p-10  " bindinput="getDisGoodsContent" data-type="0"
+				value="{{goods.nxDgGoodsName}}" ></input>
+		</view>
+
+		<view class=" flex-row p-20 border-bottom">
+			<view class="flex-row flex-fixed">
+				<text class="text-secondary mr-20">商品规格:</text>
+			</view>
+			<input class="goodsInput p-10" value="{{goods.nxDgGoodsStandardname}}"
+				bindinput="getDisGoodsContent" data-type="1"></input>
+		</view>
+
+	
+
+		<!-- <view class="p-10 middle flex-column ">
+		<view class="bg-white">
+      <view class=" flex-column-center p-20" >
+        <view class="flex-row p-10">
+          <radio-group class="radio-group flex-row-between"  bindchange="radioChange">
+         <label class="radio " > <radio value="0" checked="{{isGrade == 0 ? true : ''}}" />一级进货</label>
+         <text style="width: 100rpx;"></text>
+         <label class="radio" > <radio value="1" checked="{{isGrade == 1 ? true : ''}}" />分级进货</label>
+      </radio-group>
+        </view>
+      </view>
+
+      <view class="flex-column ">
+        <view class="flex-column" wx:if="{{isGrade == 0}}">
+          <view class="flex-row with-lr-padding">
+            <text class="margin-l-right shrink_fix">进货价格:</text>
+            <view class="out margin-l-right">
+              <input class="mainColor orderInput" type="digit" value="{{buyingPrice}}" bindinput="getBuyingPrice" data-type="0" />
+            </view>元
+          </view>
+        </view>
+
+        <view class="flex-column" wx:if="{{isGrade == 1}}">
+          <view class="flex-column  ">
+            <view class="flex-row p-20">
+              <text class="margin-l-right shrink_fix">普通进价(低):</text>
+              <view class="out">
+                <input class="orderInput" type="digit" value="{{goods.nxDgBuyingPriceThree}}" bindinput="getBuyingPrice" data-type="3" />
+              </view>元
+            </view> 
+
+            <view class="flex-row  p-20">
+              <text class="margin-l-right shrink_fix">优选进价(中):</text>
+              <view class="out">
+                <input class="orderInput" type="digit" value="{{goods.nxDgBuyingPriceTwo}}" bindinput="getBuyingPrice" data-type="2" />
+              </view>
+              元
+            </view>
+
+            <view class="flex-row p-20">
+              <text class="margin-l-right shrink_fix" >精选进价(高):</text>
+              <view class="out margin-l-right" >
+                <input class="orderInput" type="digit" value="{{goods.nxDgBuyingPriceOne}}" bindinput="getBuyingPrice" data-type="1" />
+              </view>元
+            </view>
+
+            
+          </view>
+        </view>
+      </view>
+		
+		</view>
+	</view> -->
+	</view>
+	
+
+	<view class="p-20">可填:</view>
+	<view class="bg-white p-20 font-md flex-column border-bottom">
+	
+		<view class=" flex-row p-20">
+			<view class="flex-row flex-fixed">
+				<text class="text-secondary mr-20">单位重量</text>
+			</view>
+			<input value="{{goods.nxDgGoodsStandardWeight !== '-1' ? goods.nxDgGoodsStandardWeight : ''}}" class="inputAddGoods p-10"
+				bindinput="getDisGoodsContent" data-type="2"></input>
+		</view>
+
+		<view class=" flex-row p-20">
+			<text class="text-secondary mr-20 flex-fixed">品牌</text>
+			<input class="inputAddGoods p-10" bindinput="getDisGoodsContent" data-type="3"
+				value="{{goods.nxDgGoodsBrand !== '-1' ? goods.nxDgGoodsBrand : ''}}"></input>
+		</view>
+
+		<view class=" flex-row p-20">
+			<text class="text-secondary flex-fixed">产地</text>
+			<input class="inputAddGoods p-10" value="{{goods.nxDgGoodsPlace !== '-1' ? goods.nxDgGoodsPlace  : ''}}" bindinput="getDisGoodsContent"
+				data-type="4"></input>
+		</view>
+		<view class=" flex-row p-20">
+			<text class="text-secondary flex-fixed border-bottom">详细</text>
+			<input class="inputAddGoods p-10" value="{{goods.nxDgGoodsDetail}}" bindinput="getDisGoodsContent"
+				data-type="5"></input>
+		</view>
+	
+	</view>
+
+
+
+
+</view>
+
+
+
+
+<!-- mask -->
+<view class='mask {{showTishi ? "is-active" : ""}}' catchtap="hideMask" style="height:{{maskHeight > windowHeight ? maskHeight : windowHeight}}rpx;">
+  <!-- + scrollViewTop -->
+  <view class="bg-white normal" style="margin-top:{{haveSame == 2 ? '400': '300'}}rpx;margin-left: 50rpx; width:{{windowWidth - 100}}rpx;" >
+    <view   class="flex-column-center p-20 small" wx:if="{{haveSame == 2}}">
+    <image src="/images/smile.png" mode="aspectFill" class="icon"/>
+      <text>已经有相同的商品啦!</text>
+    </view>
+    
+    <view class="p-20">
+      <view class="p-20  border-bottom" wx:for="{{showArr}}" bindtap="orderGoods" data-item="{{item}}" > 
+     <text class="{{item.nxDgGoodsBrand !== null ? brand: ''}}"> {{item.nxDgGoodsBrand !== null ? item.nxDgGoodsBrand: ''}}</text>
+    <text class="margin-right"> {{item.nxDgGoodsName}}</text>
+    <text>({{item.nxDgGoodsStandardname}})</text>
+     
+    </view>
+    </view>
+    
+    <view class="flex-row p-20" wx:if="{{haveSame == 1}}">
+     <view class="half-row flex-column-center">
+       关闭
+     </view>
+      <view class="half-row flex-column-center" bindtap="againSave">
+        确定添加
+      </view>
+     
+   </view>
+   
+  </view>
+
+  
+
+</view>
+<!-- ./mask -->

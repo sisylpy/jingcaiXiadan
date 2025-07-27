@@ -1,0 +1,74 @@
+
+
+function getAttrName(string){
+  if (string) {
+    var string = string.toString(string);
+    if(string.length > 3){
+
+    string = string.substring(0, 3);
+    string = string + "..."
+    return string;
+    }else{
+      return string;
+    }
+    
+  }
+}
+
+function getAttrDate(string){
+  if (string) {
+    var string = string.toString(string);
+    string = string.substring(5, 10);
+    return string; 
+  }
+}
+
+function getAttrFullTime(string){
+  if (string) {
+    var string = string.toString(string);
+    string = string.substring(5, 16);
+    return string; 
+  }
+}
+
+function getGongli(a,b){
+  var bbb  = a / 1000;
+  return  bbb.toFixed(b);
+}
+
+function getPercent(a, b){
+  var c = ((a/b) * 100).toFixed(1) ;
+  return c;
+}
+function getProfitPercent(a,b){
+  var c =(((b - a) / a) * 100 ).toFixed(1)
+  return c;
+}
+
+
+function getDaysBetween(dateString1, dateString2){
+  var  startDate = Date.parse(dateString1);
+    var  endDate = Date.parse(dateString2);
+    if (startDate>endDate){
+        return 0;
+    }
+    if (startDate==endDate){
+        return 1;
+    }
+    var days=(endDate - startDate)/(1*24*60*60*1000);
+    return  days;
+}
+
+function getPankuId(index){
+  return "panku" + index;
+}
+module.exports = {
+  getGongli:getGongli,
+  getPercent: getPercent,
+  getProfitPercent:getProfitPercent,
+  getAttrName: getAttrName,
+  getAttrDate:getAttrDate,
+  getAttrFullTime: getAttrFullTime,
+  getDaysBetween: getDaysBetween,
+  getPankuId: getPankuId
+}

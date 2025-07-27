@@ -1,0 +1,48 @@
+<view class="top_bar flex-row  with-border-bottom" style=" padding-top: {{statusBarHeight}}rpx;">
+  <view class="flex-column-center with-padding " bindtap="toBack">
+    <text class="big five-weight">用户注册</text>
+  </view>
+
+</view>
+
+<!-- 表格部分 -->
+<view class="with-padding" style="margin-top: 200rpx;">
+  <!-- address -->
+  <view class="flex-column-center">
+    <image src="/images/logo.png" mode="aspectFill" class="customerUrl" />
+    <text class="with-padding normal gray">品优价低 更好服务</text>
+  </view>
+
+  <view class="flex-row with-padding" style="margin-top: 80rpx;">
+    <text class="normal gray" style="width: 180rpx; ">用户头像</text>
+    <view class="ava">
+      <button class="ava" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar" plain='true'>
+        <image class="avaImg" src="{{avatarUrl}}"></image>
+      </button>
+    </view>
+  </view>
+
+
+  <form bindsubmit="formSubmit">
+    <view class="flex-row with-padding" style="margin-top: 20rpx;">
+      <text class="normal gray" style="width: 160rpx; text-align: right; padding-right: 20rpx;">用户名</text>
+      <input name="input" type="nickname" class="weui-input inputName"  bindinput="getName" placeholder="请输入昵称" />
+    </view>
+
+
+    <view class="btn" wx:if="{{!canSave}}">
+      <button  class="saveAddress {{canSave ? 'is-active' : ''}}"  plain='true' formType="submit" >注册用户</button>
+    </view>
+    <view class="btn" wx:else="">
+      <button bindtap='save' class="saveAddress {{canSave ? 'is-active' : ''}}" type="default" plain='true' >注册用户</button>
+    </view>
+   
+  </form>
+
+ 
+
+
+
+
+
+</view>

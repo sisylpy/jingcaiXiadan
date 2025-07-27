@@ -1,0 +1,18 @@
+<!-- 通知配送商页面 -->
+
+
+
+<view class=" flex flex-1">
+
+  <view class="flex-column-center p-30" style="margin-top: 200rpx;">
+    <image class="notice-img" src="/images/daodile3.png" mode="widthFix"/>
+  <view class="title">无法下单，请联系配送商</view>
+  <view class="desc">本次订货未获得配送商授权<br/>点击下方按钮，立即通知配送商索要订货邀请链接</view>
+  <button class="primary-btn" open-type="share">
+    <image class="btn-icon" src="https://img.icons8.com/ios-filled/50/ffffff/share-2.png"/>
+    通知配送商
+  </button>
+  <view class="tips">* 若无法联系，可联系技术开发 13910825707</view>
+  </view>
+  
+</view>

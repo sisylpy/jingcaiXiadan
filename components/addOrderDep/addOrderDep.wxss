@@ -1,0 +1,256 @@
+
+/* overlay 背景 */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12000;
+}
+
+.popup {
+  width: 90%;
+  background-color: #fff;
+  border-radius: 10rpx;
+  overflow: hidden;
+  box-shadow: 0 0 20rpx rgba(0, 0, 0, 0.3);
+  position: absolute; /* 使用绝对定位 */
+  top: 30%; /* 使弹出窗口距离顶部30% */
+  left: 50%;
+  transform: translate(-50%, 0); /* 水平居中 */
+}
+
+/* 其余样式保持不变 */
+
+
+/* 弹出窗口顶部 */
+.popup-header {
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  border-bottom: 1rpx solid #ddd;
+  text-align: center;
+}
+
+.product-name {
+  font-size: 42rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 弹出窗口主体 */
+.popup-body {
+  padding: 20rpx;
+}
+
+/* 输入内容右对齐 */
+.input-row {
+  display: flex;
+  justify-content: flex-end; /* 向右对齐 */
+  margin-bottom: 15rpx; /* 每行间隔 */
+}
+
+/* 输入组样式 */
+.input-group {
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+  padding-bottom: 40rpx;
+ 
+}
+
+.label {
+  font-size: 34rpx;
+  color: #555;
+  padding: 10rpx; /* 标签和输入框之间的间隔 */
+}
+
+.input {
+  width: 200rpx; /* 设置输入框宽度 */
+  border: 1rpx solid #ccc;
+  border-radius: 5rpx;
+  padding: 10rpx;
+  font-size: 38rpx;
+  color: #187e6e;
+  font-weight: 500;
+  border-radius: 10rpx;
+}
+.input.is-active{
+  border: 1px solid #187e6e;
+}
+.input-l{
+  width: 300rpx; /* 设置输入框宽度 */
+  border: 1rpx solid #ccc;
+  border-radius: 5rpx;
+  padding: 10rpx;
+  font-size: 36rpx;
+  color: #187e6e;
+  font-weight: 500;
+}
+
+.input-l.is-active{
+  border: 1px solid #187e6e;
+}
+
+.input-half{
+  width: 120rpx; /* 设置输入框宽度 */
+  border: 1rpx solid #ccc;
+  border-radius: 5rpx;
+  font-size: 32rpx;
+  padding: 20rpx;
+}
+
+.input-half.is-active{
+
+border: 1px solid #187e6e;
+}
+
+/* 弹出窗口底部 */
+.popup-footer {
+  display: flex;
+  justify-content: space-around;
+  padding: 40rpx;
+  border-top: 1rpx solid #ddd;
+  background-color: #f8f8f8;
+}
+
+.btn {
+  height: 70rpx;
+  line-height: 70rpx;
+  border: none;
+  border-radius: 15rpx;
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  
+ 
+}
+
+.cancel {
+  background-color: #999;
+}
+
+.save {
+  background-color: #187e6e;
+  
+}
+
+.delete {
+  background-color: #ff4d4f;
+}
+
+.standardName{
+  font-size: 32rpx;
+  padding: 10rpx 20rpx;
+  line-height: 60rpx;
+  background: rgb(234, 235, 235);
+  margin-left: 20rpx;
+  border-radius: 10rpx;
+  margin-bottom: 20rpx;
+  
+}
+
+.standardName.is-active{
+  background: #187e6e;
+  color: #fff;
+}
+
+.standardName.is-hidden{
+  background: rgb(234, 235, 235);
+}
+
+
+.brand {
+  border: 1px solid #acacac;
+  color: rgb(27, 27, 27);
+  font-weight: 300;
+  padding: 0 6rpx;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  padding: 4rpx;
+}
+
+
+.flex-row {
+  flex-direction: row;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center; 
+}
+
+.flex{
+  display: flex;
+}
+.flex-column {
+  flex-direction: column;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.align-center {
+  align-items: center;
+}
+
+
+
+.flex-row {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.flex-row-wrap{
+  display: flex;
+  flex-flow: row wrap;
+}
+
+
+.p-20{
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+}
+
+.flex-row-default {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+}
+
+.flex_row_between {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  justify-content: space-between;
+
+}
+
+.confirm-btn {
+    background-color: #ffc400;
+    border-radius: 5rpx;
+    text-align: center;
+  padding: 20rpx; 
+  margin-left: 20rpx;
+}
+
+.cancel-btn{
+  background-color: #696969;
+  color: #fff;
+  border-radius: 5rpx;
+  text-align: center;
+  padding: 20rpx;
+}
+
+
+.input-l.is-red{
+  color: #ff4d4f;
+}

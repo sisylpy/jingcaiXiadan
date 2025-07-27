@@ -1,0 +1,72 @@
+<view class="top_bar flex-row " style=" padding-top: {{statusBarHeight}}rpx;">
+  <image src='/images/back.png' class="icon margin-right margin-left" bindtap="toBack"></image>
+
+  <view class="flex-column">
+    <text class="top_bar_title">添加新商品</text>
+  </view>
+</view>
+
+
+  <view class="with-padding flex-row-between" style="margin-top: {{90 + statusBarHeight}}rpx;">
+    <view></view>
+    <view class="flex-column-center">
+      <view class="addBtn {{canSave ? 'is-active' : ''}}" bindtap="saveDisGoods">添加
+      </view>
+    </view>
+  </view>
+
+  <view class="flex-column  middle">
+
+     <view class="flex-row with-padding">必填:</view>
+      <view class="flex-column whiteBack with-padding">
+        <view class=" flex-row with-l-margin-bottom">
+      <view class="flex-row shrink_fix ">
+        <image src="/images/star.png" mode="aspectFill" class="iconsmall margin-l-right" />
+        <text class="gray margin-l-right">商品名称:</text>
+      </view>
+      <input class="goodsInput with-tb-padding  " bindinput="getDisGoodsContent" data-type="0" value="{{goods.nxDgGoodsName}}"></input>
+    </view>
+
+    <view class=" flex-row with-l-margin-bottom">
+      <view class="flex-row shrink_fix ">
+        <image src="/images/star.png" mode="aspectFill" class="iconsmall margin-l-right" />
+        <text class="gray  margin-l-right">商品规格:</text>
+      </view>
+      <input class="goodsInput with-tb-padding" value="{{goods.nxDgGoodsStandardname}}" bindinput="getDisGoodsContent" data-type="1"></input>
+    </view>
+      </view>
+  
+
+      <view class="flex-row with-padding margin-top">选填:</view>
+
+      <view class="flex-column whiteBack">
+        <view class="flex-row-default with-padding" style="height: 240rpx; margin-top: 40rpx;">
+      <text class="margin-l-right gray">照片:</text>
+      <view class="flex-column" style="margin-left: 10rpx;">
+
+        <image class='class_img' wx:if="{{src.length > 0}}" src="{{src.length > 0 ? src : '/images/photo.png' }}"></image>
+        <image class='class_img_view' wx:else="" src="/images/photo.png" bind:tap="choiceImg"></image>
+        <view wx:if="{{src.length > 0}}" bindtap="delPic" style="margin-left: 180rpx;margin-top: -240rpx;">
+          <image src="../../images/del.png" mode="aspectFill" class="iconBig" />
+        </view>
+      </view>
+    </view>
+
+
+    <view class=" flex-row with-padding">
+      <text class="gray shrink_fix margin-l-right">说明</text>
+      <input class="inputAddGoods with-tb-padding" value="{{goods.nxDgGoodsDetail}}" bindinput="getDisGoodsContent" data-type="5"></input>
+    </view>
+
+    <view class="" style="height: 100rpx;"></view>
+      
+      </view>
+
+    
+
+    <view style="height: 100rpx;"></view>
+
+  </view>
+
+
+

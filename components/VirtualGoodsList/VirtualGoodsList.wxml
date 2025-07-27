@@ -1,0 +1,9 @@
+
+
+<virtual-list
+  list="{{list}}"
+  item-size="80"
+  height="400"
+  width="300"
+  render-item="renderTestItem"
+/>

@@ -1,0 +1,47 @@
+.notify-supplier-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 70rpx 32rpx 0 32rpx;
+  background: #f6f7fa;
+  min-height: 100vh;
+}
+.notice-img {
+  width: 140rpx;
+  margin-bottom: 36rpx;
+}
+.title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #392a26;
+  margin-bottom: 16rpx;
+}
+.desc {
+  font-size: 26rpx;
+  color: #888;
+  text-align: center;
+  margin-bottom: 40rpx;
+  line-height: 1.5;
+}
+.primary-btn {
+  background: linear-gradient(90deg,#7b4397 0%,#dc2430 100%);
+  color: #fff;
+  font-size: 32rpx;
+  width: 76vw;
+  height: 86rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-icon {
+  width: 38rpx;
+  height: 38rpx;
+  margin-right: 12rpx;
+}
+.tips {
+  margin-top: 32rpx;
+  color: #aaa;
+  font-size: 22rpx;
+  text-align: center;
+}

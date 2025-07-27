@@ -1,0 +1,23 @@
+
+
+<view class='overlay' wx:if='{{show}}' catchtouchmove='ture' >
+	<view class='popup' >
+
+    <view class="popup-header">
+      <text class="product-name ">{{depGoodsName}}</text>
+    </view>
+
+    <view class="flex-row p-20">
+      <text class="p-20 label">新规格:</text>
+
+      <input class='standardInput p-20' focus='true' type='text' bindinput="getStandard" value='{{itemStandard.nxDsStandardName}}' bindfocus="getFocus" placeholder="订货单位名称" />
+    </view>
+    
+
+     	<view class="btn_row" >
+       		<view class='btn sureBtn' catchtap='confirm' hover-class="hover">确定</view>
+				<view class='btn cancleBtn' bindtap="cancle" hover-class="hover">取消</view>
+			</view>
+
+	</view>
+</view>

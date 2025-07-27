@@ -1,0 +1,292 @@
+
+.mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* top: 0; */
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  padding-left: 5%;
+  padding-right: 5%;
+}
+
+.modal-content {
+  width: 90%;
+  height: 40%;
+  left: 5%;
+  top: 12%;
+  background-color: #fff;
+  position: fixed;
+}
+.top{
+ /* height: 20%; */
+  width: 100%;
+  background: #1e82b4;
+  color: #fff;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-items: center;
+  justify-content: center;
+ 
+}
+
+.goodsTitle {
+  font-size: 60rpx;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+  /* background: yellow; */
+   padding: 10rpx 20rpx;
+
+}
+
+
+
+/* 2 */
+.body{
+  display: flex;
+  flex-flow: column nowrap;
+  height: 90%;
+  align-content:stretch;
+
+}
+
+
+.goods_contents {
+  width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  flex-basis: 70%;
+  justify-content: space-around;
+  /* background: green; */
+  padding-top: 10rpx;
+  
+}
+
+
+/* 1, */
+.explain{
+  font-size: 36rpx;
+  color: gray;
+  /* background: red; */
+  flex-basis: 30%;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  
+}
+.rightPart{
+  flex-basis: 65%;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  /* background: green; */
+ 
+}
+
+/* 3 */
+
+
+
+
+
+/* 单位 */
+
+.standardName{
+  font-size: 32rpx;
+  padding: 10rpx 20rpx;
+  line-height: 60rpx;
+  background: rgb(234, 235, 235);
+  margin-left: 20rpx;
+  border-radius: 10rpx;
+  margin-bottom: 20rpx;
+  
+}
+.standardName.is-active{
+  background: #1e82b4;
+  color: #fff;
+}
+
+.weightLevel{
+  padding: 6rpx 15rpx;
+  /* line-height: 60rpx; */
+  background: rgb(234, 235, 235);
+  /* margin-left: 20rpx; */
+  border-radius: 10rpx;
+  margin-bottom: 10rpx;
+  
+}
+.weightLevel.is-active{
+  background: #38b5f3;
+  color: #fff;
+}
+.normal{
+  font-size: 38rpx;
+}
+.middle{
+  font-size: 32rpx;
+}
+.five-weight{
+  font-weight: 500;
+}
+.small{
+  font-size: 28rpx;
+
+}
+.mr-10{
+  margin-right: 10rpx;
+}
+.numberInput{
+  width: 40%;
+  border: 1px solid #1e82b4;
+  border-radius: 20rpx;
+  line-height: 70rpx;
+  height: 70rpx;
+  padding-left: 20rpx;
+  font-size: 38rpx;
+}
+.remarkInput{
+  width: 100%;
+  border-bottom: 1px solid #1e82b4;
+  color: #1d739e;
+  /* color: red; */
+ 
+  
+  /* background:  gold; */
+}
+
+.btn-wrapper {
+  /* background: gray; */
+  flex-basis: 20%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+
+}
+
+.btn_left{
+  width: 50%;
+  /* background: red; */
+  padding-left: 20rpx;
+  font-size: 30rpx;
+  color: gray;
+
+  
+}
+.sel_icon{
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 10rpx;
+}
+
+.btn_row{
+  width: 90%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+  font-size: 36rpx;
+  align-items: center; 
+  margin-left: 10%;
+  /* background: yellow; */
+  padding: 20rpx 0;
+  }
+.del-btn{
+   color:#b41e1e;
+    width: 40%;
+    text-align: center;
+    padding: 20rpx 0; 
+}
+.confirm-btn {
+  /* background: red; */
+    color:#1e82b4;
+    width: 40%;
+    text-align: center;
+    padding: 20rpx 0;
+}
+.mainColor{
+  color:#1e82b4;
+}
+.cancel-btn{
+  /* background: purple; */
+  color: gray;
+  width: 40%;
+  text-align: center;
+  padding: 20rpx 0;
+}
+
+
+
+.shrink_fix{
+  flex-shrink: 0;
+}
+
+.shrink_change{
+  flex-shrink: 1;
+}
+
+
+.flex-row {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.flex-row-wrap{
+  display: flex;
+  flex-flow: row wrap;
+}
+
+
+.with-padding{
+ 
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+}
+
+.flex-row-default {
+  display: flex;
+  flex-flow: row nowrap;
+  /* justify-items: flex-end; */
+  /* justify-content: flex-end; */
+  /* align-items: flex-end; */
+  /* align-items: center; */
+  justify-content: space-between;
+}
+
+.flex_row_between {
+  /* background: green; */
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+
+}
+
+
+
+.radio{
+  /* margin-right: 20rpx; */
+  padding: 10rpx 10rpx;
+  /* font-size: 28rpx; */
+  /* color: greenyellow; */
+  
+}
+.brand{
+  border: 1px solid #fff;
+  color: #fff;
+  font-weight: 300;
+  padding: 0 6rpx;
+  border-radius: 10rpx;
+  font-size: 35rpx;
+  margin-right: 4rpx;
+
+}
+
+.standardInput{
+  width: 45%;
+  border-bottom: 1px solid #187e6e;
+}

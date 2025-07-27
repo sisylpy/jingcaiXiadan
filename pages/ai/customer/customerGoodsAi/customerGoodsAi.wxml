@@ -1,0 +1,83 @@
+<view class="flex flex-column">
+
+
+  <back-navbar style="height: {{navBarHeight}}rpx;" title="{{orderDepInfo.nxDepartmentName}}-智能补货" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
+
+
+  <block wx:if="{{depGoodsArr.length == 0}}">
+
+    <view class="flex-column center-content" style="height: {{windowHeight  - navBarHeight}}rpx; background:#fff6df">
+
+      <view wx:if="{{showSkeleton}}" class="ai-loading">
+        <view animation="{{fadeAnimation}}" class="ai-bubble">
+          <image src="/images/CE.png" class="ai-icon" />
+          <text class="loading-text">智能分析中{{dots}}</text>
+        </view>
+      </view>
+      <view class="flex flex-column center-content" wx:else="">
+        <image class="empty-bg" style="width: {{windowWidth / 3}}rpx; height: {{windowHeight / 5}}rpx; margin-bottom: 40rpx;"></image>
+        <text class="font-xl " style="padding: 0 60rpx;">智能补货建议，让您精准掌握库存状态，既能避免缺货又能减少浪费</text>
+        <text class=" darktext-secondary mt-10">下单越多，AI 越懂你</text>
+        <text class=" darktext-secondary">让智能补货更贴合门店需求</text>
+      </view>
+
+    </view>
+  </block>
+  <view wx:else="" class="flex-column p-20">
+
+    <view class="flex-row goods_back mb-20" wx:for="{{depGoodsArr}}" wx:key="nxDistributerFatherGoodsId">
+      <view class=" flex-row-default p-20 ">
+
+        <view class="flex-row-default mr-20">
+          <image class="" src="{{url + item.nxDistributerGoodsEntity.nxDgGoodsFileLarge}}" mode="aspectFit" class="goods_url" />
+        </view>
+
+        <view class="flex-column font-lg">
+          <view class="flex-row" style="width: {{windowWidth - 280}}rpx; ">
+            <text class="font-lg-2 "> {{item.nxDdgDepGoodsName}}</text>
+          </view>
+
+          <view class="flex-row small">
+            <text class="mr-20">🛒</text>
+            <text class="mr-10 ">建议订货:</text>
+            <text class="" style="font-weight:bold; color:#FF8C00"> {{item.aiOrderQuantity}}</text>
+            <text class="" style="font-weight:bold; color:#FF8C00"> {{item.aiOrderStandard}}</text>
+          </view>
+          <view class="flex-row small">
+            <text class="mr-20">📈</text>
+            <text class="mr-10">近期平均用量/天:</text>
+            <text class=""> {{item.aiDailyUsage}}</text>
+            <text class=""> {{item.aiOrderStandard}}</text>
+          </view>
+          <view class="flex-row small">
+            <text class="mr-20">🛡️</text>
+            <text class="mr-10">安全库存:</text>
+            <text class=""> {{item.aiSafetyStock}}</text>
+            <text class=""> {{item.aiOrderStandard}}</text>
+          </view>
+          <view class="flex-row small">
+            <text class="mr-20">🕓</text>
+            <text class="mr-10">(上次){{item.aiDaysSinceLastOrder}}天前订货:</text>
+            <text class=""> {{item.nxDdgOrderQuantity}}{{item.nxDdgOrderStandard}}</text>
+            <text class=""> </text>
+          </view>
+
+          <view class="flex-row-reverse p-20">
+
+            <view class="save_btn text-center" bind:tap="applyGoodsDep" data-index="{{index}}" data-depgoods="{{item}}" data-disgoods="{{item.nxDistributerGoodsEntity}}">
+              <text>订货</text>
+            </view>
+
+          </view>
+        </view>
+
+      </view>
+
+
+    </view>
+    <view class="p-20 flex-column-center" style="height: 100rpx;" wx:if="{{!hasMore}}">没有更多数据了！</view>
+  </view>
+</view>
+
+ 
+<addOrder visible="{{show}}" bindconfirm="confirm" bindcancle="cancle" binddelApply="delApply" binddelStandard="delStandard" applyStandardName="{{applyStandardName}}" bindconfirmStandard="confirmStandard" applyNumber="{{applyNumber}}" applyRemark="{{applyRemark}}" editApply="{{editApply}}"  level="{{level}}"bindchangeStandard="changeStandard" applyGoodsName="{{applyGoodsName}}" applyGoodsId="{{applyGoodsId}}" item="{{itemDis}}" windowWidth="{{windowWidth}}" />

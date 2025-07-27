@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "商品",
+  "usingComponents": {
+   
+    "myIndependent": "/components/myIndependent/myIndependent",
+    "addOrder": "/components/addOrder/addOrder",
+    "delWarnModal": "/components/delWarnModal/delWarnModal"
+  }
+}

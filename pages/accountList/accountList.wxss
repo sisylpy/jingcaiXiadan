@@ -1,0 +1,17 @@
+
+
+.dep_name{
+  font-size: 44rpx;
+}
+
+.settleBtn{
+  padding: 10rpx 20rpx;
+  border-radius: 6rpx;
+  /* font-size: 38rpx; */
+}
+
+.detail{
+  position: absolute;
+  right: 40rpx;
+  top: 240rpx;
+}

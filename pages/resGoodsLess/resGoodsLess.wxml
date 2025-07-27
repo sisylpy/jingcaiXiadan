@@ -1,0 +1,353 @@
+<view class="flex-column">
+  <view class="top_bar flex-row " style=" padding-top: {{statusBarHeight}}rpx;">
+    <view class="flex-column-center with-lr-padding with-s-padding" bindtap="toBack">
+      <image src='/images/back.png' class="close_icon "></image>
+    </view>
+
+    <input class="searchInput " placeholder="{{placeHolder}}" style="width:{{windowWidth / 2}}rpx;z-index: 10;" placeholder-class="holderClass" placeholder="      搜索商品名称" disabled="true" bind:tap="toSearch"></input>
+    <image src="/images/search.png" mode="aspectFill" style="width: 50rpx; height: 50rpx; margin-left: -{{windowWidth / 2}}rpx;" />
+  </view>
+
+
+  <view class="flex-column">
+   
+    <view class='navbar ' style="margin-top:{{navBarHeight}}rpx;">
+      <block wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
+        <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click' hover-class="hover">
+          <view class='navbar-title'>{{tabs.words}}
+          </view>
+        </view>
+      </block>
+      <!-- <view class="navbar-slider" style="left: {{sliderLeft}}px; width:{{windowWidth / 4}}rpx; transform: translateX({{sliderOffset}}px); -webkit-transform: translateX({{sliderOffset}}px);">
+      </view> -->
+    </view>
+
+    <swiper style="height: {{windowHeight - 100 - navBarHeight}}rpx; " bindchange='swiperChange' current="{{itemIndex}}" data-index='{{itemIndex}}'>
+
+      <!-- 常购配送 -->
+      <swiper-item>
+        <view class="emptyView {{depGoodsArrAi.length == 0  ? 'is-active' : ''}}" style="height: {{windowHeight - 360}}rpx; text-align:center;">
+          <view class="normal  empty_view">
+            <view class="flex-column-center">
+              <image class="empty_image" src="../../images/cart-Empty.png"></image>
+              <text class="big">暂时无常购商品</text>
+              <view class="with-padding flex-row">
+                <image src="../../images/atm-away.png" class="show_icon"></image>
+                <view class="gray small">显示3个月内订过的商品。</view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <!-- ./empty -->
+
+        <view class="flex-row-default" wx:if="{{depGoodsArrAi.length > 0}}">
+
+          <!-- 左侧菜单 -->
+          <view class="left">
+            <scroll-view id="leftScrollDep" scroll-y="true" style="height: {{windowHeight - 200 - statusBarHeight}}rpx; " scroll-top="{{leftScrollTop}}" scroll-with-animation show-scrollbar="false">
+              <view class="left-item {{selectedSub == index ? 'left-active' : ''}}" wx:for="{{depGoodsCataArr}}" wx:key="nxDistributerFatherGoodsId" id="left-cat-{{grand.nxDistributerFatherGoodsId}}" wx:for-item="grand" bindtap="leftMenuClickDep" data-index="{{index}}" data-id="{{grand.nxDistributerFatherGoodsId}}" data-name="{{grand.nxDfgFatherGoodsName}}">
+                <view class="flex-column-center">
+                  <!-- <view class="picView ">
+                    <image src="{{url + grand.nxDfgFatherGoodsImg}}" mode="aspectFill" class="itemPic" />
+                  </view> -->
+                  <view class="extremeSmall text_center">
+                    <text>{{grand.nxDfgFatherGoodsName}}</text>
+                  </view>
+                </view>
+              </view>
+            </scroll-view>
+          </view>
+
+          <!-- 右侧内容 -->
+          <view class="flex-column">
+
+
+            <!-- 收起时横向滚动 -->
+            <view class="flex-row" style="width: {{windowWidth - 140}}rpx;">
+              <scroll-view class="subcat-bar-scroll" scroll-x="true" scroll-into-view="{{subcatScrollIntoViewDep}}" scroll-with-animation show-scrollbar="false" style="width:{{windowWidth - 240}}rpx; margin-right: 20rpx; ">
+                <block wx:for="{{fatherArr}}" wx:key="nxDistributerFatherGoodsId">
+                  <view class="subcat-tag {{activeSubCatIdDep == item.nxDistributerFatherGoodsId ? 'active' : ''}}" id="subcat-dep-{{item.nxDistributerFatherGoodsId}}" bindtap="onSubCatTapDep" data-id="{{item.nxDistributerFatherGoodsId}}">
+                    {{item.nxDfgFatherGoodsName}}
+                  </view>
+                </block>
+              </scroll-view>
+
+              <view class="subcat-toggle" bindtap="toggleSubCatDep">
+                <image src="../../images/arrow-down.svg" class="toggle-icon" />
+              </view>
+            </view>
+
+            <scroll-view scroll-y="true" scroll-with-animation="true" bindscroll="onGoodsScrollDep" bindscrolltolower="onReachBottomDep" scroll-into-view="{{scrollIntoViewDep}}" scroll-top="{{depGoodsScrollTop}}" style="width: {{windowWidth - 140}}rpx; height: {{windowHeight - 200- statusBarHeight}}rpx; " class="goods-list-dep">
+
+              <block wx:for="{{depGoodsArrAi}}" wx:for-item="goods" wx:key="nxDepartmentDisGoodsId" wx:for-index="depGoodsIndex">
+                <view wx:if="{{goods.isFirstInCategory}}" id="cat-dep-{{goods.nxDdgDisGoodsGrandId}}" class="goods-category-title-dep"></view>
+                <view class="flex-row-default   goods-item-dep p-20" id="{{goods.viewId}}" bind:longpress="delDepGoods" data-item="{{goods}}" data-index="{{depGoodsIndex}}">
+                  <view class="img-wrapper">
+                    <image bindtap="showDialogBtnDep" data-item="{{goods}}" src="{{goods.nxDisGoodsFile !== null ? url + goods.nxDisGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="dep_goods_url mr-20" />
+                  </view>
+
+
+                  <view class="flex-row">
+                    <view class="flex-column" style="width: {{windowWidth - 320}}rpx;">
+                      <view class="">
+                      <text class="{{goods.nxDgGoodsBrand !== '' ? 'brand' : ''}}">{{goods.nxDgGoodsBrand}}</text>
+                        <text class="font-bold font-lg-2">{{goods.nxDdgDepGoodsName}}</text>
+                      </view>
+
+
+                      <view class="flex-row small" wx:if="{{goods.nxDdgDepGoodsStandardname !== '斤' }}">
+                        <view class="flex-row">
+                          <text class="gray">规格:</text>
+                          <block wx:if="{{goods.nxDisStandardWeight !== null}}">
+                            <view class="">
+                              {{goods.nxDisStandardWeight}}/{{goods.nxDdgDepGoodsStandardname}}
+                            </view>
+                          </block>
+
+                          <block wx:else>
+                            <text class="">{{goods.nxDdgDepGoodsStandardname}}</text>
+                          </block>
+                        </view>
+                      </view>
+                      <view class="flex-row small">
+                        <view class="flex-row half-row" wx:if="{{goods.nxDdgDepGoodsDetail !== null && goods.nxDdgDepGoodsDetail !== ''}}">
+                          <text class="gray">说明:</text>
+                          <text>{{goods.nxDdgDepGoodsDetail}}</text>
+                        </view>
+                        <view class="flex-row" wx:if="{{goods.nxDistributerGoodsEntity.nxDgGoodsPlace !== null && goods.nxDistributerGoodsEntity.nxDgGoodsPlace.length > 0}}">
+                          <text>产地:</text>
+                          <text class="">{{goods.nxDistributerGoodsEntity.nxDgGoodsPlace}}</text>
+                        </view>
+                      </view>
+
+                      <!-- <block wx:if="{{goods.nxDepartmentOrdersEntity == null}}">
+                        <block wx:if="{{goods.nxTipText !== null}}">
+                          <view class="flex-row extremeSmall">
+                            <text class="mr-20">🔍</text>
+                            <text class=""> {{goods.nxTipText}}</text>
+                          </view>
+                        </block>
+
+                        <block wx:else="">
+
+                          <block wx:if="{{goods.aiOrderQuantity == 0}}">
+                            <view class="flex-row extremeSmall">
+                              <text class="mr-20"> ✅</text>
+                              <text class="mr-10 ">库存充足</text>
+                            </view>
+                          </block>
+
+                          <block wx:else="" class="extremeSmall">
+
+                            <view class="flex-row ">
+                              <text class="mr-20">🛒</text>
+                              <text class="mr-10 ">建议订货:</text>
+                              <text class="" style="font-weight:bold; color:#FF8C00"> {{goods.aiOrderQuantity}}</text>
+                              <text class="" style="font-weight:bold; color:#FF8C00"> {{goods.aiOrderStandard}}</text>
+                            </view>
+                            <view class="flex-row ">
+                              <text class="mr-20">📈</text>
+                              <text class="mr-10">均用量/天:</text>
+                              <text class=""> {{goods.aiRecentAvgUsage}}</text>
+                              <text class=""> {{goods.aiOrderStandard}}</text>
+                            </view>
+                            <view class="flex-row">
+                              <text class="mr-20">🛡️</text>
+                              <text class="mr-10">安全库存:</text>
+                              <text class=""> {{goods.aiSafetyStock}}</text>
+                              <text class=""> {{goods.aiOrderStandard}}</text>
+                            </view>
+                            <view class="flex-row ">
+                              <text class="mr-20">🕓</text>
+                              <text class="mr-10">{{goods.aiDaysSinceLastOrder}}天前订货:</text>
+                              <text class=""> {{goods.nxDdgOrderQuantity}}{{goods.nxDdgOrderStandard}}</text>
+                              <text class=""> </text>
+                            </view>
+
+                          </block>
+
+                        </block>
+                      </block> -->
+
+
+                      <view class="flex-row-reverse p-10">
+                        <view wx:if="{{goods.depGoodsDepOrderList.length > 0}}" class="flex-row-wrap middle ">
+                          <view class="flex-row mr-20" wx:for="{{goods.depGoodsDepOrderList}}" wx:for-item="depOrder" catch:tap="toEditApplyDep" data-order="{{depOrder}}" data-index="{{depGoodsIndex}}" data-depgoods="{{goods}}" hover-class="hover">
+                            <text class="five-weight save_btn has_order  {{depOrder.nxDoPurchaseStatus > 4 ? 'is-gray' : ''}} {{depOrder.nxDoStatus == 2 ? 'finish': ''}}">{{depOrder.nxDoQuantity}}{{depOrder.nxDoStandard}}</text>
+                          </view>
+                        </view>
+                        <view class="" wx:else="" catch:tap="applyGoodsDep" data-order="{{goods.nxDepartmentOrdersEntity}}" data-index="{{depGoodsIndex}}" data-depgoods="{{goods}}" hover-class="hover">
+                          <view class="save_btn ">
+                            <text>订货</text>
+                          </view>
+
+                        </view>
+                      </view>
+
+                    </view>
+                  </view>
+                </view>
+
+              </block>
+
+              <!-- 添加底部空白区域，确保最后一个商品也能触发联动 -->
+              <view class="flex-column-center" wx:if="{{totalPages == currentPage}}" style="height: {{windowHeight  / 3}}rpx;">
+                到底了!</view>
+            </scroll-view>
+
+          </view>
+
+        </view>
+
+      </swiper-item>
+
+
+      <swiper-item>
+        <!-- 全部配送 -->
+        <view class="flex-row-default ">
+          <!-- 左侧菜单 -->
+          <view class="left">
+            <scroll-view id="leftScroll" scroll-y="true" style="height: {{windowHeight - 200 - statusBarHeight}}rpx; " scroll-top="{{leftScrollTopNx}}" scroll-with-animation show-scrollbar="false">
+              <view class="left-item {{leftIndex == index ? 'left-active' : ''}}" wx:for="{{grandList}}" wx:key="nxDistributerFatherGoodsId" id="left-cat-{{grand.nxDistributerFatherGoodsId}}" wx:for-item="grand" bindtap="changeGreatGrandDis" data-index="{{index}}" data-id="{{grand.nxDistributerFatherGoodsId}}" data-name="{{grand.nxDfgFatherGoodsName}}">
+                <view class="font-xs text_center">
+                  <text class="font-yuan">{{grand.nxDfgFatherGoodsName}}</text>
+                </view>
+              </view>
+            </scroll-view>
+          </view>
+          <!-- 右侧内容 -->
+          <view class="">
+
+
+            <!-- 收起时横向滚动 -->
+            <view class="flex-row" style="width: {{windowWidth - 140}}rpx;">
+              <scroll-view class="subcat-bar-scroll" scroll-x="true" scroll-into-view="{{subcatScrollIntoView}}" scroll-with-animation show-scrollbar="false" style="width:{{windowWidth - 240}}rpx; margin-right: 20rpx; ">
+                <block wx:for="{{fatherArrDis}}" wx:key="nxDistributerFatherGoodsId">
+                  <view class="subcat-tag {{activeSubCatId == item.nxDistributerFatherGoodsId ? 'active' : ''}}" id="subcat-{{item.nxDistributerFatherGoodsId}}" bindtap="onSubCatTapDis" data-id="{{item.nxDistributerFatherGoodsId}}">
+                    {{item.nxDfgFatherGoodsName}}
+                  </view>
+                </block>
+              </scroll-view>
+
+              <view class="subcat-toggle" bindtap="toggleSubCatDis">
+                <image src="../../images/arrow-down.svg" class="toggle-icon" />
+              </view>
+            </view>
+
+            <!-- 商品列表 scroll-view -->
+
+
+            <scroll-view class="goods-list" scroll-y="true" style="width: {{windowWidth - 180}}rpx; height: {{windowHeight - 200- statusBarHeight}}rpx; " bindscroll="onGoodsScrollDis" bindscrolltolower="onScrollToLowerDis" scroll-with-animation scroll-into-view="{{scrollIntoView}}" show-scrollbar="false">
+              <block wx:for="{{goodsList}}" wx:for-item="sons" wx:key="nxDistributerGoodsId" wx:for-index="goodsIndex">
+                <view wx:if="{{sons.isFirstInCategory}}" id="cat-{{sons.nxDgDfgGoodsGrandId}}" class="goods-category-title">
+                  <!-- {{item.categoryName}} -->
+                </view>
+                <view class="flex-row-default  product-item p-10">
+                  <view class="flex-row-default">
+                    <image bindtap="showDialogBtn" data-item="{{sons}}" data-nxgoods="{{sons.nxGoodsEntity}}" src="{{sons.nxDgGoodsFile !== null ? url + sons.nxDgGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="goods_item mr-20" />
+                    <view class="flex-row-default" catch:tap="{{sons.nxDepartmentOrdersEntity == null ? 'applyGoods' : 'toEditApply'}}" data-order="{{sons.nxDepartmentOrdersEntity}}" data-disgoods="{{sons}}" data-index="{{goodsIndex}}" data-depgoods="{{sons.departmentDisGoodsEntity}}" hover-class="{{sons.nxDepartmentOrdersEntity == null ? 'hover' :''}}">
+                      <view class="flex-column" style="width: {{windowWidth - 480}}rpx; ">
+                        <view class="flex-row-wrap middle">
+                          <text class=" {{sons.nxDgGoodsBrand !== null && sons.nxDgGoodsBrand.length > 0 ? 'brand' : ''}}">{{sons.nxDgGoodsBrand !== null && sons.nxDgGoodsBrand.length > 0 ? sons.nxDgGoodsBrand : ''}}</text>
+                          <text class="font-lg-2">{{sons.nxDgGoodsName}}</text>
+
+                        </view>
+
+                        <view class="flex-row small" wx:if="{{sons.nxDgGoodsStandardname !== '斤'}}">
+                          <view class="flex-row-default">
+                            <text class="gray flex-fixed">规格:</text>
+                            <block wx:if="{{sons.nxDgGoodsStandardWeight !== null}}">
+                              <view class="flex-row-wrap">{{sons.nxDgGoodsStandardWeight}}/{{sons.nxDgGoodsStandardname}}
+                              </view>
+                            </block>
+                            <block wx:else="">
+                              <view>{{sons.nxDgGoodsStandardname}}</view>
+                            </block>
+                          </view>
+                        </view>
+
+                        <view class="flex-row small">
+                          <view class="flex-row" wx:if="{{sons.nxDgGoodsDetail !== null && sons.nxDgGoodsDetail !== ''}}">
+                            <text class="gray">说明:</text>
+                            <text>{{sons.nxDgGoodsDetail}}</text>
+                          </view>
+                        </view>
+
+                      </view>
+
+                      <view class="flex-row">
+                        <view class="flex-row " wx:if="{{sons.nxDepartmentOrdersEntity !== null}}">
+                          <text class="five-weight save_btn has_order  {{sons.nxDepartmentOrdersEntity.nxDoPurchaseStatus > 3 ? 'is-gray' : ''}}  {{sons.nxDepartmentOrdersEntity.nxDoStatus == 2 ? 'finish': ''}}">{{sons.nxDepartmentOrdersEntity.nxDoQuantity}}{{sons.nxDepartmentOrdersEntity.nxDoStandard}}</text>
+                        </view>
+                        <block wx:else="">
+                          <view class="" style="margin-left: -30rpx;" wx:if="{{sons.nxDgPullOff == 1}}">
+
+                            <view class="extremeSmall">暂时无货</view>
+                          </view>
+
+                          <view class="" wx:else="">
+                            <view class="save_btn">
+                              <text>订货</text>
+                            </view>
+                          </view>
+                        </block>
+                      </view>
+
+                    </view>
+                  </view>
+                </view>
+              </block>
+              <view class="flex-column-center gray extremeSmall" style="height: 200rpx; padding: 40rpx 0;" wx:if="{{totalPageDis == currentPageDis}}">
+                "{{greatName}}"共{{goodsList.length}}个商品
+              </view>
+            </scroll-view>
+          </view>
+        </view>
+
+      </swiper-item>
+    </swiper>
+
+  </view>
+
+</view>
+
+
+
+
+<delWarnModal wx:if="{{showPopupWarn}}" type="{{popupType}}" warnContent="{{warnContent}}" bind:closeWarn="closeWarn" bind:confirmWarn="confirmWarn" />
+
+<addOrder visible="{{show}}" bindconfirm="confirm" bindcancle="_cancle" binddelApply="delApply" binddelStandard="delStandard" applyStandardName="{{applyStandardName}}" bindconfirmStandard="confirmStandard" applyNumber="{{applyNumber}}" applyRemark="{{applyRemark}}" editApply="{{editApply}}" level="{{level}}" bindchangeStandard="changeStandard" applyGoodsName="{{applyGoodsName}}" applyGoodsId="{{applyGoodsId}}" item="{{itemDis}}" windowWidth="{{windowWidth}}" />
+
+<addOrderDep visible="{{showDep}}" bindconfirm="confirmDep" bindcancle="_cancle" binddelApply="delApply" binddelStandard="delStandard" applyStandardName="{{applyStandardName}}" bindconfirmStandard="confirmStandardDep" applyNumber="{{applyNumber}}" applyRemark="{{applyRemark}}" editApply="{{editApply}}" level="{{level}}" bindchangeStandard="changeStandard" applyGoodsName="{{applyGoodsName}}" applyGoodsId="{{applyGoodsId}}" item="{{depGoods}}" windowWidth="{{windowWidth}}" />
+
+<myIndependent show="{{showInd}}" url="{{url}}" item="{{item}}" windowHeight="{{windowHeight}}" windowWidth="{{windowWidth}}" />
+
+
+<depGoodsImg show="{{showIndDep}}" url="{{url}}" item="{{item}}" windowHeight="{{windowHeight}}" windowWidth="{{windowWidth}}" />
+
+
+<view wx:if="{{showAllSubCatDep}}">
+
+  <scroll-view scroll-y="true" class="subcat-popup" style="top: {{navBarHeight + 100}}rpx; max-height: {{windowHeight - navBarHeight - 400}}rpx; width: {{windowWidth -80}}rpx; ">
+    <view class="subcat-bar expand">
+      <view class="subcat-tag {{activeSubCatIdDep == item.nxDistributerFatherGoodsId ? 'active' : ''}}" wx:for="{{fatherArr}}" wx:key="nxDistributerFatherGoodsId" bindtap="onSubCatTapDep" data-id="{{item.nxDistributerFatherGoodsId}}">
+        {{item.nxDfgFatherGoodsName}}
+      </view>
+    </view>
+  </scroll-view>
+  <view class="subcat-mask" catchtouchmove="stopScroll" bindtap="toggleSubCatDep"></view>
+</view>
+
+
+
+
+<view wx:if="{{showAllSubCat}}">
+  <view class="subcat-popup" style="top: {{navBarHeight + 100}}rpx;">
+    <view class="subcat-bar expand">
+      <view class="subcat-tag {{activeSubCatId == item.nxDistributerFatherGoodsId ? 'active' : ''}}" wx:for="{{fatherArrDis}}" wx:key="nxDistributerFatherGoodsId" bindtap="onSubCatTapDis" data-id="{{item.nxDistributerFatherGoodsId}}">
+        {{item.nxDfgFatherGoodsName}}
+      </view>
+    </view>
+  </view>
+  <view class="subcat-mask" catchtouchmove="stopScroll" bindtap="toggleSubCatDis"></view>
+</view>

@@ -1,0 +1,137 @@
+<wxs src="../../utils/fn.wxs" module="tool" />
+
+
+
+<view class="top_bar_back flex-row " style=" padding-top: {{statusBarHeight}}rpx;">
+  <image src='/images/back-white.png' class="top_back_img" bindtap="toBack"></image>
+  <view class="flex-column">
+    <text class="top_bar_title_small">订单详细</text>
+  </view>
+</view>
+
+
+<view class="customerApply" style="margin-top: {{90 + statusBarHeight}}rpx;">
+  <view class="section flex-column ">
+    <view class="titleColor"></view>
+    <view class="section_head">
+      <view class="flex-column-center with-padding">
+        <view class="flex-row">
+          <text class="print_title"> 进货单</text>
+        </view>
+
+        <view class="flex-column" style="margin-left: {{windowWidth/ 2 - 40}}rpx;">
+          <view class="flex-row">
+            <text class="margin-l-right">送货员:</text>
+            <text>{{bill.issueUserEntity.nxDuWxNickName}}</text>
+          </view>
+          <view class="flex-row-default ">
+            <text class="margin-l-right shrink_fix">单号:</text>
+            <text>{{bill.nxDbTradeNo}}</text>
+          </view>
+
+          <view class="flex-row">
+            <text class="margin-l-right">时间:</text>
+            <text>{{tool.getAttrFullTime(bill.nxDbTime) }}</text>
+          </view>
+        </view>
+
+      </view>
+
+      <view class="flex-row  small fromTitle">
+        <!-- <text class="index">序号</text> -->
+        <text class="goods_name" style="margin-left: 40rpx;">商品</text>
+        <text class="standard">规格</text>
+        <text class="weight">数量</text>
+        <text class="order_price">单价</text>
+        <text class="subtotalTitle">小计(元)</text>
+      </view>
+    </view>
+
+
+    <block wx:if="{{depHasSubs == 0}}">
+      <view class="section_body small ">
+        <view class="flex-column with-border-bottom  " wx:for="{{bill.nxDepartmentOrdersEntities}}" wx:for-item="orders" wx:key="nxDepartmentOrdersId" bindlongpress="openTools" data-item="{{orders}}" data-index="{{index}}">
+          <view class="flex-row-default with-border-bottom p-20">
+            <text class="index">{{index + 1}}.</text>
+            <view class="goods_name">
+              <text class="brand" wx:if="{{orders.nxDistributerGoodsEntity.nxDgGoodsBrand !== null && orders.nxDistributerGoodsEntity.nxDgGoodsBrand.length > 0}}">{{orders.nxDistributerGoodsEntity.nxDgGoodsBrand}}</text>
+              <text class="">{{orders.nxDistributerGoodsEntity.nxDgGoodsName}}</text>
+            </view>
+            <view class="standard">{{orders.nxDistributerGoodsEntity.nxDgGoodsStandardname}}</view>
+            <view class="weight">
+              {{orders.nxDoWeight}}</view>
+            <view class="order_price flex-column">
+              <text>{{orders.nxDoPrice}}</text>
+              <!-- <view  class="flex-row" wx:if="{{orders.nxDoPriceDifferent !== '0.0' && orders.nxDoPriceDifferent !== null}}">
+                <image class="price_img" src="{{orders.nxDoPriceDifferent > 0 ? '/images/arrow_up_right_square_fill-2.png' : '/images/arrow_down_right_square_fill.png'}}">
+                </image>
+                <text class="{{orders.nxDoPriceDifferent > 0 ? 'red' : 'greenText'}}  changeNumber">{{orders.nxDoPriceDifferent}}元</text>
+              </view> -->
+            </view>
+            <text class="subtotal">{{orders.nxDoSubtotal}}</text>
+          </view>
+         
+        </view>
+      </view>
+    </block>
+    <block wx:else>
+      <view class="with-padding" wx:for="{{applyArr}}" wx:for-item="dep" wx:for-index="depIndex">
+        <view class="">#{{dep.depName}}</view>
+        <view class="flex-column" wx:for="{{dep.depOrders}}" wx:for-item="orders" wx:for-index="index" bindlongpress="openTools" data-item="{{orders}}" data-index="{{index}}" data-depindex="{{depIndex}}">
+          <view class="flex-row with-border-bottom">
+            <text class="index">{{index + 1}}.</text>
+            <view class="goods_name flex-row">
+              <text class="brand" wx:if="{{orders.nxDistributerGoodsEntity.nxDgGoodsBrand !== null && orders.nxDistributerGoodsEntity.nxDgGoodsBrand.length > 0}}">{{orders.nxDistributerGoodsEntity.nxDgGoodsBrand}}</text>
+              <text class="">{{orders.nxDistributerGoodsEntity.nxDgGoodsName}}</text>
+            </view>
+            <view class="standard">{{orders.nxDistributerGoodsEntity.nxDgGoodsStandardname}}</view>
+            <view class="weight">
+              {{orders.nxDoWeight}}</view>
+            <view class="order_price flex-column">
+              <text>{{orders.nxDoPrice}}</text>
+              <view wx:if="{{orders.nxDoPriceDifferent > 0}}">
+                <image class="price_img" src="{{orders.nxDoPriceDifferent > 0 ? '/images/arrow_up_right_square_fill-2.png' : '/images/arrow_down_right_square_fill.png'}}">
+                </image>
+                <text class="{{orders.nxDoPriceDifferent > 0 ? 'red' : 'greenText'}}  changeNumber">{{orders.nxDoPriceDifferent}}元</text>
+              </view>
+
+            </view>
+            <text class="subtotal">{{orders.nxDoSubtotal}}</text>
+
+          </view>
+
+
+
+          <!--  -->
+        </view>
+      </view>
+    </block>
+
+
+    <view class="flex-column with-padding  weight_five normal" style="margin-bottom: 80rpx;">
+      <view class="section_head flex-row-between  " style="width: {{(windowWidth - 44 ) / 2}}rpx; margin-left: {{(windowWidth - 80 ) / 2}}rpx;">
+        <text>合计:</text>
+        <text class="total ">{{bill.nxDbTotal}}元</text>
+      </view>
+    </view>
+  </view>
+
+
+  <view class="titleColor"></view>
+
+</view>
+
+
+
+
+<view class='mask {{showTishi ? "is-active" : ""}}' catchtap="hideMask" style="height:{{maskHeight > windowHeight ? maskHeight : windowHeight}}rpx;">
+  <!-- + scrollViewTop -->
+  <view class=" flex-column-center whiteBack" style="margin-top:{{scrollViewTop > 0 ? (windowHeight - 240)/2 + scrollViewTop : (windowHeight - 240)/2  }}rpx;margin-left: 50rpx; width:{{windowWidth - 100}}rpx;">
+    <view class="with-padding margin_bottom with-border-bottom">
+      <image src="../../images/calender.png" class="icon"></image>
+    </view>
+    <view class="with-padding" catchtap="confirmBill">确认正确</view>
+  </view>
+
+
+</view>

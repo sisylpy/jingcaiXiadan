@@ -1,0 +1,100 @@
+<view class='mask' wx:if='{{show}}' catchtouchmove='ture' style="height:{{maskHeight}}rpx;top:-{{scrollViewTop}}px;">
+	<view class='modal-content' style=" margin-top:{{scrollViewTop}}px;">
+		<view class="top">
+			<view class='goodsTitle flex-row'>
+				<text class="brand" wx:if="{{item.nxDgGoodsBrand.length > 0 && item.nxDgGoodsBrand !== 'null'}}">{{item.nxDgGoodsBrand}}</text>
+				<text>{{item.nxDgGoodsName}}</text>
+				<text wx:for="{{item.nxDistributerAliasEntities}}" wx:for-item="alias" wx:key="nxDaAliasId" >={{alias.nxDaAliasName}}</text>
+				<block wx:if="{{item.nxDgGoodsStandardWeight !== 'null' && item.nxDgGoodsStandardWeight.length > 0}}">
+					<text style="font-size: 40rpx;" wx:if="{{item.nxDgGoodsStandardname !== '斤'}}">({{item.nxDgGoodsStandardWeight}}/{{item.nxDgGoodsStandardname}})</text>
+				</block>
+				<block wx:else>
+					<text wx:if="{{item.nxDgGoodsStandardname !== '斤'}}">({{item.nxDgGoodsStandardname}})</text>
+				</block>
+			</view>
+		</view>
+
+		<view class="body">
+			<view class='goods_contents'>
+				<view class="flex_row_between with-padding">
+					<text class="explain">数量</text>
+					<view class="rightPart">
+						<input class='numberInput' focus='true' type='digit' value="{{applyNumber}}" bindinput="getApplyNumber" hold-keyboard='true'></input>
+					</view>
+				</view>
+
+        <view class="flex-row-default  with-padding">
+					<text class="explain shrink_fix">单价:</text>
+          <block>
+            
+          </block>
+					<view class="flex-row-wrap shrink_change ">
+            <view class="flex-row  weightLevel  {{level == 1 ? 'is-active' : ''}} " >
+              <text class="mr-10 five-weight middle" >{{item.nxDgWillPriceOne}}元/{{item.nxDgGoodsStandardname}}</text>
+              <text class="small">({{item.nxDgWillPriceOneWeight}}-{{item.nxDgWillPriceTwoWeight}}{{item.nxDgGoodsStandardname}})</text>
+            </view>
+
+            <view class="flex-row third-row weightLevel  {{level == 2 ? 'is-active' : ''}} ">
+              <text class="mr-10 five-weight middle" >{{item.nxDgWillPriceTwo}}元/{{item.nxDgGoodsStandardname}}</text>
+              <text class="small">({{item.nxDgWillPriceTwoWeight}}-{{item.nxDgWillPriceThreeWeight}}{{item.nxDgGoodsStandardname}})</text>
+            </view>
+            
+            <view class="flex-row third-row weightLevel {{level == 3 ? 'is-active' : ''}} ">
+              <text class="mr-10 five-weight middle" >{{item.nxDgWillPriceThree}}元/{{item.nxDgGoodsStandardname}}</text>
+              <text class="small">({{item.nxDgWillPriceThreeWeight}}{{item.nxDgGoodsStandardname}})</text>
+            </view>
+           
+            
+						
+					</view>
+				</view>
+        <view class="flex-row-default flex_row_between1 with-padding">
+					<text class="explain shrink_fix">预计小价:</text>
+					<view class=" flex-row-wrap shrink_change rightPart">
+						<text class="mainColor normal" >{{applySubtotal}}</text>
+					</view>
+				</view>
+
+				<!-- <view class="flex-row-default flex_row_between1 with-padding">
+					<text class="explain shrink_fix">单位</text>
+					<view class=" flex-row-wrap shrink_change rightPart">
+						<text class="standardName {{applyStandardName == item.nxDgGoodsStandardname ? 'is-active' : ''}}" bindtap="changeStandard" data-name="{{item.nxDgGoodsStandardname}}" >{{item.nxDgGoodsStandardname}}</text>
+
+						<text  class="standardName {{applyStandardName == standard.nxDsStandardName ? 'is-active' : ''}}" bindtap="changeStandard" data-name="{{standard.nxDsStandardName}}" wx:for="{{item.nxDistributerStandardEntities}}" wx:key="nxDistributerStandardId"
+            wx:for-item="standard">{{standard.nxDsStandardName}}</text>
+					</view>
+
+				</view>
+        <view class="flex_row_between with-padding" wx:if="{{showAddStandard}}">
+          <text class="explain" style="width: 300rpx;">添加规格</text>
+					<view class="flex_row_between" style="width: {{windowWidth - 300}}rpx; " >
+						<input class="standardInput"  focus="{{showAddStandard ? 'true' : ''}}" bindinput="addStanard" value="{{newStandardName}}"></input>
+             <view class="flex-row" style="width: 200rpx;">
+              <text class='cancel-btn' bindtap="cancleStandard" hover-class="hoverBtn">取消</text>
+              <text class='confirm-btn' catchtap='confirmStandard' hover-class="hoverBtn">保存</text>
+             </view>
+					</view>
+        </view> -->
+
+				<view class="flex_row_between with-padding">
+					<text class="explain">备注</text>
+					<view class="rightPart">
+						<input class="remarkInput" bindinput="addRemark" value="{{applyRemark}}"></input>
+					</view>
+				</view>
+
+
+			</view>
+
+			<view class='btn-wrapper'>
+				<view class="btn_row" >
+          <text class="del-btn" wx:if="{{editApply}}" bindtap="delApply">删除订单</text>
+					<text class='cancel-btn' bindtap="cancle" hover-class="hoverBtn">取消</text>
+          <text class='{{canSave ? "confirm-btn" : "cancel-btn"}}' catchtap='{{canSave ? "confirm" : ""}}' hover-class="hoverBtn">确定</text>
+
+				</view>
+			</view>
+		</view>
+
+	</view>
+</view>

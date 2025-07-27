@@ -1,0 +1,192 @@
+<wxs src="../../../../utils/fn.wxs" module="tool" />
+
+<view class="flex flex-column height-100">
+
+<back-navbar style="height: {{navBarHeight}}rpx;" title="{{depName}}" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
+ 
+
+<!-- 订单数据 -->
+<block wx:if="!toSearch">
+  <scroll-view scroll-y="true" class="flex-column" style="height:{{showArr.length  < 10  ? showArr.length * 220 : windowHeight - 260 - navBarHeight}}rpx;">
+    <view class=" flex-column font-md bg-white border-bottom" wx:for="{{showArr}}" wx:for-item="apply" wx:key="nxDepartmentOrdersId" wx:for-index="applyIndex">
+      <view class="flex-row-between p-20">
+        <!-- 配送订单 -->
+        <view class="flex-column ">
+          <view class="flex flex-row">
+            <text class=" ">{{applyIndex + 1}}. </text>
+            
+              <view class="flex-row-wrap " style="width: {{windowWidth - 140}}rpx;">
+                <text class="brand" wx:if="{{apply.nxDistributerGoodsEntity.nxDgGoodsBrand.length > 0 && apply.nxDistributerGoodsEntity.nxDgGoodsBrand !==  'null'}}">{{apply.nxDistributerGoodsEntity.nxDgGoodsBrand}}</text>
+                <text class="">{{apply.nxDistributerGoodsEntity.nxDgGoodsName}}</text>
+                <text class="font-sm" wx:if="{{apply.nxDistributerGoodsEntity.nxAliasEntities.length > 0}}" wx:for="{{apply.nxDistributerGoodsEntity.nxAliasEntities}}" wx:for-item="alias" wx:key="nxDistributerAliasId">@{{alias.nxDaAliasName}}</text>
+
+                <!-- <block wx:if="{{apply.nxDistributerGoodsEntity.nxDgGoodsStandardWeight !== 'null'  && apply.nxDistributerGoodsEntity.nxDgGoodsStandardWeight.length > 0}}"> 
+                <text class="font-sm m-10 flex-row">({{apply.nxDistributerGoodsEntity.nxDgGoodsStandardWeight}}/{{apply.nxDistributerGoodsEntity.nxDgGoodsStandardname}})</text>
+                </block>
+                <block wx:else>
+                  <text class="font-sm m-10">({{apply.nxDistributerGoodsEntity.nxDgGoodsStandardname}})</text>
+                </block> -->
+                <text class="font-sm m-10 text-secondary" wx:if="{{apply.nxDistributerGoodsEntity.nxDgGoodsPlace !== 'null' && apply.nxDistributerGoodsEntity.nxDgGoodsPlace.length > 0}}">产地:{{apply.nxDistributerGoodsEntity.nxDgGoodsPlace}}</text>
+                <text class="font-sm text-secondary m-10" wx:if="{{apply.nxDistributerGoodsEntity.nxDgGoodsDetail.length > 0 && apply.nxDistributerGoodsEntity.nxDgGoodsDetail !==  'null'}}">{{apply.nxDistributerGoodsEntity.nxDgGoodsDetail}}</text>
+               
+                <view class="flex-row ml-20 ">
+                <text class="font-sltext-secondary text-secondary">订货:</text>
+                <text class="">{{apply.nxDoQuantity}}{{apply.nxDoStandard}}</text>
+              </view>
+              </view>
+          </view>
+
+          <view class="flex flex-row" wx:if="{{apply.nxDoRemark !== null && apply.nxDoRemark.length > 0}}">
+            <text class="text-white">{{applyIndex + 1}}. </text>
+            <view class="">
+              <text class="m-10 text-secondary">备注:</text>
+              <text class="text-danger" >{{apply.nxDoRemark}}</text>
+            </view>
+          </view>
+
+        </view>
+
+        <!-- 订单状态和按钮 -->
+          
+          <view class="flex flex-row ">
+            <view class="btnClick" bindtap="openOperation" data-item="{{apply}}" hover-class="hover"   data-index="{{applyIndex}}">
+              <image src="../../../images/points.png" class="icon"></image>
+            </view>
+          </view>
+      
+        <!-- ./订单状态和按钮 -->
+      </view>
+      <!-- ./订单数据 -->
+    </view>
+  </scroll-view>
+</block>
+
+<view class="flex  flex-column   searchPart1 comment" 
+style="bottom:{{bottom}}px; " >
+  <scroll-view scroll-y class="searchAddList {{isSearching ? 'is-active' :''}} flex-column"   catchtouchmove='ture' style="width:{{windowWidth}}rpx; height:{{count < 6  ?  count * 140 : windowHeight - keyBordHeight - navBarHeight - 140}}rpx; border-top: 1px solid rgb(207, 207, 207);">
+  
+    <view class="flex-column border-bottom p-20" wx:for="{{strArr}}" wx:for-item="goods" wx:for-index="index" wx:key="nxDistributerGoodsId" bindtap="{{goods.nxDgPullOff == 0 ? 'applyGoods' : 'tishi'}}" data-item="{{goods}}" data-index="{{goodsIndex}}" hover-class="hover">
+      <view class="flex-row-between font-lg" >
+        <view class="flex flex-row">
+          <text class="mr-20">{{index + 1}}.</text>
+          <view class="flex-row-wrap align-center">
+            <text class="brand" wx:if="{{goods.nxDgGoodsBrand.length > 0 && goods.nxDgGoodsBrand !==  'null'}}">{{goods.nxDgGoodsBrand}}</text>
+            <text class=" text-secondary" wx:if="{{goods.nxDgPullOff == 1}}">(下架) {{goods.nxDgGoodsName}}</text>
+            <text class="mr-10" wx:else>{{goods.nxDgGoodsName}}</text>
+            <text class="" wx:if="{{goods.nxDistributerAliasEntities.length > 0}}" wx:for="{{goods.nxDistributerAliasEntities}}" wx:key="nxDistributerAliasId" wx:for-item="alias">@{{alias.nxDaAliasName}}</text>
+
+            <block wx:if="{{goods.nxDgGoodsStandardWeight !== 'null' && goods.nxDgGoodsStandardWeight.length > 0}}">
+              <text class=" m-10" wx:if="{{goods.nxDgGoodsStandardname !== '斤'}}">({{goods.nxDgGoodsStandardname}}/{{goods.nxDgGoodsStandardWeight}})</text>
+            </block>
+            <block wx:else>
+              <text class="m-10" >({{goods.nxDgGoodsStandardname}})</text>
+            </block>
+
+            <text class="font-slmr-20 text-secondary" wx:if="{{goods.nxDgGoodsPlace !== null && goods.nxDgGoodsPlace.length > 0}}">产地:{{goods.nxDgGoodsPlace}}</text>
+
+            <text class="font-sltext-secondary" wx:if="{{goods.nxDgGoodsDetail.length > 0 && goods.nxDgGoodsDetail !==  'null'}}">{{goods.nxDgGoodsDetail}}</text>
+          </view>
+        </view>
+        <view wx:if="{{goods.nxDepartmentOrdersEntity !== null}}">
+          <text>订:{{goods.nxDepartmentOrdersEntity.nxDoQuantity}}{{goods.nxDepartmentOrdersEntity.nxDoStandard}}</text>
+        </view>
+      </view>
+      <block wx:if="{{goods.departmentDisGoodsEntity !== null}}">
+        <view class="flex flex-row ">
+          <text class="text-white mr-10">{{index + 1}}.</text>
+          <view class="flex flex-row" style="width: {{windowWidth - 60}}rpx; ">
+            <view class="third-row">
+              <text>{{tool.transferDateString(goods.departmentDisGoodsEntity.nxDdgOrderDate)}}</text>
+            </view>
+            <view class="third-row">
+              <text>单价:</text>
+              <text>{{goods.departmentDisGoodsEntity.nxDdgOrderPrice}}元/{{goods.nxDgGoodsStandardname}}</text>
+            </view>
+            <view class="third-row">
+              <text>订货:</text>
+              <text>{{goods.departmentDisGoodsEntity.nxDdgOrderQuantity}}</text>
+              <text>{{goods.departmentDisGoodsEntity.nxDdgOrderStandard}}</text>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view class="flex-row-between border-bottom p-20 bg-mainColor" wx:for="{{nxArr}}" wx:for-item="goods" wx:for-index="index" wx:key="nxDistributerGoodsId"  style="width:{{windowWidth - 40}}rpx; ">
+      <view class="flex flex-row">
+        <text class="mr-20">{{strArr.length + index + 1}}.</text>
+        <view class="flex-row-wrap align-center" style="width:{{windowWidth - 240}}rpx;">
+          <text class="brand" wx:if="{{goods.nxGoodsBrand.length > 0 && goods.nxGoodsBrand !==  'null'}}">{{goods.nxGoodsBrand}}</text>
+          <text class="font-lg-2 mr-20">{{goods.nxGoodsName}}</text>
+          <text class="" wx:if="{{goods.nxDistributerAliasEntities.length > 0}}" wx:for="{{goods.nxDistributerAliasEntities}}" wx:for-item="alias">@{{alias.nxDaAliasName}}</text>
+          <block wx:if="{{goods.nxGoodsStandardWeight !== 'null' && goods.nxGoodsStandardWeight.length > 0}}">
+            <text class="font-slm-10" wx:if="{{goods.nxGoodsStandardname !== '斤'}}">({{goods.nxGoodsStandardname}}/{{goods.nxGoodsStandardWeight}})</text>
+          </block>
+          <block wx:else>
+            <text class="font-lg-2 m-10" >({{goods.nxGoodsStandardname}})</text>
+          </block>
+
+          <text class="font-slmr-20 text-secondary" wx:if="{{goods.nxGoodsPlace !== 'null' && goods.nxGoodsPlace.length > 0}}">产地:{{goods.nxGoodsPlace}}</text>
+          <text class="font-sltext-secondary" wx:if="{{goods.nxGoodsDetail.length > 0 && goods.nxGoodsDetail !==  'null'}}">{{goods.nxGoodsDetail}}</text>
+        </view>
+      </view>
+      
+      <view class="p-20" hover-class="hover" bindtap="downLoadGoods" data-item="{{goods}}"  wx:if="{{goods.nxDistributerGoodsEntity == null}}">
+      <image src="/images/download.png" mode="aspectFill" class="icon" />
+      </view>
+      <view wx:else=""  class="p-20"  hover-class="hover" bindtap="applyGoods" data-item="{{goods.nxDistributerGoodsEntity}}" data-index="{{goodsIndex}}">
+      <image src="/images/finish.png" mode="aspectFill" class="icon"/>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="flex flex-row">
+    <input class="inputGoods " placeholder="搜索商品名称、拼音、简拼" style="width: {{windowWidth - 200}}rpx; margin-right: 30rpx;" bindfocus="inputFocus" bindblur="inputBlur" adjust-position="{{false}}" bindkeyboardheightchange = "bindkeyboardheightchange" bindinput="getSearchString" value="{{searchStr}}" focus="{{toSearch ? true: ''}}" />
+    <view class="button-container " bindtap="toAddGoods" wx:if="{{searchStr.length > 0}}">
+      <image src="../../../images/add-active.png" class="icon"></image>
+    </view>
+    <!-- <view class="button-container" bindtap="changeSearchType" >
+      <image src="../../../images/changeorder.png" class="icon"></image>
+    </view> -->
+  </view>
+</view>
+
+
+</view>
+
+<view class='overlay {{showOperation ? "show" : ""}}' catchtouchmove='ture' catchtap="hideMask">
+  <view class="flex-column nnn bg-white font-lg" wx:if="{{chooseSize}}" animation='{{animationData}}'>
+ 
+      <view class="center-content p-30  border-bottom ">
+        <text class="brand" wx:if="{{applyItem.nxDistributerGoodsEntity.nxDgGoodsBrand !== 'null' && applyItem.nxDistributerGoodsEntity.nxDgGoodsBrand.length > 0}}">{{applyItem.nxDistributerGoodsEntity.nxDgGoodsBrand}}</text>
+        <text class="">{{applyItem.nxDistributerGoodsEntity.nxDgGoodsName}}</text>
+        <block wx:if="{{applyItem.nxDistributerGoodsEntity.nxDgGoodsStandardWeight !== 'null' && applyItem.nxDistributerGoodsEntity.nxDgGoodsStandardWeight.length > 0}}">
+          <text wx:if="{{applyItem.nxDistributerGoodsEntity.nxDgGoodsStandardname !== '斤'}}">({{applyItem.nxDistributerGoodsEntity.nxDgGoodsStandardWeight}}/{{applyItem.nxDistributerGoodsEntity.nxDgGoodsStandardname}})
+          </text>
+        </block>
+        <block wx:else>
+          <text >({{applyItem.nxDistributerGoodsEntity.nxDgGoodsStandardname}})</text>
+        </block>
+      </view>
+   
+    <view class="flex flex-row p-30 border-bottom" bindtap="toEditApply" hover-class="hover">
+      <image src="../../../images/edit.png" class="icon mr-20 ml-20"></image>
+      <text class=" mr-20">修改订货</text>
+    </view>
+
+    <view class=" flex flex- p-30 " catchtap="deleteApply" hover-class="hover">
+      <image src="../../../images/ashbin.png" class="icon mr-20 ml-20"></image>
+      <text class="mr-20">删除订货</text>
+    </view>
+     <view style="height: 20rpx;"></view>
+  </view>
+</view>
+
+  
+<addOrder visible="{{show}}" bindconfirm="confirm" bindcancle="cancle" binddelApply="delApply" binddelStandard="delStandard" applyStandardName="{{applyStandardName}}" bindconfirmStandard="confirmStandard" applyNumber="{{applyNumber}}" applyRemark="{{applyRemark}}" editApply="{{editApply}}"  level="{{level}}"bindchangeStandard="changeStandard" applyGoodsName="{{applyGoodsName}}" applyGoodsId="{{applyGoodsId}}" item="{{itemDis}}" windowWidth="{{windowWidth}}" />
+
+
+<delWarnModal wx:if="{{showPopupWarn}}"  type="{{popupType}}"  warnContent="{{warnContent}}"   bind:closeWarn="onClosePopup" bind:confirmWarn="confirmWarn" />
+
+  <myDismodalCashSingle show="{{showCash}}" bindconfirm="confirmCash" bindcancle="cancle" binddelApply="delApply" bindconfirmStandard="confirmStandard" applyStandardName="{{applyStandardName}}" applyNumber="{{applyNumber}}" applySubtotal="{{applySubtotal}}" applyRemark="{{applyRemark}}"  level="{{level}}" editApply="{{editApply}}" maskHeight="{{maskHeight}}" expectPrice="{{expectPrice}}" bindchangeStandard="changeStandard" applyGoodsName="{{applyGoodsName}}" applyGoodsId="{{applyGoodsId}}" item="{{itemDis}}" maskHeight="{{maskHeight > windowHeight ? maskHeight : windowHeight}}" applyStandardName="{{applyStandardName}}"   windowWidth="{{windowWidth}}" windowHeight="{{windowHeight}}"  statusBarHeight="{{statusBarHeight}}" />
+

@@ -1,0 +1,34 @@
+
+
+
+<view class="top_bar_back flex-row " style=" padding-top: {{statusBarHeight}}rpx;" >
+    <image src='/images/back-white.png' class="top_back_img" bindtap="toBack"></image>
+    <view class="flex-column">
+      <text class="top_bar_title_small">修改信息</text>
+    </view>
+  </view>
+
+
+<view class="flex-column with-padding normal" style="margin-top: {{90 + statusBarHeight}}rpx;">
+
+    
+
+ <view class="with-padding with-padding flex-column ">
+    <text class="gray">用户头像</text>
+     <image class='class_img' src='{{src}}' bindtap='choiceImg'></image>
+  </view>
+
+
+   <view class="with-padding flex-column ">
+    <text class="gray">用户名</text>
+    <input class="group_input normal" value="{{userInfo.nxDuWxNickName}}" bindinput="getUserName"> </input>
+  </view>
+
+
+ <view class="flex-row with-padding" style="margin-top: 100rpx;">
+  <view class="saveBtn {{canSave ? 'is-active' : ''}}" bindtap="{{canSave ? 'save' : ''}}">保存</view>
+ </view>
+ 
+ </view>
+
+

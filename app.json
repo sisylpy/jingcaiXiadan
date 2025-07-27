@@ -1,0 +1,39 @@
+{
+  "pages": [
+   
+    "pages/ai/customer/chefOrder/chefOrder",
+    "pages/ai/customer/paste/paste",
+    "pages/ai/customer/resGoodsList/resGoodsList",
+    "pages/ai/customer/customerGoodsAi/customerGoodsAi",
+    "pages/ai/customer/disAddGoodsLinshi/disAddGoodsLinshi",
+    "pages/loginWarn/loginWarn",
+    "pages/resGoodsLess/resGoodsLess",
+    "pages/resGoodsLessCash/resGoodsLessCash",
+    "pages/disAddGoods/disAddGoods",
+    "pages/resGroup/resGroup",
+    "pages/resGoodsAll/resGoodsAll",
+    "pages/registerCusomer/registerCusomer",
+    "pages/accountList/accountList",
+    "pages/issuePage/issuePage",
+     "pages/getPhone/getPhone",
+    "pages/resGoodsSearch/resGoodsSearch",
+    "pages/resGoodsCashSearch/resGoodsCashSearch",
+    "pages/depUserEdit/depUserEdit"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationStyle": "custom"
+  },
+  "sitemapLocation": "sitemap.json",
+  "networkTimeout": {
+    "request": 60000,
+    "downloadFile": 10000
+  },
+  "plugins": {
+    "QCloudAIVoice": {
+      "version": "2.3.12",
+      "provider": "wx3e17776051baf153"
+    }
+  }
+}

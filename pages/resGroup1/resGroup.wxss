@@ -1,0 +1,103 @@
+.top_padding{
+  
+  padding-top: 50rpx;
+}
+.dep_name{
+  font-size: 44rpx;
+}
+
+.member_url{
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 50%;
+  border-radius: 50%;
+}
+
+.jiantou{
+  /* background: red; */
+  margin-right: 20rpx;
+
+}
+
+.member_line{
+  height: 1px;
+  background: lightgray;
+  margin-left: 140rpx;
+
+}
+
+.dep{
+  margin-left: 200rpx;
+  
+}
+.dep_icon{
+  margin-left: 100rpx;
+}
+.dep_img{
+  width: 50rpx;
+  height: 50rpx;
+  margin-right: 40rpx;
+
+}
+
+.edit{
+  color: blue;
+  position: absolute;
+  right: 60rpx;
+}
+
+
+
+.nnn{
+  position: fixed;
+  bottom: 0;
+  z-index: 99999;
+  width: 100%;
+}
+
+.icon_operation{
+  padding: 20rpx 30rpx;
+  /* border: 1px solid yellow; */
+}
+
+button.group_btn {
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 0;
+  font-weight: 400;
+  background: none;
+  font-size: 30rpx;
+  /* background: red; */
+}
+button.group_btn::after {
+  border: none;
+}
+
+
+
+.sentence{
+  padding: 60rpx 60rpx 20rpx 60rpx;
+  text-align: center;
+
+}
+
+.tishiView{
+  background: rgb(230, 228, 228);
+}
+
+
+.iknow{
+  padding: 10rpx 0;
+  border-radius: 40rpx;
+  margin-bottom: 40rpx;
+  
+}
+
+.applyBtn{
+  border: 1px solid lightgray;
+  border-radius: 10rpx;
+  /* padding: 6rpx 20rpx; */
+  /* padding: 4rpx 20rpx; */
+
+
+}

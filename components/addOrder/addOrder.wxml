@@ -1,0 +1,97 @@
+
+
+<view class="overlay" wx:if="{{visible}}">
+  <view class="popup" style="top: {{popupTop}};">
+    <!-- 顶部商品名称 -->
+    <view class="flex flex-column align-center justify-center popup-header">
+      <view class="flex flex-row">
+      <text class="brand" wx:if="{{item.nxDgGoodsBrand.length > 0 && item.nxDgGoodsBrand !== 'null'}}">{{item.nxDgGoodsBrand}}</text>
+				<text class="product-name">{{item.nxDgGoodsName}}</text>
+        <text class=""  wx:if="{{item.nxAliasEntities.length > 0}}" wx:for="{{item.nxAliasEntities}}" wx:for-item="alias" wx:key="nxDistributerAliasId">@{{alias.nxDaAliasName}}</text>
+      </view>
+       <view class="flex flex-row" wx:if="{{item.nxDgGoodsDetail  !== null ||  item.nxDgGoodsStandardWeight !== null  && item.nxDgGoodsStandardWeight.length > 0}}">
+        <text style="font-size: 28rpx;" >{{item.nxDgGoodsDetail  !== null ? item.nxDgGoodsDetail : ''}}
+        </text>
+			
+				<block wx:if="{{item.nxDgGoodsStandardWeight !== 'null' && item.nxDgGoodsStandardWeight.length > 0}}">
+					<text style="font-size: 30rpx;" wx:if="{{item.nxDgGoodsStandardname !== '斤'}}">({{item.nxDgGoodsStandardWeight}}/{{item.nxDgGoodsStandardname}})</text>
+				</block>
+				<block wx:else>
+					<text style="font-size: 30rpx;"  wx:if="{{item.nxDgGoodsStandardname !== '斤'}}">({{item.nxDgGoodsStandardname}})</text>
+				</block>
+      </view>
+    </view>
+    
+    <!-- 输入内容 -->
+    <view class="popup-body">
+      <!-- 订货数量 -->
+      <view class="input-group">
+        <text class="label">订货数量:</text>
+        <view class="rightPart">
+						<input class="input {{focusType == 'number' ? 'is-active' : ''}}" bindfocus="onInputFocus" bindblur="onInputBlur" data-type="number" focus='true' type='digit' value="{{applyNumber}}" bindinput="getApplyNumber" hold-keyboard='true'></input>
+					</view>
+      </view>
+
+      <view class="input-group">
+					<text class="label">单位:</text>
+					<view class="flex flex-row-wrap shrink_change rightPart">
+						<text class="standardName {{applyStandardName == item.nxDgGoodsStandardname ? 'is-active' : ''}}" bindtap="changeStandard"  data-name="{{item.nxDgGoodsStandardname}}"  data-level="1">{{item.nxDgGoodsStandardname}}</text>
+						<text  class="standardName {{applyStandardName == standard.nxDsStandardName ? 'is-active' : ''}}" catchtap="changeStandard" data-name="{{standard.nxDsStandardName}}"   data-level="1"  catchlongpress="delStandard"  data-id="{{standard.nxDistributerStandardId}}" wx:for="{{item.nxDistributerStandardEntities}}" wx:key="nxDistributerStandardId"
+            wx:for-item="standard">{{standard.nxDsStandardName}}</text>
+
+            <text class="standardName" bindtap="showInputStandard" wx:if="{{!showAddStandard}}">+</text>
+            <!-- <text wx:else="" bindtap="cancleStandard" >guabi</text> -->
+          
+					</view>
+				</view>
+        <view class="flex flex_row_between" style="padding: 20rpx 0;" wx:if="{{showAddStandard}}">
+          <text class="label " style="width: {{windowWidth / 5}}rpx;">添加规格</text>
+          <view class="flex flex_row_between" style="width: {{windowWidth - 300}}rpx; ">
+            <input class="input-half  {{focusType == 'standard' ? 'is-active' : ''}}" focus="{{showAddStandard ? 'true' : ''}}" bindinput="addStanard" value="{{newStandardName}}"  bindfocus="onInputFocus" bindblur="onInputBlur" data-type="standard"  ></input>
+            <view class="flex-row-between" style="width:{{windowWidth / 3}}rpx; ">
+        <text class='cancel-btn' bindtap="cancleStandard" hover-class="hoverBtn">取消</text>
+              <text class='confirm-btn' catchtap='confirmStandard' hover-class="hoverBtn">保存</text>
+            </view>
+          </view>
+        </view>
+        <!-- <view class="flex flex-row" wx:if="{{showAddStandard}}">
+          <text class="label" >添加规格</text>
+
+         
+					<view class="input-line flex flex-row-wrap"  >
+						<input class="input-half  {{focusType == 'standard' ? 'is-active' : ''}}"  focus="{{showAddStandard ? 'true' : ''}}" bindinput="addStanard"  bindfocus="onInputFocus" bindblur="onInputBlur" data-type="standard"  value="{{newStandardName}}"></input>
+            <text class='confirm-btn' catchtap='confirmStandard' hover-class="hoverBtn">保存</text>
+              <text class='confirm-btn' catchtap='confirmStandard' hover-class="hoverBtn">保存</text>
+              <image src="/images/del.png" mode="aspectFill" class="badge"  bindtap="cancleStandard"  />
+					</view>
+        </view> -->
+
+      
+        <block wx:if="{{item.nxDgWillPriceTwo !== null && item.nxDgWillPriceTwo > 0}}">
+          <view class="input-group">
+          <text class="label">大单位:</text>
+          <view class=" flex-row-wrap shrink_change rightPart">
+            <text class="standardName {{applyStandardName == item.nxDgWillPriceTwoStandard ? 'is-active' : ''}}" bindtap="changeStandard"   data-level="2" data-name="{{item.nxDgWillPriceTwoStandard}}">{{item.nxDgWillPriceTwoStandard}}</text>
+          </view>
+        </view>
+        </block>
+      <!-- 备注 -->
+      <view class="input-group">
+        <text class="label">备注:</text>
+        <view class="rightPart">   
+          <input class="input-l is-red {{focusType == 'remark' ? 'is-red' : ''}}" bindinput="addRemark"  bindfocus="onInputFocus" bindblur="onInputBlur" data-type="remark"  value="{{applyRemark}}"></input>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 按钮组 -->
+    <view class="popup-footer">
+      <view class="btn delete"  style="width: {{windowWidth / 6}}rpx; margin-right: 10rpx; " wx:if="{{editApply}}"  bindtap="delApply" >删除</view>
+      <view class="btn cancel" bindtap="onCancel" style="width: {{windowWidth / 6}}rpx; margin-right: 10rpx;">取消</view>
+      <view class="btn save" bindtap="onSave" style="width:{{windowWidth /6 * 2}}rpx;" >保存</view>
+    </view>
+  </view>
+</view>
+
+
+
