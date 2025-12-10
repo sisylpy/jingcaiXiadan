@@ -24,7 +24,7 @@
     </view>
   </block>
   <view wx:else="" class="flex-column p-20">
-
+<!--  -->
     <view class="flex-row goods_back mb-20" wx:for="{{depGoodsArr}}" wx:key="nxDistributerFatherGoodsId">
       <view class=" flex-row-default p-20 ">
 

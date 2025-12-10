@@ -4,7 +4,7 @@ var dateUtils = require('../../../../utils/dateUtil');
 import apiUrl from '../../../../config.js'
 
 import {
-
+  getDisInfo,
   updateOrder,
   deleteOrder,
   restrauntCashPayLaodu,
@@ -49,7 +49,7 @@ Page({
     showDepSwitch: false,
     depSwitchAnim: null,
 
-    // 新增：数据刷新控制
+    // 新增：数据刷新控制  lanxiang 陈 13581698082
     lastRefreshTime: 0,
     refreshInterval: 30000, // 
 
@@ -128,7 +128,15 @@ Page({
       // 3. 有参数或缓存，先尝试用户登录
       wx.setStorageSync('depFatherId', depFatherId);
       wx.setStorageSync('disId', disId);
+      var disInfo = wx.getStorageSync('disInfo');
+      if(disInfo){
+        this.setData({
+          disInfo: disInfo,
+
+        })
+      }
     }
+    this._getDisInfo();
     this.attemptLogin();
 
   },
@@ -137,7 +145,19 @@ Page({
 
   // 
 
+  _getDisInfo(){
 
+    getDisInfo(this.data.disId).then(res =>{
+      if(res.result.code == 0){
+        console.log("res==", Number(res.result.data.nxDistributerBuyQuantity))
+        this.setData({
+          disInfo: res.result.data,
+          res: Number(res.result.data.nxDistributerBuyQuantity)
+        })
+      }
+    })
+
+  },  
   toSwitchDep() {
     this.setData({
       showDepSwitch: true,

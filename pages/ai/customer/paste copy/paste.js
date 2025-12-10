@@ -16,7 +16,7 @@ import {
   disDeleteStandard,
  
 } from '../../../../lib/apiRestraunt';
-
+const config = require('../../../../config.js');
 
 const globalData = getApp().globalData;
 const plugin = requirePlugin("QCloudAIVoice");
@@ -350,9 +350,9 @@ Page({
     });
   
     const params = {
-      secretkey: 'YOUR_SECRET_KEY', // 请替换为实际的密钥
-      secretid: 'YOUR_SECRET_ID', // 请替换为实际的ID
-      appid: '1308821743',
+      secretkey: config.tencentCloud.secretkey,
+      secretid: config.tencentCloud.secretid,
+      appid: config.tencentCloud.appid,
       engine_model_type: '16k_zh',
       voice_format: 1
     };

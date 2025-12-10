@@ -1,6 +1,6 @@
 <view class="flex-column">
  
-  <main-navbar style="height: {{navBarHeight}}rpx;" title="老杜南方菜" avatar="/images/logodu.png" button-text="设置" bindnavbuttontap="onNavButtonTap"></main-navbar>
+  <main-navbar style="height: {{navBarHeight}}rpx;" title="老杜南方菜" avatar="/images/logo.png" button-text="设置" bindnavbuttontap="onNavButtonTap"></main-navbar>
 
 
      <!-- 全部配送 -->

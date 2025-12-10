@@ -1,21 +1,22 @@
-import load from '../../../lib/load';
+import load from '../../../../lib/load';
 import {
-  pasteSearchGoods,
+  depPasteSearchGoods,
   choiceGoodsForApply,
   updateOrder,
   deleteOrder,
   addRecord,
-  getBooks
-} from '../../../lib/apiDepOrder';
+  downDisGoods,
+  getBooks,
+  depGetTodayRecordSeconds
+} from '../../../../lib/apiRestraunt';
+
 import {
   disSaveStandard,
-  queryDisGoodsByQuickSearchWithDepId,
+  queryDepDisGoodsByQuickSearch,
   disDeleteStandard,
-} from '../../../lib/apiDistributer';
-import {
-  downDisGoods,
-} from '../../../lib/apiibook';
-const config = require('../../config.js');
+ 
+} from '../../../../lib/apiRestraunt';
+const config = require('../../../../config.js');
 
 const globalData = getApp().globalData;
 const plugin = requirePlugin("QCloudAIVoice");
@@ -25,10 +26,8 @@ const speechRecognizerManager = plugin.speechRecognizerManager();
 const DEEPSEEK_API_KEY = 'sk-ab54d76efc1e4d95a7ab2cdb3013a920'; // 需要替换为实际的 API key
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
-
-
 // 添加优化语音文本的函数
-async function optimizeTextWithDeepSeek(text) {
+async function optimizeTextWithDeepSeek(text, temperature) {
   try {
     console.log('开始调用 DeepSeek API，输入文本:', text);
     
@@ -53,6 +52,7 @@ async function optimizeTextWithDeepSeek(text) {
    - "去叶中葱"、"去叶大葱" - 这些都是完整的葱类商品名称
    - "西兰苔" - 完整的蔬菜名称
    - "板蓝根" - 完整的药材名称
+   - "手指胡萝卜" - 这是一种特殊的胡萝卜品种，是完整的蔬菜名称，不要识别为普通"胡萝卜"
    - 其他以"去叶"、"去根"、"去皮"等开头的商品名都是完整的商品名称
 3.  **宽容处理**：不要随便删除无法立刻理解的内容，应尽最大努力将其理解为同音的蔬菜、水果或调料名称。
 
@@ -120,7 +120,7 @@ async function optimizeTextWithDeepSeek(text) {
               content: text
             }
           ],
-          temperature: 0.7
+          temperature: temperature
         },
         success: (res) => {
           console.log('API 响应成功:', res);
@@ -150,6 +150,13 @@ async function optimizeTextWithDeepSeek(text) {
   }
 }
 
+// 商品名归一化函数
+function normalizeGoodsName(name) {
+  // 只替换商品名中的"元"为"圆"，可扩展更多规则
+  return name.replace(/1000元/g, '1000圆').replace(/元餐盒/g, '圆餐盒');
+  // 你也可以用更通用的规则，如 name.replace(/元/g, '圆')
+}
+
 var books = "";
 
 Page({
@@ -173,6 +180,31 @@ Page({
 
   },
 
+  onHide() {
+    // 页面隐藏时停止录音
+    if (this.data.isRecording) {
+      this.stopRecord();
+    }
+  },
+
+  onUnload() {
+    // 页面卸载时停止录音
+    if (this.data.isRecording) {
+      this.stopRecord();
+    }
+    // 清除所有定时器
+    if (this.data.timer) {
+      clearInterval(this.data.timer);
+    }
+    if (this.restSecondsTimer) {
+      clearInterval(this.restSecondsTimer);
+    }
+    // 清除静音定时器
+    if (this.data.silenceTimer) {
+      clearTimeout(this.data.silenceTimer);
+    }
+  },
+
 
   data: {
     orderArr: [],
@@ -188,14 +220,18 @@ Page({
     customerName: "",
     sentence: "",
     inputContent: "",
-    originSentence: "",
-    userId: null,
+    originSentence: '',
     bottomHeight: 180,
     showDeepSeekLoading: false,
-    aiRetryCount: 0,
     hasAiRecognized: false,
-    temperature: 1.5,
-
+    temperature: 0.7,
+    aiRetryCount: 0,
+    isRecording: false,
+    showExplanationModal: false,
+    explanationContent: "",
+    hasUsedExtraTime: false, // 是否已经使用过额外录音时间
+    silenceTimer: null, // 静音超时定时器
+    lastVoiceTime: 0, // 最后一次检测到语音的时间
   },
 
 
@@ -206,69 +242,37 @@ Page({
       navBarHeight: globalData.navBarHeight * globalData.rpxR,
       depFatherId: options.depFatherId,
       depId: options.depId,
+      disId: options.disId,
       depName: options.depName,
     })
 
+    var value = wx.getStorageSync('userInfo');
+    if (value) {
+      this.setData({
+        userInfo: value,
+        disId: value.nxDuDistributerId,
+        userId: value.nxDepartmentUserId,
+      })
+    } else {
+      this.setData({
+        userId:  -1,
+      })
+    }
+ 
     getBooks().then(res =>{
-      if(res.result.code == 0){
+      if(res.result.code == 0){ 
        books = res.result.data;
       }
     })
 
-    var userInfo = wx.getStorageSync('userInfo');
-    if (userInfo) {
-      this.setData({
-        userInfo: userInfo,
-        disId: userInfo.nxDiuDistributerId,
-        disInfo: userInfo.nxDistributerEntity,
-      })
-    }
 
-    var depInfo = wx.getStorageSync('depItem');
-    if (depInfo) {
-      this.setData({
-        depInfo: depInfo,
-      })
-    }
-
-    
- 
-    var pasteDepList = wx.getStorageSync("pasteDepList");
-    if (pasteDepList) {
-      this.setData({
-        pasteDepList: pasteDepList,
-      })
-
-      for (var i = 0; i < pasteDepList.length; i++) {
-        var pDepId = pasteDepList[i].depId;
-        if (pDepId == this.data.depId) {
-          this.setData({
-            pasteDepId: pDepId,
-            pasteDepIndex: i,
-            pasteDep: pasteDepList[i],
-            orderArr: pasteDepList[i].arr,
-            saveCount: pasteDepList[i].saveCount,
-          })
-        }
+    depGetTodayRecordSeconds(this.data.depFatherId).then(res =>{
+      if(res.result.code == 0){
+        this.setData({
+          restSeconds: res.result.data
+        })
       }
-    } else {
-      this.setData({
-        saveCount: null,
-        pasteDepList: null,
-        pasteDepId: null,
-        pasteDep: null,
-        pasteDepIndex: -1,
-      })
-
-    }
-    var numberBooks = wx.getStorageSync('numberBooks');
-    if (numberBooks) {
-
-      books = numberBooks
-
-    }
-
-
+    })
    
 
     // 检查隐私设置并处理隐私弹窗逻辑
@@ -322,9 +326,31 @@ Page({
     speechRecognizerManager.OnRecognitionResultChange = (res) => {
       console.log('识别变化时', res)
       if (res.result) {
+        // 检测到语音，重置静音计时器
         this.setData({
           sentence: res.result.voice_text_str,
-        })
+          lastVoiceTime: Date.now()
+        });
+        
+        // 清除之前的静音定时器
+        if (this.data.silenceTimer) {
+          clearTimeout(this.data.silenceTimer);
+        }
+        
+        // 设置新的静音检测定时器（6秒）
+        const silenceTimer = setTimeout(() => {
+          console.log('检测到6秒静音，自动停止录音');
+          this.stopRecord();
+          wx.showToast({
+            title: '检测到静音，已停止录音',
+            icon: 'none',
+            duration: 2000
+          });
+        }, 6000);
+        
+        this.setData({
+          silenceTimer: silenceTimer
+        });
       }
     }
 
@@ -333,38 +359,37 @@ Page({
     }
 
     speechRecognizerManager.OnRecognitionComplete = async (res) => {
-      console.log('识别结束', res)
+      console.log('识别结束', res);
       this.setData({
         recognitionStatus: '识别完成',
         isRecording: false
-      })
+      });
 
       try {
         // 获取识别到的文本
         const recognizedText = this.data.sentence;
-        console.log('识别到的原始文本:', recognizedText);
-        
+        console.log('【语音识别原始文本】:', recognizedText);
         if (!recognizedText || recognizedText.trim() === '') {
           console.log('识别文本为空，跳过优化');
           return;
         }
 
-
+        // DeepSeek 优化前日志
+        console.log('【DeepSeek优化前】:', recognizedText);
         // 显示 DeepSeek loading 动画
         this.setData({ showDeepSeekLoading: true });
         // 调用 DeepSeek API 优化文本
-        const optimizedText = await optimizeTextWithDeepSeek(recognizedText);
-        this.setData({ showDeepSeekLoading: false });
-        console.log('优化后的文本:', optimizedText);
-        
-        // 更新输入框内容
+        const optimizedText = await optimizeTextWithDeepSeek(recognizedText, this.data.temperature);
+        // DeepSeek 优化后日志
+        console.log('【DeepSeek优化后】:', optimizedText);
+        // 隐藏 DeepSeek loading 动画
         this.setData({
           inputContent: optimizedText,
-          sentence: optimizedText
+          sentence: optimizedText,
+          originSentence: recognizedText, // 保存最初的录音文本
+          showDeepSeekLoading: false
         });
 
-        // 自动格式化内容
-        this.formatContent();
       } catch (error) {
         // 隐藏 DeepSeek loading 动画（异常时也要隐藏）
         this.setData({ showDeepSeekLoading: false });
@@ -395,98 +420,273 @@ Page({
     // //。
   },
 
-
   startRecord() {
-    const that = this
+    // 检查录音时间是否已用完
+    if (this.data.restSeconds <= 0) {
+      wx.showModal({
+        title: '录音时长提醒',
+        content: '今日录音时间已用完，请选择用其它方式下单。如果您的下单时间不够用，请联系配送商为您增加录音时长。',
+        showCancel: false,
+        confirmText: '知道了',
+        success: function (res) {
+          if (res.confirm) {
+            console.log('用户确认了录音时间用完');
+          }
+        }
+      });
+      return;
+    }
+
+    wx.vibrateShort && wx.vibrateShort();
+    const that = this;
+    console.log('[startRecord] called');
     this.setData({
       duration: 0,
-    })
+      isRecording: true,
+    }, () => {
+      console.log('[startRecord] setData done, duration:', that.data.duration, 'isRecording:', that.data.isRecording);
+    });
+  
     const params = {
       secretkey: config.tencentCloud.secretkey,
       secretid: config.tencentCloud.secretid,
-      appid: config.tencentCloud.appid, // 腾讯云账号appid（非微信appid）
-
+      appid: config.tencentCloud.appid,
       engine_model_type: '16k_zh',
       voice_format: 1
-    }
-
-    this.setData({
-      isRecording: true,
-      // sentence: '',
-      recognitionStatus: '准备中...',
-      duration: 0
-    })
-
+    };
+  
+    if (this.restSecondsTimer) clearInterval(this.restSecondsTimer);
+    this.restSecondsTimer = setInterval(() => {
+      if (that.data.restSeconds > 0) {
+        that.setData({
+          restSeconds: that.data.restSeconds - 1
+        });
+      } else {
+        // 检查是否已经使用过额外时间
+        if (!that.data.hasUsedExtraTime) {
+          // 第一次用完，给60秒额外时间
+          that.setData({
+            hasUsedExtraTime: true,
+            restSeconds: 60
+          });
+          
+          wx.showModal({
+            title: '录音时长提醒',
+            content: '今天录音时长已用完，今天为您额外添加 60 秒录音时间，如果您的订单较多，请联系供货商为您增加录音时间',
+            showCancel: false,
+            confirmText: '知道了',
+            success: function (res) {
+              if (res.confirm) {
+                console.log('用户确认了额外录音时间');
+              }
+            }
+          });
+        } else {
+          // 额外时间也用完了，停止录音
+          that.stopRecord();
+          
+          wx.showModal({
+            title: '录音时长提醒',
+            content: '今日录音时长已用完，请您用其它方式下单',
+            showCancel: false,
+            confirmText: '知道了',
+            success: function (res) {
+              if (res.confirm) {
+                console.log('用户确认了录音时长用完');
+              }
+            }
+          });
+        }
+      }
+    }, 1000);
+  
+    if (that.data.timer) clearInterval(that.data.timer);
     that.data.timer = setInterval(() => {
       that.setData({
         duration: that.data.duration + 1
-      })
-    }, 1000)
-
-    speechRecognizerManager.start(params)
+      }, () => {
+        console.log('[timer] duration:', that.data.duration);
+      });
+    }, 1000);
+  
+    console.log('[startRecord] timer started:', !!that.data.timer);
+    speechRecognizerManager.start(params);
   },
-
+  
   stopRecord() {
-    const that = this
-    clearInterval(that.data.timer)
+    const that = this;
+    that.lastRecordDuration = that.data.duration;
+    console.log('[stopRecord] called, duration:', that.data.duration, 'isRecording:', that.data.isRecording);
+    clearInterval(that.data.timer);
+    if (this.restSecondsTimer) clearInterval(this.restSecondsTimer);
+    // 清除静音定时器
+    if (this.data.silenceTimer) {
+      clearTimeout(this.data.silenceTimer);
+      this.setData({
+        silenceTimer: null
+      });
+    }
+    // 增强：确保isRecording状态被正确关闭
+    if (that.data.isRecording) {
+      console.log('[stopRecord] set isRecording false');
+      that.setData({
+        isRecording: false
+      });
+    }
     that.setData({
       recording: false,
-      timer: null
-    })
-   
+      timer: null,
+      // isRecording: false, // 保留原有，防止遗漏
+    }, () => {
+      console.log('[stopRecord] setData done, duration:', that.data.duration, 'isRecording:', that.data.isRecording);
+    });
+
     var data = {
       nxNdplNxDisId: that.data.disId,
       nxNdplPaySubtotal: that.data.duration,
       nxNdplNxDepartmentFatherId: that.data.depFatherId,
       nxNdplNxDepartmentId: that.data.depId,
-    }
-    load.showLoading("保存录音")
-    console.log(data);
+    };
+    load.showLoading("保存录音");
+    console.log('[stopRecord] addRecord data:', data);
     addRecord(data).then(res => {
       if (res.result.code == 0) {
         load.hideLoading();
-      
         that.setData({
           duration: 0,
-        })
+        }, () => {
+          console.log('[stopRecord] duration reset to 0');
+        });
+        // that.formatContent();
       }
-    })
+    });
     speechRecognizerManager.stop();
-
   },
 
 
-  clearSentence() {
 
+  // 统一AI+本地解析处理
+  async handleContentWithAI(content, temperature) {
+    try {
+      this.setData({ showDeepSeekLoading: true });
+      const optimizedText = await optimizeTextWithDeepSeek(content, temperature || this.data.temperature);
+      
+      // 检查是否包含说明性文字
+      const explanationMatches = optimizedText.match(/（说明(.+?)）/g);
+      if (explanationMatches && explanationMatches.length > 0) {
+        // 提取所有说明内容
+        const explanations = explanationMatches.map(match => {
+          const content = match.match(/（说明(.+?)）/);
+          return content ? content[1] : '';
+        }).filter(text => text.length > 0);
+        
+        // 移除说明文字，只保留订单内容
+        let cleanText = optimizedText.replace(/（说明.+?）/g, '').trim();
+        
+        // 移除可能的前缀说明文字
+        cleanText = cleanText.replace(/^根据餐饮行业.*?：\s*/g, '');
+        cleanText = cleanText.replace(/^我将对输入内容进行专业优化处理.*?：\s*/g, '');
+        cleanText = cleanText.replace(/^特别注意.*?：\s*/g, '');
+        
+        // 移除末尾的总结说明
+        cleanText = cleanText.replace(/\n说明：.*$/s, '');
+        
+        // 显示说明弹窗
+        this.setData({
+          showDeepSeekLoading: false,
+          showExplanationModal: true,
+          explanationContent: explanations.join('\n\n')
+        });
+        
+        // 如果有清理后的文本，再进行解析
+        if (cleanText) {
+          this.setData({
+            inputContent: cleanText
+          });
+          const { orders, formatted } = this._formatOrderContent(cleanText);
+          this.setData({
+            orderArr: orders,
+            formattedContent: formatted
+          });
+        }
+      } else {
+        // 没有说明文字，正常处理
+        let cleanText = optimizedText;
+        // 移除可能的前缀说明文字
+        cleanText = cleanText.replace(/^根据餐饮行业.*?：\s*/g, '');
+        cleanText = cleanText.replace(/^我将对输入内容进行专业优化处理.*?：\s*/g, '');
+        cleanText = cleanText.replace(/^特别注意.*?：\s*/g, '');
+        
+        // 移除末尾的总结说明
+        cleanText = cleanText.replace(/\n说明：.*$/s, '');
+        
+        this.setData({
+          inputContent: cleanText,
+          showDeepSeekLoading: false
+        });
+        const { orders, formatted } = this._formatOrderContent(cleanText);
+        this.setData({
+          orderArr: orders,
+          formattedContent: formatted
+        });
+      }
+    } catch (e) {
+      this.setData({ showDeepSeekLoading: false });
+      wx.showToast({ title: 'AI识别失败', icon: 'none' });
+      console.error('handleContentWithAI error:', e);
+    }
+  },
+
+  // 粘贴内容/按钮入口
+  async formatContent() {
+    const content = this.data.inputContent;
+    if (!content || !content.trim()) {
+      wx.showToast({ title: '内容为空', icon: 'none' });
+      return;
+    }
+    // 只做本地格式化
+    const { orders, formatted } = this._formatOrderContent(content);
     this.setData({
-      sentence: "",
+      orderArr: orders,
+      formattedContent: formatted
+    });
+  },
+
+  // 录音识别完成后调用
+  async onRecordRecognizeFinish(originSentence) {
+    if (!originSentence || !originSentence.trim()) {
+      wx.showToast({ title: '录音内容为空', icon: 'none' });
+      return;
+    }
+    await this.handleContentWithAI(originSentence);
+  },
+
+
+
+  
+
+  clearSentence() {
+    this.setData({
+      inputContent: '',
+      sentence: '',
       orderArr: [],
       orderArrFixed: [],
-    })
-   
-
-   
+    });
   },
 
  
   onInput(e) {
     const text = e.detail.value;
+    console.log('[onInput] textarea value:', text);
     this.setData({
-     inputContent: text.trim() !== '' ? text : null,
+      inputContent: text.trim() !== '' ? text : ''
+    }, () => {
+      console.log('[onInput] setData done, inputContent:', this.data.inputContent);
     });
   },
   
 
-  againPaste() {
-    this.setData({
-      orderArr: [],
-      sentence: this.data.inputContent,
-    })
-  }, 
-
-
-
-  async againAi() {
+  async again() {
     const content = this.data.originSentence || this.data.inputContent;
     let temp = 1.5;
     let retry = this.data.aiRetryCount;
@@ -509,7 +709,6 @@ Page({
         showDeepSeekLoading: false,
         hasAiRecognized: true // 1次后显示"重新操作"按钮
       });
-      // 重新进行订单解析
       this.formatContent();
     } catch (e) {
       this.setData({ showDeepSeekLoading: false });
@@ -517,27 +716,25 @@ Page({
     }
   },
   
-  
-  formatContent: function () {
-    var content = this.data.inputContent;
-    console.log("formatContentformatContent00000", content)
-    // 如果文本的最后没有逗号，自动在末尾加上逗号
-    // if (!content.endsWith(',')) {
-    //   content += ','; // 添加逗号
-    // }
-    console.log("centtnntntnn11111", content)
-    content = content
-      .replace(/(\d)\s+/g, '$1') // 处理数字后的空格
-      .replace(/[^\S\r\n]+/g, ' '); // 只替换水平空白，保留换行符
 
-    // 清空订单数组
-    this.orderArray = [];
-    const formatted = this._formatOrderContent(content);
-
-    this.setData({
-      formattedContent: formatted
-    });
-
+  // 合并被拆开的商品行（如"500"、"黑方餐盒"、"100个"）
+  mergeLines: function (lines) {
+    const merged = [];
+    let i = 0;
+    while (i < lines.length) {
+      // 如果当前行是纯数字，且后面有两行，合并三行
+      if (/^[\d一二三四五六七八九十百千万]+$/.test(lines[i]) && i + 2 < lines.length) {
+        merged.push(lines[i] + lines[i + 1] + lines[i + 2]);
+        i += 3;
+      } else if (/^[\d一二三四五六七八九十百千万]+$/.test(lines[i]) && i + 1 < lines.length) {
+        merged.push(lines[i] + lines[i + 1]);
+        i += 2;
+      } else {
+        merged.push(lines[i]);
+        i++;
+      }
+    }
+    return merged;
   },
 
 
@@ -730,7 +927,7 @@ Page({
           let item = commaParts[i].trim();
           if (!item) continue;
           
-                    console.log('[parseLineWithComma] 处理逗号分割部分:', item);
+          console.log('[parseLineWithComma] 处理逗号分割部分:', item);
           
           // 检查是否包含多个商品（用空格分隔）
           if (/\s/.test(item) && item.length > 10) {
@@ -851,7 +1048,7 @@ Page({
               if (mm) {
                 let goodsName = mm[1].trim();
                 let quantity = mm[2].trim();
-                let unit = mm[3].trim().replace(/[。，,\.]+$/, '');
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
                 
                 console.log('[parseLineWithComma] 组合匹配成功:', { goodsName, quantity, unit });
                 
@@ -894,7 +1091,7 @@ Page({
               if (mm) {
                 let goodsName = mm[1].trim();
                 let quantity = mm[2].trim();
-                let unit = mm[3].trim().replace(/[。，,\.]+$/, '');
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
                 
                 console.log('[parseLineWithComma] 商品名组合匹配成功:', { goodsName, quantity, unit });
                 
@@ -1005,7 +1202,7 @@ Page({
               if (mm) {
                 let goodsName = mm[1].trim();
                 let quantity = mm[2].trim();
-                let unit = mm[3].trim().replace(/[。，,\.]+$/, '');
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
                 
                 console.log('[parseLineWithComma] 组合匹配成功:', { goodsName, quantity, unit });
                 
@@ -1048,7 +1245,7 @@ Page({
               if (mm) {
                 let goodsName = mm[1].trim();
                 let quantity = mm[2].trim();
-                let unit = mm[3].trim().replace(/[。，,\.]+$/, '');
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
                 
                 console.log('[parseLineWithComma] 商品名组合匹配成功:', { goodsName, quantity, unit });
                 
@@ -1118,7 +1315,7 @@ Page({
           nxDoPurchaseUserId: -1,
           rawText: line,
           nxDoOrderUserId: this.data.userId,
-          nxDoIsAgent: -1,
+          nxDoIsAgent: 1,
         });
         return;
       }
@@ -1133,7 +1330,9 @@ Page({
       // 3) 逗号分隔
       
       let arr2 = parseLineWithComma(line);
+      console.log('[formatOrderContent] parseLineWithComma 返回结果:', arr2);
       if (arr2 && arr2.length) {
+        console.log('[formatOrderContent] 逗号分隔匹配成功:', arr2);
         arr2.forEach(i => {
           if (i && i.nxDoGoodsName) {
             orders.push({
@@ -1149,7 +1348,7 @@ Page({
               nxDoPurchaseUserId: -1,
               rawText: line,
               nxDoOrderUserId: this.data.userId,
-              nxDoIsAgent: -1,
+              nxDoIsAgent: 1,
             });
           }
         });
@@ -1177,7 +1376,7 @@ Page({
             nxDoPurchaseUserId: -1,
             rawText: line,
             nxDoOrderUserId: this.data.userId,
-            nxDoIsAgent: -1,
+            nxDoIsAgent: 1,
           });
         }
       });
@@ -1232,8 +1431,9 @@ Page({
       return str;
     }).join('\n');
     return { orders, formatted };
-  },
-
+  }
+,  
+ 
 
   //修改预览订单内容
   editOrder(e) {
@@ -1276,41 +1476,31 @@ Page({
           [data]: e.detail.value,
         })
       }
-      //  else {
-      //   this.setData({
-      //     [data]: "",
-      //   })
-      // }
+       else {
+        var dataAdd = "orderArr[" + index + "].nxDoAddRemark";
+        this.setData({
+          [data]: "",
+          [dataAdd]: false
+        })
+      }
 
     }
-    // else {
-
-    //   if (type == "quantity") {
-    //     var data = "orderArr[" + index + "].nxDoQuantity";
-    //     this.setData({
-    //       [data]: "",
-    //     })
-    //   }
-    //   if (type == "standard") {
-    //     var data = "orderArr[" + index + "].nxDoStandard";
-    //     this.setData({
-    //       [data]: "",
-    //     })
-    //   }
-    // }
+   
 
   },
 
 
-
+  
   //保存预览订单
-  pasteSearchGoods() {
+  depPasteSearchGoods() {
     var canSave = this._checkOrderContent();
     if (canSave) {
       load.showLoading("识别商品中");
-      pasteSearchGoods(this.data.orderArr).then(res => {
+      depPasteSearchGoods(this.data.orderArr).then(res => {
         if (res.result.code == 0) {
           console.log(res.result.data);
+          wx.setStorageSync('needRefreshOrderData', true);
+
           var tempArr = res.result.data;
           this.setData({
             strArr: [],
@@ -1334,39 +1524,8 @@ Page({
               orderArr: listArr,
             })
           }
-          var data = {
-            depId: this.data.depId,
-            depFatherId: this.data.depFatherId,
-            depName: this.data.depName,
-            arr: this.data.orderArr,
-            saveCount: this.data.saveCount
-          }
-          var pasteDepArr = this.data.pasteDepList;
-          if (pasteDepArr !== null) {
-            pasteDepArr.push(data);
-            wx.setStorageSync("pasteDepList", pasteDepArr);
-
-            this.setData({
-              pasteDepList: pasteDepArr,
-              pasteDepId: this.data.depId,
-              pasteDepIndex: pasteDepArr.length - 1,
-              pasteDep: data,
-              orderArr: this.data.orderArr,
-              saveCount: this.data.saveCount,
-            })
-          } else {
-            var temp = [];
-            temp.push(data);
-            wx.setStorageSync("pasteDepList", temp);
-            this.setData({
-              pasteDepList: temp,
-              pasteDepId: data.depId,
-              pasteDepIndex: 0,
-              pasteDep: data,
-              orderArr: data.arr,
-              saveCount: data.saveCount,
-            })
-          }
+        
+        
         }
         load.hideLoading();
         wx.showToast({
@@ -1441,7 +1600,9 @@ Page({
   },
 
 
-  editOrderName(e) {
+  // 
+
+  getCustomerName(e){
     var index = e.currentTarget.dataset.index;
     console.log(index);
     if(this.data.customerName == null){
@@ -1449,19 +1610,23 @@ Page({
         customerName:  this.data.orderArr[index].nxDoGoodsName,
       })
      }
+  },
+
+  editOrderName(e) {
+    var index = e.currentTarget.dataset.index;
   
     this.setData({
       orderArrIndex: index,
       goodsName: e.detail.value,
     })
-    // if (this.data.saveCount !== null) {
+    if (this.data.saveCount !== null) {
     //   this.getSearchString(e);
     // }
-    if (e.detail.value.length > 0) {
-      var data = "orderArr[" + index + "].nxDoGoodsName";
-      this.setData({
-        [data]: e.detail.value,
-      })
+    // if (e.detail.value.length > 0) {
+    //   var data = "orderArr[" + index + "].nxDoGoodsName";
+    //   this.setData({
+    //     [data]: e.detail.value,
+    //   })
       this.getSearchString(e);
     }
   },
@@ -1542,36 +1707,36 @@ Page({
     this.setData({
       orderArrIndex: e.currentTarget.dataset.index,
       goodsId: e.currentTarget.dataset.id,
+      customerName: e.currentTarget.dataset.name
     })
 
     this._choiceGoods();
 
   },
 
-  
   closeStr(){
     this.setData({
       strArr: [],
-      nxArr: [],
       orderArrIndex: -1,
     })
   },
+
+  
 
   _choiceGoods() {
     var index = this.data.orderArrIndex;
     var order = this.data.orderArr[index];
     var canSave = this._checkOrderItemContent(order, index);
     if (canSave) {
-      if(this.data.customerName != ""){
-        order.nxDoGoodsName = this.data.customerName;
-      }
-     
       order.nxDoDisGoodsId = this.data.goodsId;
 
       console.log(order);
       load.showLoading("保存订单中")
       choiceGoodsForApply(order).then(res => {
         if (res.result.code == 0) {
+          // 设置刷新标记，确保返回时刷新订单数据
+          wx.setStorageSync('needRefreshOrderData', true);
+          
           load.hideLoading();
           console.log(res.result.data);
           var data = "orderArr[" + index + "]";
@@ -1580,9 +1745,7 @@ Page({
             saveOrder: false,
             findGoods: false,
             strArr: [],
-            nxArr: [],
           })
-          this._updateStorage(res.result.data);
         }
       })
     }
@@ -1599,12 +1762,9 @@ Page({
       customerName: name,
 
     })
-    // wx.navigateTo({
-    //   url: '../ailasGoodsList/ailasGoodsList?name=' + name + '&depId=' + this.data.depId +
-    //     '&standard=' + standard,
-    // })
+   
     wx.navigateTo({
-      url: '../../../subPackage/pages/goods/disAddGoodsLinshi/disAddGoodsLinshi?goodsName=' + name + '&from=paste' + '&standard=' + standard ,
+      url: '../disAddGoodsLinshi/disAddGoodsLinshi?goodsName=' + name + '&from=paste' + '&standard=' + standard ,
     })
   },
 
@@ -1620,12 +1780,10 @@ Page({
 
   addRemark() {
     var index = this.data.orderPasteIndex;
-    var orderItem = this.data.orderItem;
-    orderItem.nxDoRemark = "";
-    var data = "orderArr[" + index + "]";
-    console.log("rooeo", orderItem)
+   
+    var data = "orderArr[" + index + "].nxDoAddRemark";
     this.setData({
-      [data]: orderItem,
+      [data]: true,
       showOperationPaste: false
     })
 
@@ -1637,7 +1795,6 @@ Page({
     var arr = this.data.orderArr;
     var data = {
       nxDoStatus: -2,
-      nxDoIsAgent: -1,
       nxDoDepartmentId: this.data.depId,
       nxDoDepartmentFatherId: this.data.depFatherId,
       nxDoDisGoodsId: null,
@@ -1645,6 +1802,7 @@ Page({
       goodsNameWarn: 0,
       nxDoDistributerId: this.data.disId,
       nxDoPurchaseUserId: -1,
+      nxDoIsAgent: 1,
     }
     // 方法1
     const newArr1 = [...arr];
@@ -1700,32 +1858,17 @@ Page({
         searchStr: e.detail.value,
       })
       load.showLoading("搜索商品中")
-      queryDisGoodsByQuickSearchWithDepId(data).then(res => {
+      queryDepDisGoodsByQuickSearch(data).then(res => {
         console.log(res.result.data);
         load.hideLoading();
-        if (res.result.data.nxArr == -1) {
+        if (res.result.data.dis.length > 0) {
           this.setData({
-            strArr: res.result.data.disArr,
-            nxArr: [],
-            count: res.result.data.disArr.length,
+            strArr: res.result.data.dis,
+            count: res.result.data.dis.length,
           })
 
-        } else {
-          if (res.result.data.nxArr !== -2) {
-            this.setData({
-              nxArr: res.result.data.nxArr,
-              count: res.result.data.nxArr.length,
-              strArr: [],
-            })
-          } else {
-            this.setData({
-              strArr: [],
-              nxArr: [],
-              count: 0
-            })
-          }
-
-        }
+        } 
+       
       })
     } else {
       this.setData({
@@ -2000,7 +2143,6 @@ Page({
           [data]: res.result.data,
           [dataName]: goodsName,
         })
-        this._updateStorage(res.result.data);
       } else {
         load.hideLoading();
         wx.showToast({
@@ -2088,48 +2230,12 @@ Page({
     })
   },
 
-  _updateStorage(order) {
-    var data = "pasteDep.arr[" + this.data.orderArrIndex + "]";
-    var depData = "pasteDepList[" + this.data.pasteDepIndex + "].arr[" + this.data.orderArrIndex + "]";
-    this.setData({
-      [data]: order,
-      [depData]: order,
-    })
-    wx.setStorageSync('pasteDepList', this.data.pasteDepList);
-
-  },
 
 
-  updateStroageDelete() {
-    console.log("updateStorare");
-    var arr = this.data.orderArr;
-    if (arr.length > 0) {
-      var data = "pasteDep.arr";
-      var depData = "pasteDepList[" + this.data.pasteDepIndex + "].arr";
-      this.setData({
-        [data]: arr,
-        [depData]: arr,
-      })
-      wx.setStorageSync('pasteDepList', this.data.pasteDepList);
-      if (arr.length == 0) {
-
-      }
-    } else {
-      if (this.data.pasteDepList.length == 1) {
-        wx.removeStorageSync('pasteDepList');
-      } else {
-        var depArr = this.data.pasteDepList.splice(this.data.pasteDepIndex, 1);
-        wx.setStorageSync('pasteDepList', depArr)
-      }
-
-    }
-
-
-  },
 
   toBack() {
 
-    this.onUnload();
+  
     wx.navigateBack({
       delta: 1
     })
@@ -2137,64 +2243,49 @@ Page({
   },
 
 
-  clearSave(){
-   
-    var depArr = wx.getStorageSync('pasteDepList');
-    console.log("deparrr" , depArr.length);
-    if(depArr.length > 0){
-      var arr = depArr.filter(item => item.depId !== this.data.pasteDepId);
-      console.log("arrarrarr" , arr.length);
-      if(arr.length == 0){
-        wx.removeStorageSync('pasteDepList');
-      }else{
-         wx.setStorageSync('pasteDepList', arr)
-      }
-    }
 
-    var arr = this.data.orderArr;
-    var temp = [];
-    if(arr.length > 0){
-      for(var i =0 ;i < arr.length; i++){
-        var status  = arr[i].nxDoStatus;
-        if(status == 0){
-          temp.push(arr[i]);
-        }
-      }
-    }
+
+  backBegin() {
     this.setData({
-      orderArr: temp,
-    })
-  },
-
-
-  onUnload() {
-
-    var orderArr = this.data.orderArr;
-    if (orderArr.length > 0) {
-
-      var temp = [];
-      for (var i = 0; i < orderArr.length; i++) {
-        var status = orderArr[i].nxDoStatus;
-        if (status == -2) {
-          temp.push(orderArr[i]);
-        }
-      }
-      if (temp.length == 0) {
-
-        var arr = this.data.pasteDepList.filter(item => item.depId !== this.data.pasteDepId);
-
-        if (arr.length == 0) {
-          wx.removeStorageSync('pasteDepList');
-        }
-      }
-    }
-    
-    // 重置AI相关字段
-    this.setData({
-      aiRetryCount: 0,
+      inputContent: '',
+      sentence: '',
+      orderArr: [],
+      orderArrFixed: [],
       hasAiRecognized: false,
-      showDeepSeekLoading: false
+      temperature: 0.7,
+      aiRetryCount: 0,
+      hasUsedExtraTime: false // 重置额外时间使用状态
     });
   },
+
+  toggleRecord() {
+    console.log('[toggleRecord] called, isRecording:', this.data.isRecording);
+    if (this.data.isRecording) {
+      console.log('[toggleRecord] will call stopRecord');
+      this.stopRecord();
+    } else {
+      console.log('[toggleRecord] will call startRecord');
+      this.startRecord();
+    }
+  },
+
+  // 关闭说明弹窗
+  closeExplanationModal() {
+    this.setData({
+      showExplanationModal: false,
+      explanationContent: ""
+    });
+  },
+
+  // 确认说明弹窗
+  confirmExplanationModal() {
+    this.setData({
+      showExplanationModal: false,
+      explanationContent: ""
+    });
+  },
+
+  
+
 
 })

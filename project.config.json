@@ -45,7 +45,9 @@
   },
   "compileType": "miniprogram",
   "simulatorType": "wechat",
-  "simulatorPluginLibVersion": {},
+  "simulatorPluginLibVersion": {
+    "qywx_simulator_plugin": "2.20.3"
+  },
   "condition": {
     "plugin": {
       "list": []
@@ -68,6 +70,6 @@
     "ignore": [],
     "include": []
   },
-  "appid": "wx38e2e89afe95a51f",
-  "libVersion": "3.8.8"
+  "appid": "wx159c5a46d80e4500",
+  "libVersion": "3.10.2"
 }

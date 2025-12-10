@@ -3,7 +3,7 @@
 <view class="flex flex-column page-bg">
 
 
-  <main-navbar style="height: {{navBarHeight}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null  ? '/images/logodu.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" bindnavbuttontap="onNavButtonTap"></main-navbar>
+  <main-navbar style="height: {{navBarHeight}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null  ? '/images/logo.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" bindnavbuttontap="onNavButtonTap"></main-navbar>
 
 
 

@@ -1,0 +1,99 @@
+<view class="flex-column height-100">
+
+  <back-navbar style="height: {{navBarHeight}}rpx;" title="临时商品" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
+
+  <view class="flex-column " style="margin-top: {{navBarHeight}}rpx;">
+    <view class="flex-row-between p-20 border-bottom  bg-white" wx:for="{{goodsList}}" wx:for-item="item" wx:for-index="goodsIndex" wx:key="nxDistributerGoodsId" >
+       <view class="flex-row-default">
+        <text class="m-10">{{goodsIndex + 1}}.</text>
+
+        <view class=" flex-column mr-10" bindtap="shwoIImage" data-goods="{{item}}"  data-index="{{goodsIndex}}">
+             
+             <image class="" src="{{url + item.nxDgGoodsFileLarge}}" mode="aspectFill" class="goods_item_lg" />
+           </view>
+      <view class="flex-column" bindtap="{{ item.nxDgGoodsStatus == 0 ? 'toAlias' : 'toCustomerServicePages'}}" data-name="{{item.nxDgGoodsName}}" data-standard="{{item.nxDgGoodsStandardname}}" data-id="{{item.nxDistributerGoodsId}}" data-item="{{item}}" hover-class="hover">
+        <view class="flex-row with-tbl-padding font-lg-2" style="width:{{windowWidth - 300}}rpx; ">
+          <text class="brand" wx:if="{{item.nxDgGoodsBrand !== null && item.nxDgGoodsBrand.length > 0}}">{{item.nxDgGoodsBrand}}</text>
+          <text class=" mr-20">{{item.nxDgGoodsName}}</text>
+          <text class=" ">单位:</text>
+          <block wx:if="{{item.nxDgGoodsStandardWeight !== 'null' && item.nxDgGoodsStandardWeight.length > 0}}">
+            <text class="font-sl" wx:if="{{item.nxDgGoodsStandardname !== '斤'}}">{{item.nxDgGoodsStandardWeight}}/{{item.nxDgGoodsStandardname}}</text>
+          </block>
+          <block wx:else>
+            <text class="font-sl">{{item.nxDgGoodsStandardname}}</text>
+          </block>
+
+          <text class="text-secondary" wx:if="{{item.nxDgGoodsDetail !== null && item.nxDgGoodsDetail.length > 0}}">{{item.nxDgGoodsDetail}}</text>
+        </view>
+            <view class="flex-column">
+              <view class="text-secondary flex-row-default" wx:for="{{item.nxDepartmentOrdersEntities}}" wx:for-item="order">
+              <!-- <text class="mr-20 flex-fixed">订货:</text> -->
+              <!-- gbDepartment order -->
+              <block wx:if="{{order.gbDepartmentEntity !== null}}">
+                <view class="flex-row-wrap ">
+                  <text wx:if="{{order.gbDepartmentEntity.gbDepartmentSubAmount > 1}}">{{order.gbDepartmentEntity.fatherGbDepartmentEntity.gbDepartmentName}}.</text>
+                  <text>{{order.gbDepartmentEntity.gbDepartmentName}}</text>
+                </view>
+              </block>
+              <!-- nxRestraunt order -->
+              <block wx:if="{{order.nxRestrauntEntity !== null}}">
+                <view class="flex-row ">
+                  <text>{{order.nxRestrauntEntity.nxRestrauntAttrName}}</text>
+                </view>
+              </block>
+
+              <block wx:else>
+                <view class="flex-row-wrap ">
+                  <text wx:if="{{order.nxDepartmentEntity.nxDepartmentFatherId > 0}}">{{order.nxDepartmentEntity.fatherDepartmentEntity.nxDepartmentName}}.</text>
+                  <text class="">{{order.nxDepartmentEntity.nxDepartmentName}}</text>
+                </view>
+              </block>
+
+              <text class="flex-row-wrap">{{order.nxDoQuantity}}{{order.nxDoStandard}}</text>
+            </view>
+         
+            </view>
+           
+
+     
+
+      </view>
+       </view>
+    
+
+      <view>
+
+
+        <image src="/images/arrow-right-3.png" mode="aspectFill" class="icon" />
+
+
+      </view>
+
+    </view>
+  </view>
+  <view class="p-20 text-secondary small" style="line-height: 100rpx; text-align: center;">没有数据啦！
+  </view>
+
+  <!-- 图片弹窗 -->
+  <view class="image-modal" wx:if="{{showImageModal}}" bindtap="hideImageModal">
+    <view class="modal-content" catchtap="stopPropagation">
+      <view class="modal-header">
+        <text class="modal-title">商品图片</text>
+        <view class="close-btn" bindtap="hideImageModal">×</view>
+      </view>
+      <view class="modal-body">
+        <image 
+          src="{{currentImage}}" 
+          mode="aspectFit" 
+          class="modal-image"
+          bindload="onImageLoad"
+          binderror="onImageError"
+        />
+        <view class="image-info" wx:if="{{currentGoods}}">
+          <text class="goods-name">{{currentGoods.nxDgGoodsName}}</text>
+          <text class="goods-standard" wx:if="{{currentGoods.nxDgGoodsStandardname}}">规格: {{currentGoods.nxDgGoodsStandardname}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

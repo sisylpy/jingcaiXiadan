@@ -83,7 +83,7 @@
                 <view wx:if="{{goods.isFirstInCategory}}" id="cat-dep-{{goods.nxDdgDisGoodsGrandId}}" class="goods-category-title-dep"></view>
                 <view class="flex-row-default   goods-item-dep p-20" id="{{goods.viewId}}" bind:longpress="delDepGoods" data-item="{{goods}}" data-index="{{depGoodsIndex}}">
                   <view class="img-wrapper">
-                    <image bindtap="showDialogBtnDep" data-item="{{goods}}" src="{{goods.nxDisGoodsFile !== null ? url + goods.nxDisGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="dep_goods_url mr-20" />
+                    <image bindtap="showImageModal" data-goods="{{goods}}" src="{{goods.nxDisGoodsFile !== null ? url + goods.nxDisGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="dep_goods_url mr-20" />
                   </view>
 
 
@@ -244,7 +244,7 @@
                 </view>
                 <view class="flex-row-default  product-item p-10">
                   <view class="flex-row-default">
-                    <image bindtap="showDialogBtn" data-item="{{sons}}" data-nxgoods="{{sons.nxGoodsEntity}}" src="{{sons.nxDgGoodsFile !== null ? url + sons.nxDgGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="goods_item mr-20" />
+                    <image bindtap="showDisImageModal" data-goods="{{sons}}" data-item="{{sons}}" data-nxgoods="{{sons.nxGoodsEntity}}" src="{{sons.nxDgGoodsFile !== null ? url + sons.nxDgGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="goods_item mr-20" />
                     <view class="flex-row-default" catch:tap="{{sons.nxDepartmentOrdersEntity == null ? 'applyGoods' : 'toEditApply'}}" data-order="{{sons.nxDepartmentOrdersEntity}}" data-disgoods="{{sons}}" data-index="{{goodsIndex}}" data-depgoods="{{sons.departmentDisGoodsEntity}}" hover-class="{{sons.nxDepartmentOrdersEntity == null ? 'hover' :''}}">
                       <view class="flex-column" style="width: {{windowWidth - 480}}rpx; ">
                         <view class="flex-row-wrap middle">
@@ -350,4 +350,30 @@
     </view>
   </view>
   <view class="subcat-mask" catchtouchmove="stopScroll" bindtap="toggleSubCatDis"></view>
+</view>
+
+<!-- 图片弹窗 -->
+<view class="image-modal" wx:if="{{showImageModal}}" bindtap="hideImageModal">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-header">
+      <text class="modal-title">商品图片</text>
+      <view class="close-btn" bindtap="hideImageModal">×</view>
+    </view>
+    <view class="modal-body">
+      <image 
+        src="{{currentImage}}" 
+        mode="aspectFit" 
+        class="modal-image"
+        bindload="onImageLoad"
+        binderror="onImageError"
+        catchtap="previewImage"
+      />
+      <view class="image-info" wx:if="{{currentGoods}}">
+        <text class="goods-name">{{currentGoods.nxDdgDepGoodsName || currentGoods.nxDgGoodsName}}</text>
+        <text class="goods-standard" wx:if="{{currentGoods.nxDdgDepGoodsStandardname || currentGoods.nxDgGoodsStandardname}}">
+          规格: {{currentGoods.nxDdgDepGoodsStandardname || currentGoods.nxDgGoodsStandardname}}
+        </text>
+      </view>
+    </view>
+  </view>
 </view>

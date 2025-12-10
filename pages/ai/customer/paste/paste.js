@@ -16,14 +16,15 @@ import {
   disDeleteStandard,
  
 } from '../../../../lib/apiRestraunt';
-
+const config = require('../../../../config.js');
 
 const globalData = getApp().globalData;
 const plugin = requirePlugin("QCloudAIVoice");
 const speechRecognizerManager = plugin.speechRecognizerManager();
-
+//
 // 添加 DeepSeek API 配置
-const DEEPSEEK_API_KEY = 'sk-ab54d76efc1e4d95a7ab2cdb3013a920'; // 需要替换为实际的 API key
+// const DEEPSEEK_API_KEY = 'sk-ab54d76efc1e4d95a7ab2cdb3013a920'; // 需要替换为实际的 API key
+const DEEPSEEK_API_KEY = 'sk-c730d09a4a4b4cf9b247e5a698d9776f'; // 需要替换为实际的 API key
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 // 添加优化语音文本的函数
@@ -260,7 +261,7 @@ Page({
     }
  
     getBooks().then(res =>{
-      if(res.result.code == 0){
+      if(res.result.code == 0){ 
        books = res.result.data;
       }
     })
@@ -448,9 +449,9 @@ Page({
     });
   
     const params = {
-      secretkey: 'YOUR_SECRET_KEY', // 请替换为实际的密钥
-      secretid: 'YOUR_SECRET_ID', // 请替换为实际的ID
-      appid: '1308821743',
+      secretkey: config.tencentCloud.secretkey,
+      secretid: config.tencentCloud.secretid,
+      appid: config.tencentCloud.appid,
       engine_model_type: '16k_zh',
       voice_format: 1
     };
@@ -916,17 +917,70 @@ Page({
     function parseLineWithComma(line) {
       console.log('[parseLineWithComma] 开始解析行:', line);
       
-      // 先处理空格分隔优先
-      if (/\s/.test(line)) {
-        let parts = line.split(/\s+/), arr = [];
-        console.log('[parseLineWithComma] 按空格分割后的部分:', parts);
+      // 先按逗号分割，处理逗号分隔的商品
+      if (/[，,]/.test(line)) {
+        let commaParts = line.split(/[，,]/);
+        let arr = [];
         
-        // 处理每个部分
-        for (let i = 0; i < parts.length; i++) {
-          let item = parts[i].trim();
+        console.log('[parseLineWithComma] 按逗号分割后的部分:', commaParts);
+        
+        for (let i = 0; i < commaParts.length; i++) {
+          let item = commaParts[i].trim();
           if (!item) continue;
           
-          console.log('[parseLineWithComma] 处理部分:', item);
+          console.log('[parseLineWithComma] 处理逗号分割部分:', item);
+          
+          // 检查是否包含多个商品（用空格分隔）
+          if (/\s/.test(item) && item.length > 10) {
+            console.log('[parseLineWithComma] 检测到可能包含多个商品，尝试进一步分割:', item);
+            let subParts = item.split(/\s+/);
+            let subArr = [];
+            
+            for (let j = 0; j < subParts.length; j++) {
+              let subItem = subParts[j].trim();
+              if (!subItem) continue;
+              
+              console.log('[parseLineWithComma] 处理子部分:', subItem);
+              
+              // 对子部分进行解析
+              let subMm = subItem.match(/^(.+?)([\d一二两三四五六七八九十百千万半\.]+)(\S*)$/);
+              if (subMm) {
+                let subGoodsName = subMm[1].trim();
+                let subQuantity = subMm[2].trim();
+                let subUnit = subMm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
+                
+                console.log('[parseLineWithComma] 子部分匹配成功:', { subGoodsName, subQuantity, subUnit });
+                
+                if (/[\u4e00-\u9fa5]/.test(subGoodsName) && subGoodsName.length > 0 && subGoodsName.length <= 10) {
+                  let subQtyVal = subQuantity;
+                  if (/[零一二两三四五六七八九十百千万半]/.test(subQuantity)) {
+                    subQtyVal = chineseNumberToArabic(subQuantity).toString();
+                  }
+                  
+                  console.log('[parseLineWithComma] 添加子商品:', { subGoodsName, subQtyVal, subUnit });
+                  subArr.push({
+                    nxDoGoodsName: subGoodsName,
+                    nxDoQuantity: subQtyVal,
+                    nxDoStandard: subUnit,
+                    nxDoRemark: ''
+                  });
+                }
+              } else {
+                // 尝试使用 parseSegmentEndOfLine 解析子部分
+                let subParsed = parseSegmentEndOfLine(subItem);
+                if (subParsed && subParsed.nxDoQuantity) {
+                  console.log('[parseLineWithComma] 子部分 parseSegmentEndOfLine 解析结果:', subParsed);
+                  subArr.push(subParsed);
+                }
+              }
+            }
+            
+            if (subArr.length > 0) {
+              console.log('[parseLineWithComma] 子部分解析成功，添加多个商品:', subArr);
+              arr.push(...subArr);
+              continue;
+            }
+          }
           
           // 1. 尝试匹配 "商品名+数字+单位" 格式
           let mm = item.match(/^(.+?)([\d一二两三四五六七八九十百千万半\.]+)(\S*)$/);
@@ -934,13 +988,13 @@ Page({
           if (mm) {
             let goodsName = mm[1].trim();
             let quantity = mm[2].trim();
-            let unit = mm[3].trim();
+            let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
             
             console.log('[parseLineWithComma] 匹配到格式1:', { goodsName, quantity, unit });
             
-            // 验证商品名包含中文字符
+            // 验证商品名包含中文字符，并且商品名不能太长（避免匹配到多个商品）
             console.log('[parseLineWithComma] 验证商品名:', { goodsName, hasChinese: /[\u4e00-\u9fa5]/.test(goodsName), length: goodsName.length });
-            if (/[\u4e00-\u9fa5]/.test(goodsName) && goodsName.length > 0) {
+            if (/[\u4e00-\u9fa5]/.test(goodsName) && goodsName.length > 0 && goodsName.length <= 10) {
               let qtyVal = quantity;
               if (/[零一二两三四五六七八九十百千万半]/.test(quantity)) {
                 qtyVal = chineseNumberToArabic(quantity).toString();
@@ -984,8 +1038,8 @@ Page({
           }
           
           // 4. 新增：尝试组合相邻部分
-          if (i < parts.length - 1) {
-            let nextItem = parts[i + 1].trim();
+          if (i < commaParts.length - 1) {
+            let nextItem = commaParts[i + 1].trim();
             if (nextItem) {
               let combined = item + nextItem;
               console.log('[parseLineWithComma] 尝试组合:', combined);
@@ -995,7 +1049,7 @@ Page({
               if (mm) {
                 let goodsName = mm[1].trim();
                 let quantity = mm[2].trim();
-                let unit = mm[3].trim();
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
                 
                 console.log('[parseLineWithComma] 组合匹配成功:', { goodsName, quantity, unit });
                 
@@ -1020,9 +1074,9 @@ Page({
           }
           
           // 5. 新增：处理被分割的商品名（如"油 菜"）
-          if (i < parts.length - 2) {
-            let nextItem = parts[i + 1].trim();
-            let nextNextItem = parts[i + 2].trim();
+          if (i < commaParts.length - 2) {
+            let nextItem = commaParts[i + 1].trim();
+            let nextNextItem = commaParts[i + 2].trim();
             
             // 检查当前项和下一项是否都是中文字符，且下一项的下一个项包含数字
             if (/^[\u4e00-\u9fa5]+$/.test(item) && 
@@ -1038,7 +1092,7 @@ Page({
               if (mm) {
                 let goodsName = mm[1].trim();
                 let quantity = mm[2].trim();
-                let unit = mm[3].trim();
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
                 
                 console.log('[parseLineWithComma] 商品名组合匹配成功:', { goodsName, quantity, unit });
                 
@@ -1063,7 +1117,161 @@ Page({
           }
         }
         
-        console.log('[parseLineWithComma] 最终解析结果:', arr);
+        console.log('[parseLineWithComma] 逗号分割最终解析结果:', arr);
+        if (arr.length) {
+          return arr;
+        }
+      }
+
+      // 如果没有逗号，尝试按空格分割
+      if (/\s/.test(line)) {
+        let spaceParts = line.split(/\s+/);
+        let arr = [];
+        
+        console.log('[parseLineWithComma] 按空格分割后的部分:', spaceParts);
+        
+        for (let i = 0; i < spaceParts.length; i++) {
+          let item = spaceParts[i].trim();
+          if (!item) continue;
+          
+          console.log('[parseLineWithComma] 处理空格分割部分:', item);
+          
+          // 1. 尝试匹配 "商品名+数字+单位" 格式
+          let mm = item.match(/^(.+?)([\d一二两三四五六七八九十百千万半\.]+)(\S*)$/);
+          console.log('[parseLineWithComma] 正则匹配结果:', mm);
+          if (mm) {
+            let goodsName = mm[1].trim();
+            let quantity = mm[2].trim();
+            let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
+            
+            console.log('[parseLineWithComma] 匹配到格式1:', { goodsName, quantity, unit });
+            
+            // 验证商品名包含中文字符，并且商品名不能太长（避免匹配到多个商品）
+            console.log('[parseLineWithComma] 验证商品名:', { goodsName, hasChinese: /[\u4e00-\u9fa5]/.test(goodsName), length: goodsName.length });
+            if (/[\u4e00-\u9fa5]/.test(goodsName) && goodsName.length > 0 && goodsName.length <= 10) {
+              let qtyVal = quantity;
+              if (/[零一二两三四五六七八九十百千万半]/.test(quantity)) {
+                qtyVal = chineseNumberToArabic(quantity).toString();
+              }
+              
+              console.log('[parseLineWithComma] 添加商品:', { goodsName, qtyVal, unit });
+              arr.push({
+                nxDoGoodsName: goodsName,
+                nxDoQuantity: qtyVal,
+                nxDoStandard: unit,
+                nxDoRemark: ''
+              });
+              continue;
+            } else {
+              console.log('[parseLineWithComma] 商品名验证失败:', { goodsName, hasChinese: /[\u4e00-\u9fa5]/.test(goodsName), length: goodsName.length });
+            }
+          }
+          
+          // 2. 尝试使用 parseSegmentEndOfLine 解析
+          let parsed = parseSegmentEndOfLine(item);
+          if (parsed && parsed.nxDoQuantity) {
+            console.log('[parseLineWithComma] parseSegmentEndOfLine 解析结果:', parsed);
+            arr.push(parsed);
+            continue;
+          }
+          
+          // 3. 如果都失败了，尝试匹配纯数字格式
+          mm = item.match(/^(.+?)(\d+)(.+)$/);
+          if (mm) {
+            let goodsName = mm[1].trim();
+            if (/[\u4e00-\u9fa5]/.test(goodsName) && goodsName.length > 0) {
+              console.log('[parseLineWithComma] 匹配到纯数字格式:', mm);
+              arr.push({
+                nxDoGoodsName: goodsName,
+                nxDoQuantity: mm[2].trim(),
+                nxDoStandard: mm[3].trim(),
+                nxDoRemark: ''
+              });
+              continue;
+            }
+          }
+          
+          // 4. 新增：尝试组合相邻部分
+          if (i < spaceParts.length - 1) {
+            let nextItem = spaceParts[i + 1].trim();
+            if (nextItem) {
+              let combined = item + nextItem;
+              console.log('[parseLineWithComma] 尝试组合:', combined);
+              
+              // 尝试匹配组合后的格式
+              mm = combined.match(/^(.+?)([\d一二两三四五六七八九十百千万半\.]+)(\S*)$/);
+              if (mm) {
+                let goodsName = mm[1].trim();
+                let quantity = mm[2].trim();
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
+                
+                console.log('[parseLineWithComma] 组合匹配成功:', { goodsName, quantity, unit });
+                
+                if (/[\u4e00-\u9fa5]/.test(goodsName) && goodsName.length > 0) {
+                  let qtyVal = quantity;
+                  if (/[零一二两三四五六七八九十百千万半]/.test(quantity)) {
+                    qtyVal = chineseNumberToArabic(quantity).toString();
+                  }
+                  
+                  console.log('[parseLineWithComma] 添加组合商品:', { goodsName, qtyVal, unit });
+                  arr.push({
+                    nxDoGoodsName: goodsName,
+                    nxDoQuantity: qtyVal,
+                    nxDoStandard: unit,
+                    nxDoRemark: ''
+                  });
+                  i++; // 跳过下一个部分，因为已经组合处理了
+                  continue;
+                }
+              }
+            }
+          }
+          
+          // 5. 新增：处理被分割的商品名（如"油 菜"）
+          if (i < spaceParts.length - 2) {
+            let nextItem = spaceParts[i + 1].trim();
+            let nextNextItem = spaceParts[i + 2].trim();
+            
+            // 检查当前项和下一项是否都是中文字符，且下一项的下一个项包含数字
+            if (/^[\u4e00-\u9fa5]+$/.test(item) && 
+                /^[\u4e00-\u9fa5]+$/.test(nextItem) && 
+                /[\d一二两三四五六七八九十百千万半]/.test(nextNextItem)) {
+              
+              let combinedName = item + nextItem;
+              let combined = combinedName + nextNextItem;
+              console.log('[parseLineWithComma] 尝试组合商品名:', combined);
+              
+              // 尝试匹配组合后的格式
+              mm = combined.match(/^(.+?)([\d一二两三四五六七八九十百千万半\.]+)(\S*)$/);
+              if (mm) {
+                let goodsName = mm[1].trim();
+                let quantity = mm[2].trim();
+                let unit = mm[3].trim().replace(/[。，,\.]+$/, ''); // 去掉末尾的标点符号
+                
+                console.log('[parseLineWithComma] 商品名组合匹配成功:', { goodsName, quantity, unit });
+                
+                if (/[\u4e00-\u9fa5]/.test(goodsName) && goodsName.length > 0) {
+                  let qtyVal = quantity;
+                  if (/[零一二两三四五六七八九十百千万半]/.test(quantity)) {
+                    qtyVal = chineseNumberToArabic(quantity).toString();
+                  }
+                  
+                  console.log('[parseLineWithComma] 添加组合商品名商品:', { goodsName, qtyVal, unit });
+                  arr.push({
+                    nxDoGoodsName: goodsName,
+                    nxDoQuantity: qtyVal,
+                    nxDoStandard: unit,
+                    nxDoRemark: ''
+                  });
+                  i += 2; // 跳过两个部分，因为已经组合处理了
+                  continue;
+                }
+              }
+            }
+          }
+        }
+        
+        console.log('[parseLineWithComma] 空格分割最终解析结果:', arr);
         if (arr.length) {
           return arr;
         }

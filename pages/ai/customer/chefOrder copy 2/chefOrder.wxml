@@ -3,7 +3,7 @@
 <view class="flex flex-column page-bg">
 
 
-  <main-navbar style="height: {{navBarHeight + 110}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null  ? '/images/logodu.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" bindnavbuttontap="onNavButtonTap" bind:sortby="onSortByChange" bind:searchinput="onSearchInput" bind:searchcancel="onSearchCancel" searchValue="{{searchValue}}"></main-navbar>
+  <main-navbar style="height: {{navBarHeight + 110}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null  ? '/images/logo.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" bindnavbuttontap="onNavButtonTap" bind:sortby="onSortByChange" bind:searchinput="onSearchInput" bind:searchcancel="onSearchCancel" searchValue="{{searchValue}}"></main-navbar>
 
   <view class="content flex-1 flex-column">
     <block wx:if="{{depInfo.fatherDepartmentEntity == null}}">

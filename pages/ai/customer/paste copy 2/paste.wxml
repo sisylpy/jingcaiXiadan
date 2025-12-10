@@ -1,0 +1,238 @@
+<view class="flex flex-column page-bg">
+
+  <back-navbar style="height: {{navBarHeight}}rpx;" title="{{hasUsedExtraTime ? '可录音下单额外' + (restSeconds > 0 ? restSeconds : 0) + '秒' : '可录音下单' + (restSeconds > 0 ? restSeconds : 0) + '秒'}}" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
+
+  <view class="flex-column p-20">
+
+    <view class="input-area {{isRecording ? 'recording' : ''}}" wx:if="{{orderArr.length == 0}}">
+      <view wx:if="{{isRecording}}" class="recording-tip">正在录音，请说话...</view>
+      <textarea class="p-20 sentence {{inputContent !== '' ? 'is-active' : ''}}" value="{{isRecording ? sentence : inputContent}}" style="width: {{windowWidth - 80}}rpx; font-size: 40rpx; min-height: {{windowHeight / 4}}rpx; max-height: {{windowHeight - navBarHeight - bottomHeight  - 180}}rpx; overflow-y: auto; padding-bottom: 100rpx;" bindinput="onInput" maxlength="-1" auto-height="false" placeholder="粘贴文字或语音录入" />
+    </view>
+
+
+    <!-- 底部操作按钮条 -->
+    <view class="bottom-bar">
+
+      <block wx:if="{{orderArr.length == 0}}">
+        <view class="flex-row" style=" width: 100%;">
+
+          <block wx:if="{{inputContent !== ''}}">
+            <view class="flex-column-center half-row">
+              <view class="circle-btn orange" bindtap="clearSentence">
+                <image src="/images/delete.svg" class="btn-icon" />
+              </view>
+            </view>
+
+            <view class="flex-column-center half-row">
+              <view class="circle-btn green" bindtap="formatContent">
+                <image src="/images/zhuanhuan.svg" class="btn-icon" />
+              </view>
+            </view>
+          </block>
+
+
+          <view class="flex-column-center" style="width: 100%;" wx:if="{{inputContent === ''}}">
+            <view class="pulse-ring" wx:if="{{isRecording}}"></view>
+            <view class="circle-btn {{isRecording ? 'red' : 'green'}}" bindtap="toggleRecord">
+              <image src="/images/chat_record.svg" class="btn-icon" />
+            </view>
+          </view>
+
+        </view>
+      </block>
+      <block wx:else="">
+
+        <view class="flex-row" style="width: {{windowWidth - 40}}rpx; " wx:if="{{saveCount == null}}">
+          <view class="flex-column-center half-row" wx:if="{{hasAiRecognized}}">
+            <view class="circle-btn orange" bindtap="backBegin">
+              <image src="/images/delete.svg" class="btn-icon" />
+            </view>
+          </view>
+
+          <view class="flex-column-center half-row">
+
+            <view class="circle-btn white" bindtap="again" wx:if="{{aiRetryCount < 1}}">
+              <image src="/images/CE.png" class="btn-icon" />
+            </view>
+
+          </view>
+          <view class="flex-column-center half-row">
+            <view class="circle-btn green" bindtap="depPasteSearchGoods">
+              <image src="/images/correct.svg" class="btn-icon" />
+            </view>
+          </view>
+        </view>
+
+      </block>
+
+    </view>
+
+
+
+
+
+    <!-- <scroll-view scroll-y="true" style="height: {{windowHeight - navBarHeight -  bottomHeight - 40}}rpx; " wx:if="{{orderArr.length > 0}}" class="table"> -->
+
+    <block wx:if="{{saveCount == null}}">
+
+
+
+      <scroll-view scroll-y="true" style="max-height: {{windowHeight - navBarHeight -  bottomHeight - 40 }}rpx; " wx:if="{{orderArr.length > 0}}" class="table">
+
+        <view class="p-20  flex-row border-bottom" wx:for="{{orderArr}}" wx:for-index="orderIndex">
+          <view class="flex-column">
+            <view class="flex-row-default">
+              <view class="flex-row font-bold" style="width: {{windowWidth / 2 - 40}}rpx; ">
+                <text class="mr-10 text-secondary">{{orderIndex + 1}}.</text>
+                <!-- name -->
+                <view class="flex-column">
+                  <input class="input" style="width: {{windowWidth / 2 - 120}}rpx; " type="text" bindinput="editOrder" data-type="name" data-index="{{orderIndex}}" value="{{item.nxDoGoodsName}}" />
+                </view>
+              </view>
+              <!-- ../name -->
+
+              <!-- quantity -->
+              <input class="input  p-10 mr-10" type="number" bindinput="editOrder" data-type="quantity" data-index="{{orderIndex}}" value="{{item.nxDoQuantity}}" style="width: {{windowWidth / 7 - 20}}rpx; " />
+              <!-- ../quantity -->
+              <!-- standard -->
+              <input class="input p-10 mr-10" type="text" bindinput="editOrder" data-type="standard" data-index="{{orderIndex}}" value="{{item.nxDoStandard}}" style="width: {{windowWidth / 7}}rpx;" />
+
+              <!-- ../standard -->
+
+              <!-- </view> -->
+            </view>
+            <view class="flex-row p-10" wx:if="{{item.nxDoAddRemark}}">
+              <text class="margin-l-right text-white">{{orderIndex + 1}}.</text>
+              <text class="mr-10 text-secondary font-sl">备注:</text>
+              <input class="input p-10" type="text" bindinput="editOrder" data-type="remark" data-index="{{orderIndex}}" value="{{item.nxDoRemark}}" />
+            </view>
+          </view>
+
+
+          <view class="button-container" bindtap="showPasteOperation" data-index="{{orderIndex}}">
+            <image src="/images/points.png" mode="aspectFill" class="icon" />
+          </view>
+
+          <!-- </view> -->
+        </view>
+        <view style="height: 200rpx;" class="text-secondary font-xs center-content">没有数据啦！</view>
+
+      </scroll-view>
+    </block>
+
+    <view class="flex-column" wx:else="">
+      <view class="flex-row" style="background-color: #eeeeee; padding: 10rpx;" wx:if="{{orderArr.length > 0}}">
+        <text class="" style="width: {{windowWidth / 2}}rpx; margin-left: 60rpx;">商品名称</text>
+        <text class="" style="width: {{windowWidth / 5}}rpx;">数量</text>
+        <text class="" style="width: {{windowWidth / 5}}rpx; ">规格</text>
+      </view>
+      <scroll-view scroll-y="true" style="height: {{windowHeight - navBarHeight -  bottomHeight}}rpx;  " wx:if="{{orderArr.length > 0}}" class="table">
+        <view class="flex-row-default border-bottom" wx:for="{{orderArr}}" wx:for-index="orderIndex">
+          <view class="flex-row-default  p-20 ">
+            <text class="mr-10">{{orderIndex + 1}}.</text>
+
+            <view class="flex-column">
+
+              <view class="flex-row" style="width: {{windowWidth - 220}}rpx; ">
+                <text class="half-row">{{item.nxDoGoodsName}}</text>
+                <text class="quarter-row">{{item.nxDoQuantity}}</text>
+                <text class="quarter-row">{{item.nxDoStandard}}</text>
+              </view>
+
+              <block>
+                <view class="flex-row p-10" wx:if="{{item.nxDoRemark.length > 0}}">
+                  <text class="mr-10 text-secondary font-sl">备注:</text>
+                  <text class=" font-sl text-danger">{{item.nxDoRemark}}</text>
+                </view>
+              </block>
+
+            </view>
+
+
+          </view>
+
+
+
+        </view>
+        <!-- <view style="height: 200rpx;" class="text-secondary font-xs center-content">没有数据啦！</view> -->
+
+
+      </scroll-view>
+
+    </view>
+
+  </view>
+</view>
+
+
+
+
+
+
+
+
+
+<!-- pasteOperation -->
+<view class='overlay {{showOperationPaste ? "show" : "hide"}}' catchtouchmove='ture' catchtap="hideMask">
+  <view class="nnn bg-white  font-lg">
+    <view class="center-content border-bottom font-bold">
+      <text class="p-30">{{orderItem.nxDoGoodsName}}</text>
+      <text class="p-30">{{orderItem.nxDoQuantity}}{{orderItem.nxDoStandard}}</text>
+    </view>
+    <view class="flex-column">
+      <view class="flex-row p-30 border-bottom" catchtap="delOrder" hover-class="hover">
+        <image src="/images/ashbin.png" class="icon mr-20"></image>
+        <text class="">删除订单</text>
+      </view>
+      <view class="flex-row p-30 " catchtap="addRemark" hover-class="hover">
+        <image src="/images/edit.png" class="icon mr-20"></image>
+        <text class="">添加备注</text>
+      </view>
+
+    </view>
+
+    <view style="height: 20rpx;"></view>
+
+
+  </view>
+
+</view>
+<!-- ../goodsOperation -->
+
+
+<!-- ../goodsOperation -->
+
+
+
+<addOrder visible="{{showOrder}}" bindconfirm="confirm" bindcancle="cancle" binddelApply="delApply" binddelStandard="delStandard" applyStandardName="{{applyStandardName}}" bindconfirmStandard="confirmStandard" applyNumber="{{applyNumber}}" applyRemark="{{applyRemark}}" editApply="{{editApply}}" bindchangeStandard="changeStandard" applyGoodsName="{{applyGoodsName}}" applyGoodsId="{{applyGoodsId}}" item="{{itemDis}}" windowWidth="{{windowWidth}}" newStandardName="{{newStandardName}}" />
+
+
+<delWarnModal wx:if="{{showPopupWarn}}" type="{{popupType}}" warnContent="{{warnContent}}" bind:closeWarn="closeWarn" bind:confirmWarn="confirmWarn" />
+
+<myDismodalCashSingle show="{{showCash}}" bindconfirm="confirmCash" bindcancle="cancle" binddelApply="delApply" bindconfirmStandard="confirmStandard" applyStandardName="{{applyStandardName}}" applyNumber="{{applyNumber}}" applySubtotal="{{applySubtotal}}" applyRemark="{{applyRemark}}" editApply="{{editApply}}" expectPrice="{{expectPrice}}" bindchangeStandard="changeStandard" applyGoodsName="{{applyGoodsName}}" applyGoodsId="{{applyGoodsId}}" item="{{itemDis}}" applyStandardName="{{applyStandardName}}" windowWidth="{{windowWidth}}" windowHeight="{{windowHeight}}" statusBarHeight="{{statusBarHeight}}" />
+
+<deepseek-loading show="{{showDeepSeekLoading}}" />
+
+<!-- 说明弹窗 -->
+<view class='overlay {{showExplanationModal ? "show" : "hide"}}' catchtouchmove='true' catchtap="closeExplanationModal">
+  <view class="explanation-modal bg-white font-lg">
+    <view class="center-content border-bottom font-bold">
+      <text class="p-30">AI识别说明</text>
+    </view>
+    <view class="explanation-content p-30">
+      <text class="font-md">{{explanationContent}}</text>
+    </view>
+    <view class="flex-row p-30">
+      <view class="flex-column-center half-row">
+        <view class="btn btn-secondary" bindtap="closeExplanationModal">
+          <text>关闭</text>
+        </view>
+      </view>
+      <view class="flex-column-center half-row">
+        <view class="btn btn-primary" bindtap="confirmExplanationModal">
+          <text>知道了</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

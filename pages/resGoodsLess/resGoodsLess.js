@@ -229,6 +229,10 @@ Page({
     subcatScrollIntoViewDep: '', // 二级分类横向滚动位置
     scrollIntoViewDep: '', // 商品列表滚动位置
 
+    // 图片弹窗相关
+    showImageModal: false,
+    currentImage: '',
+    currentGoods: null
 
   },
 
@@ -688,6 +692,27 @@ Page({
     })
   },
 
+  // 显示配送商品图片弹窗
+  showDisImageModal: function(e) {
+    console.log('=== 显示配送商品图片弹窗 ===');
+    console.log('事件对象:', e);
+    const goods = e.currentTarget.dataset.goods;
+    console.log('商品数据:', goods);
+    console.log('baseUrl:', this.data.url);
+    console.log('图片路径:', goods.nxDgGoodsFileLarge);
+    
+    const imageUrl = this.data.url + goods.nxDgGoodsFileLarge;
+    console.log('完整图片地址:', imageUrl);
+    
+    this.setData({
+      showImageModal: true,
+      currentImage: imageUrl,
+      currentGoods: goods
+    }, () => {
+      console.log('弹窗状态已更新，currentImage:', this.data.currentImage);
+    });
+  },
+
   showDialogBtnDep: function (e) {
     this.setData({
       item: e.currentTarget.dataset.item,
@@ -695,6 +720,97 @@ Page({
       windowHeight: this.data.windowHeight,
       windowWidth: this.data.windowWidth
     })
+  },
+
+  // 显示图片弹窗
+  showImageModal: function(e) {
+    console.log('=== 显示图片弹窗 ===');
+    console.log('事件对象:', e);
+    const goods = e.currentTarget.dataset.goods;
+    console.log('商品数据:', goods);
+    console.log('baseUrl:', this.data.url);
+    console.log('图片路径:', goods.nxDisGoodsFile);
+    
+    const imageUrl = this.data.url + goods.nxDisGoodsFile;
+    console.log('完整图片地址:', imageUrl);
+    
+    this.setData({
+      showImageModal: true,
+      currentImage: imageUrl,
+      currentGoods: goods
+    }, () => {
+      console.log('弹窗状态已更新，currentImage:', this.data.currentImage);
+    });
+  },
+
+  // 隐藏图片弹窗
+  hideImageModal: function() {
+    this.setData({
+      showImageModal: false,
+      currentImage: '',
+      currentGoods: null
+    });
+  },
+
+  // 阻止事件冒泡
+  stopPropagation: function() {
+    // 阻止事件冒泡，防止点击内容区域时关闭弹窗
+  },
+
+  // 图片加载成功
+  onImageLoad: function() {
+    console.log('图片加载成功');
+  },
+
+  // 图片加载失败
+  onImageError: function() {
+    wx.showToast({
+      title: '图片加载失败',
+      icon: 'none'
+    });
+  },
+
+  // 预览图片（支持缩放）
+  previewImage: function(e) {
+    console.log('=== 点击图片预览 ===');
+    console.log('事件对象:', e);
+    console.log('currentImage:', this.data.currentImage);
+    console.log('currentGoods:', this.data.currentGoods);
+    
+    if (!this.data.currentImage) {
+      console.error('currentImage 为空，无法预览');
+      wx.showToast({
+        title: '图片地址为空',
+        icon: 'none'
+      });
+      return;
+    }
+
+    try {
+      console.log('准备调用 wx.previewImage，图片地址:', this.data.currentImage);
+      wx.previewImage({
+        current: this.data.currentImage, // 当前显示图片的http链接
+        urls: [this.data.currentImage], // 需要预览的图片http链接列表
+        success: (res) => {
+          console.log('预览图片成功:', res);
+        },
+        fail: (err) => {
+          console.error('预览图片失败:', err);
+          wx.showToast({
+            title: '预览失败: ' + (err.errMsg || '未知错误'),
+            icon: 'none',
+            duration: 3000
+          });
+        }
+      });
+    } catch (error) {
+      console.error('预览图片异常:', error);
+      wx.showToast({
+        title: '预览异常: ' + error.message,
+        icon: 'none',
+        duration: 3000
+      });
+    }
   },
 
 
