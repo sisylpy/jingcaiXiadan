@@ -233,8 +233,6 @@ Page({
               var depInfo = response.result.data.depInfo;
               wx.setStorageSync('depInfo', depInfo);
               wx.setStorageSync('userInfo', response.result.data.userInfo);
-
-
               this.setData({
                 depInfo,
                 disId: depInfo.nxDepartmentDisId,
@@ -244,19 +242,16 @@ Page({
                 depId: depInfo.nxDepartmentId,
                 depHasSubs: depInfo.nxDepartmentSubAmount,
               });
-              console.log("delgulueueue", this.data.depFatherId)
 
               if (depInfo.nxDepartmentFatherId !== 0) {
                 this.setData({
                   isSubDep: true,
                 })
-               
                 if(this.data.showType == 'time'){
                   this._initDataSub();
                 }else if(this.data.showType =='category'){
                   this._initSubDepDataByFather();
                 }
-
               } else {
                 this.setData({
                   isSubDep: false,
@@ -277,11 +272,7 @@ Page({
                   depRecord: false,
                 })
               }
-
-
-
             } else {
-
               // 业务逻辑失败，用户不存在，执行_getDepInfo和_checkIfShowPage
               if (this.data.disId && this.data.depFatherId) {
                 console.log("用户不存在，执行_getDepInfo和_checkIfShowPage");
@@ -404,7 +395,6 @@ Page({
 
 
   _login() {
-    var that = this;
     wx.login({
       success: (res) => {
         load.hideLoading();
@@ -485,17 +475,15 @@ Page({
 
 
 
-
   /**
    * 邀请采购员
    * @param {*} options 
    */
   onShareAppMessage: function (options) {
     return {
-      title: '一起下订货单吧！', // 默认是小程序的名称(可以写slogan等)
-      path: '/pages/ai/customer/chefOrder/chefOrder?depFatherId=' + this.data.depFatherId + '&disId=' +
-        this.data.disId,
-      imageUrl: this.data.url + this.data.imgUrl,
+      title: '"' + this.data.disInfo.nxDistributerName  + '下单小程序', 
+      path: '/pages/ai/customer/chefOrder/chefOrder?depFatherId=' + this.data.depFatherId + '&disId=' + this.data.disId,
+      imageUrl: this.data.url + this.data.disInfo.nxDistributerImg,
     }
   },
 
@@ -974,8 +962,6 @@ Page({
       applyItem: e.currentTarget.dataset.item
     })
 
-    var that = this;
-
     load.showLoading("删除订单")
     deleteOrder(e.currentTarget.dataset.id).then(res => {
       load.hideLoading();
@@ -1376,10 +1362,20 @@ Page({
 
   hidePopup() {
     const timestamp = Date.now();
-    wx.setStorageSync('firstVisitTimestamp', timestamp);
-    this.setData({
-      showPage: false,
-    })
+   console.log("hidePopuphidePopup")
+    if(this.data.bill !== -1){
+      wx.showToast({
+        title: '支付需要用户openId，请注册',
+        icon: 'none'
+      })
+
+    }else{
+      wx.setStorageSync('firstVisitTimestamp', timestamp);
+      this.setData({
+        showPage: false,
+      })
+    }
+    
   },
 
 
@@ -1403,10 +1399,17 @@ Page({
     });
 
     if (this.data.userInfo == null && this.data.disId && this.data.depFatherId && shouldShowLogin) {
-      this.setData({
-        selDepId: this.data.depInfo.nxDepartmentEntities[0].nxDepartmentId,
-
-      })
+      if(this.data.depInfo.nxDepartmentEntities.length > 0){
+        this.setData({
+          selDepId: this.data.depInfo.nxDepartmentEntities[0].nxDepartmentId,
+  
+        })
+      }else{
+        this.setData({
+          selDepId: this.data.depInfo.nxDepartmentId,
+        })
+      }
+     
       this._aaa();
     }
 

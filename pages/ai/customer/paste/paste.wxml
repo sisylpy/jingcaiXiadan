@@ -51,8 +51,8 @@
 
           <view class="flex-column-center half-row">
 
-            <view class="circle-btn white" bindtap="again" wx:if="{{aiRetryCount < 1}}">
-              <image src="/images/CE.png" class="btn-icon" />
+            <view class="circle-btn orange" bindtap="backBegin" >
+              <image src="/images/delete.svg" class="btn-icon" />
             </view>
 
           </view>

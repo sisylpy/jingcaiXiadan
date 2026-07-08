@@ -63,14 +63,12 @@ async function optimizeTextWithDeepSeek(text, temperature = 0.2, brandList = [])
 2. **品牌识别优先级最高**：如果发音与品牌库中的品牌（如"东古"）完全一致或极度相似，必须优先纠正为品牌名！
 3. **特殊商品名**：如"去叶中葱"、"西兰苔"等是完整名称，不要拆分。
 4. **语音识别错误纠正**："实质"→"10只", "死机"→"4斤", "无间"→"5斤", "溜达"→"6大" 等。
-5. **输出格式**：必须输出**严格符合 JSON 格式**的数组，**严禁使用 Markdown 代码块（如 \`\`\`json）**，不要包含任何其他解释性文字。
-6. **JSON 格式要求**：确保每个字段都有正确的冒号分隔符，例如 "name":"商品名称" 而不是 "name""商品名称"。
+5. **输出格式**：必须输出纯 JSON 数组，**严禁使用 Markdown 代码块（如 \`\`\`json）**，不要包含任何其他解释性文字。
 
 格式示例：
 [{"name": "商品名称", "qty": "数量", "unit": "单位", "remark": "备注"}]
 
-默认值：如果没有单位默认"斤"，没有备注默认为空字符串。
-商品名称必须只包含汉字、数字、字母，不要包含 JSON 格式字符。`
+默认值：如果没有单位默认"斤"，没有备注默认为空字符串。`
             }];
 
             // 动态添加品牌提示
@@ -100,25 +98,16 @@ ${HIGH_PRIORITY_CORRECTIONS.join('\n')}
           temperature: temperature
         },
         success: (res) => {
-          console.log('========== DeepSeek API 响应 ==========');
-          console.log('响应状态码:', res.statusCode);
-          console.log('响应数据:', JSON.stringify(res.data, null, 2));
-          
           if (res.statusCode !== 200) {
-            console.error('API 请求失败，状态码:', res.statusCode);
             reject(new Error(`API 请求失败，状态码: ${res.statusCode}`));
             return;
           }
           if (!res.data || !res.data.choices || !res.data.choices[0]) {
-            console.error('API 响应格式不正确:', res.data);
             reject(new Error('API 响应格式不正确'));
             return;
           }
           const optimizedText = res.data.choices[0].message.content;
-          console.log('========== DeepSeek 返回的优化文本 ==========');
           console.log('优化后的文本:', optimizedText);
-          console.log('文本类型:', typeof optimizedText);
-          console.log('文本长度:', optimizedText ? optimizedText.length : 0);
           resolve(optimizedText);
         },
         fail: (err) => {
@@ -330,7 +319,7 @@ Page({
     bottomHeight: 180,
     showDeepSeekLoading: false,
     hasAiRecognized: false,
-    temperature: 0.2,
+    temperature: 0.7,
     aiRetryCount: 0,
     isRecording: false,
     showExplanationModal: false,
@@ -465,11 +454,7 @@ Page({
     }
 
     speechRecognizerManager.OnRecognitionComplete = async (res) => {
-      console.log('========== 语音识别完成 ==========');
       console.log('识别结束', res);
-      // 停止后清理静音定时器
-      if (this.data.silenceTimer) clearTimeout(this.data.silenceTimer);
-      
       this.setData({
         recognitionStatus: '识别完成',
         isRecording: false
@@ -486,20 +471,12 @@ Page({
 
         // DeepSeek 优化前日志
         console.log('【DeepSeek优化前】:', recognizedText);
-        console.log('【DeepSeek参数】温度:', this.data.temperature, '品牌列表:', this.data.brandPrompts || []);
-        
         // 显示 DeepSeek loading 动画
         this.setData({ showDeepSeekLoading: true });
-        
-        // 调用 DeepSeek API 优化文本（可以传入品牌列表，如果有的话）
-        const optimizedText = await optimizeTextWithDeepSeek(recognizedText, this.data.temperature, this.data.brandPrompts || []);
-        
+        // 调用 DeepSeek API 优化文本
+        const optimizedText = await optimizeTextWithDeepSeek(recognizedText, this.data.temperature);
         // DeepSeek 优化后日志
-        console.log('========== DeepSeek 返回结果 ==========');
-        console.log('【DeepSeek优化后】原始文本:', optimizedText);
-        console.log('【DeepSeek优化后】文本类型:', typeof optimizedText);
-        console.log('【DeepSeek优化后】文本长度:', optimizedText ? optimizedText.length : 0);
-        
+        console.log('【DeepSeek优化后】:', optimizedText);
         // 隐藏 DeepSeek loading 动画
         this.setData({
           inputContent: optimizedText,
@@ -508,16 +485,10 @@ Page({
           showDeepSeekLoading: false
         });
 
-        // ✅ 自动解析为订单
-        console.log('========== 开始调用 formatContent ==========');
-        this.formatContent();
-
       } catch (error) {
         // 隐藏 DeepSeek loading 动画（异常时也要隐藏）
         this.setData({ showDeepSeekLoading: false });
-        console.error('========== 处理语音识别结果时出错 ==========');
-        console.error('错误信息:', error);
-        console.error('错误堆栈:', error.stack);
+        console.error('处理语音识别结果时出错:', error);
         wx.showToast({
           title: '文本优化失败，使用原始文本',
           icon: 'none',
@@ -694,150 +665,54 @@ Page({
 
   formatContent: function () {
     let content = this.data.inputContent;
-    console.log('[formatContent] ========== 开始解析 ==========');
-    console.log('[formatContent] 原始输入内容:', content);
-    
-    if (!content || content.trim() === '') {
-      console.log('[formatContent] 内容为空，返回');
-      return;
-    }
+    if (!content || content.trim() === '') return;
 
-    // 检测是否包含 JSON 格式（包含 [ 和 ]）
-    const hasJsonFormat = /\[.*\]/.test(content);
-    console.log('[formatContent] 是否包含 JSON 格式:', hasJsonFormat);
-    
-    if (hasJsonFormat) {
-      try {
-        // 1. 强壮的 JSON 提取逻辑
-        let jsonStr = content.trim();
-        console.log('[formatContent] 去除 Markdown 前:', jsonStr);
-        
-        // 去除 Markdown 代码块标记
-        jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-        console.log('[formatContent] 去除 Markdown 后:', jsonStr);
-        
-        // 只提取 [] 之间的内容
-        const firstBracket = jsonStr.indexOf('[');
-        const lastBracket = jsonStr.lastIndexOf(']');
-        console.log('[formatContent] 括号位置 - firstBracket:', firstBracket, 'lastBracket:', lastBracket);
-        
-        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-          jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
-          console.log('[formatContent] 提取的 JSON 字符串:', jsonStr);
-          
-          // 修复常见的 JSON 格式错误：缺少冒号的情况
-          const beforeFix = jsonStr;
-          
-          // 修复连续两个引号的情况（缺少冒号）："name""value" -> "name":"value"
-          // 注意：需要确保是在键值对的位置，而不是在值内部
-          jsonStr = jsonStr.replace(/"(\w+)""([^"]+)"/g, '"$1":"$2"');
-          
-          // 修复键名后跟空格和引号的情况："name" "value" -> "name":"value"
-          jsonStr = jsonStr.replace(/"(\w+)"\s+"([^"]+)"/g, '"$1":"$2"');
-          
-          // 修复其他可能的格式错误：键名后直接跟值（没有引号的情况）
-          // 这个可能不太常见，但为了保险起见
-          
-          if (beforeFix !== jsonStr) {
-            console.log('[formatContent] JSON 格式修复前:', beforeFix);
-            console.log('[formatContent] JSON 格式修复后:', jsonStr);
-          } else {
-            console.log('[formatContent] JSON 格式无需修复');
-          }
-          
-          console.log('[formatContent] 准备解析 JSON...');
-          let ordersJson;
-          try {
-            ordersJson = JSON.parse(jsonStr);
-          } catch (parseError) {
-            console.error('[formatContent] JSON.parse 失败:', parseError);
-            console.error('[formatContent] 尝试解析的 JSON 字符串:', jsonStr);
-            throw parseError;
-          }
-          console.log('[formatContent] JSON 解析成功:', ordersJson);
-
-          if (Array.isArray(ordersJson) && ordersJson.length > 0) {
-            console.log('[formatContent] 订单数组长度:', ordersJson.length);
-            console.log('[formatContent] 原始订单数据:', JSON.stringify(ordersJson, null, 2));
-            
-            const formattedOrders = ordersJson.map((item, index) => {
-              console.log(`[formatContent] 处理第 ${index + 1} 个订单项:`, item);
-              
-              const order = {
-                nxDoGoodsName: item.name || '',
-                nxDoGoodsNameOriginal: item.name || '',
-                nxDoQuantity: item.qty || '',
-                nxDoStandard: item.unit || '斤',
-                nxDoRemark: item.remark || '',
-                nxDoAddRemark: !!(item.remark && item.remark.trim()),
-                nxDoStatus: -1, // 草稿状态
-                nxDoDepartmentId: this.data.depId,
-                nxDoDepartmentFatherId: this.data.depFatherId,
-                nxDoDistributerId: this.data.disId,
-                nxDoOrderUserId: this.data.userId,
-                nxDoIsAgent: 3,
-                nxDoStandardWarn: 0,
-                nxDoDisGoodsId: null,
-                goodsNameWarn: 0,
-                nxDoPurchaseUserId: -1
-              };
-              
-              console.log(`[formatContent] 格式化后的订单项 ${index + 1}:`, order);
-              return order;
-            }).filter(o => {
-              const isValid = o.nxDoGoodsName && o.nxDoGoodsName.trim();
-              if (!isValid) {
-                console.log('[formatContent] 过滤掉无效订单项:', o);
-              }
-              return isValid;
-            });
-
-            console.log('[formatContent] 最终格式化订单数量:', formattedOrders.length);
-            console.log('[formatContent] 最终订单数组:', JSON.stringify(formattedOrders, null, 2));
-
-            this.setData({ orderArr: formattedOrders, saveCount: null });
-            this._updateHasUnsavedOrders(formattedOrders);
-            this._saveToStorage(formattedOrders);
-            console.log('[formatContent] ========== JSON 解析完成 ==========');
-            return { orders: formattedOrders, formatted: '' };
-          } else {
-            console.warn('[formatContent] 订单数组为空或不是数组');
-          }
-        } else {
-          console.warn('[formatContent] 无法找到有效的括号位置');
-        }
-        throw new Error('无法提取有效 JSON');
-      } catch (e) {
-        console.error('[formatContent] ========== JSON 解析失败 ==========');
-        console.error('[formatContent] 错误信息:', e);
-        console.error('[formatContent] 错误堆栈:', e.stack);
-        console.error('[formatContent] 原始内容:', content);
-        // JSON 格式的内容解析失败，不降级到正则解析，而是提示用户
-        wx.showToast({
-          title: 'JSON 格式解析失败，请重试',
-          icon: 'none',
-          duration: 2000
-        });
-        return;
-      }
-    }
-    
-    // 非 JSON 格式，使用正则解析
-    console.log('[formatContent] ========== 使用正则解析 ==========');
     try {
+      // 1. 强壮的 JSON 提取逻辑
+      let jsonStr = content.trim();
+      // 去除 Markdown 代码块标记
+      jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+      
+      // 只提取 [] 之间的内容
+      const firstBracket = jsonStr.indexOf('[');
+      const lastBracket = jsonStr.lastIndexOf(']');
+      
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
+        const ordersJson = JSON.parse(jsonStr);
+
+        if (Array.isArray(ordersJson) && ordersJson.length > 0) {
+          const formattedOrders = ordersJson.map(item => ({
+            gbDoGoodsName: item.name || '',
+            gbDoGoodsNameOriginal: item.name || '',
+            gbDoQuantity: item.qty || '',
+            gbDoStandard: item.unit || '斤',
+            gbDoRemark: item.remark || '',
+            gbDoAddRemark: !!(item.remark && item.remark.trim()),
+            gbDoStatus: -2, // 草稿状态
+            gbDoDepartmentId: this.data.depId,
+            gbDoDepartmentFatherId: this.data.depFatherId,
+            gbDoDistributerId: this.data.disId,
+            gbDoOrderUserId: this.data.userId,
+            gbDoIsAgent: 1,
+            gbDoStandardWarn: 0
+          })).filter(o => o.gbDoGoodsName && o.gbDoGoodsName.trim());
+
+          this.setData({ orderArr: formattedOrders, saveCount: null });
+          this._updateHasUnsavedOrders(formattedOrders);
+          this._saveToStorage(formattedOrders);
+          return { orders: formattedOrders, formatted: '' };
+        }
+      }
+      throw new Error('无法提取有效 JSON');
+    } catch (e) {
+      console.warn('JSON 解析失败，降级为正则解析:', e);
+      
+      // 降级处理：使用正则逻辑
       content = content.replace(/(\d)\s+/g, '$1').replace(/[^\S\r\n]+/g, ' ');
-      console.log('[formatContent] 正则解析前的处理:', content);
       const result = this._formatOrderContent(content);
-      console.log('[formatContent] 正则解析结果:', result);
       this.setData({ formattedContent: result.formatted });
       return result;
-    } catch (e) {
-      console.error('[formatContent] 正则解析失败:', e);
-      wx.showToast({
-        title: '内容解析失败',
-        icon: 'none',
-        duration: 2000
-      });
     }
   },
 
@@ -1047,20 +922,20 @@ Page({
   //   }
   // },
 
-  // 粘贴内容/按钮入口（已废弃，使用上面的 formatContent）
-  // async formatContent() {
-  //   const content = this.data.inputContent;
-  //   if (!content || !content.trim()) {
-  //     wx.showToast({ title: '内容为空', icon: 'none' });
-  //     return;
-  //   }
-  //   // 只做本地格式化
-  //   const { orders, formatted } = this._formatOrderContent(content);
-  //   this.setData({
-  //     orderArr: orders,
-  //     formattedContent: formatted
-  //   });
-  // },
+  // 粘贴内容/按钮入口
+  async formatContent() {
+    const content = this.data.inputContent;
+    if (!content || !content.trim()) {
+      wx.showToast({ title: '内容为空', icon: 'none' });
+      return;
+    }
+    // 只做本地格式化
+    const { orders, formatted } = this._formatOrderContent(content);
+    this.setData({
+      orderArr: orders,
+      formattedContent: formatted
+    });
+  },
 
   // // 录音识别完成后调用
   // async onRecordRecognizeFinish(originSentence) {
@@ -2656,7 +2531,7 @@ Page({
       orderArr: [],
       orderArrFixed: [],
       hasAiRecognized: false,
-      temperature: 0.2,
+      temperature: 0.7,
       aiRetryCount: 0,
       hasUsedExtraTime: false // 重置额外时间使用状态
     });
