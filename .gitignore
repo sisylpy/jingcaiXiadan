@@ -27,3 +27,4 @@ project.private.config.json
 *.swp
 *.swo
 *~
+config.js

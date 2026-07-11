@@ -1,0 +1,57 @@
+<wxs src="../../utils/fn.wxs" module="tool" />
+
+<view class="top_bar_back flex-row" style="padding-top: {{statusBarHeight}}rpx;">
+  <image src="/images/back-white.png" class="top_back_img" bindtap="toBack"></image>
+  <view class="flex-column">
+    <text class="top_bar_title_small">我的优惠券</text>
+  </view>
+</view>
+
+<view class="page-body flex-column p-20" style="margin-top: {{navBarHeight}}rpx;">
+  <view wx:if="{{loading}}" class="coupon-loading">正在加载优惠券...</view>
+
+  <view wx:elif="{{payArr.length === 0}}" class="empty-wrap" style="height: {{windowHeight / 3}}rpx;">
+    <view class="font-lg empty_view">
+      <view class="flex-column center-content">
+        <image class="empty_image" src="../../../../images/gouwucheicon-3.png"></image>
+        <text class="big">暂无可用优惠券</text>
+        <text class="empty-sub">已领取且在有效期内的券会显示在这里</text>
+      </view>
+    </view>
+  </view>
+
+  <block wx:else>
+    <view class="coupon-container mb-20" wx:for="{{payArr}}" wx:key="userCouponId">
+      <view class="flex-row coupon-card">
+        <view class="coupon-left flex-column">
+          <block wx:if="{{item.couponType == 0}}">
+            <view class="flex-row text-main coupon-amount-row">
+              <text class="coupon-currency">¥</text>
+              <text class="coupon-amount">{{item.discountAmount}}</text>
+            </view>
+            <text class="coupon-threshold">满{{item.thresholdAmount}}元可用</text>
+          </block>
+          <block wx:else>
+            <view class="flex-row text-main coupon-amount-row">
+              <text class="coupon-amount">{{item.discountPercentLabel || item.discountPercent}}</text>
+            </view>
+            <text class="coupon-threshold">满{{item.thresholdAmount}}元可用</text>
+          </block>
+        </view>
+
+        <view class="coupon-right flex-column">
+          <view class="flex-row-between coupon-right-top">
+            <view class="flex-column coupon-info">
+              <view class="order-fee-coupon-badge" wx:if="{{item.descText}}">{{item.descText}}</view>
+              <text class="coupon-name">{{item.couponName}}</text>
+              <text class="coupon-scope" wx:if="{{item.scopeLabel}}">{{item.scopeLabel}}</text>
+              <text class="coupon-valid">{{item.validPeriodText}}</text>
+            </view>
+            <view class="coupon-status-badge">{{item.statusLabel || '可使用'}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="dotted-line"></view>
+    </view>
+  </block>
+</view>

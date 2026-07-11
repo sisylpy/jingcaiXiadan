@@ -1,4 +1,5 @@
 import load from '../../../../lib/load';
+import { parseOrderFromText } from '../../../../lib/orderParser';
 import {
   depPasteSearchGoods,
   choiceGoodsForApply,
@@ -23,245 +24,12 @@ const plugin = requirePlugin("QCloudAIVoice");
 const speechRecognizerManager = plugin.speechRecognizerManager();
 //
 
-// --- 配置读取 ---
-const DEEPSEEK_API_KEY = config.deepSeek?.apiKey || '';
-const DEEPSEEK_API_URL = config.deepSeek?.apiUrl || 'https://api.deepseek.com/v1/chat/completions';
-const DEEPSEEK_MODEL = config.deepSeek?.model || 'deepseek-chat';
-
 // 腾讯云配置
 const TENCENT_CLOUD_SECRET_ID = config.tencentCloud?.secretId || '';
 const TENCENT_CLOUD_SECRET_KEY = config.tencentCloud?.secretKey || '';
 const TENCENT_CLOUD_APP_ID = config.tencentCloud?.appId || '1308821743';
 const TENCENT_CLOUD_ENGINE_MODEL_TYPE = config.tencentCloud?.engineModelType || '16k_zh';
 const TENCENT_CLOUD_VOICE_FORMAT = config.tencentCloud?.voiceFormat || 1;
-
-/**
- * 优化语音文本的核心函数
- */
-async function optimizeTextWithDeepSeek(text, temperature = 0.2, brandList = []) {
-  try {
-    console.log('开始调用 DeepSeek API，输入文本:', text, '温度:', temperature);
-
-    return new Promise((resolve, reject) => {
-      wx.request({
-        url: DEEPSEEK_API_URL,
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
-        },
-        data: {
-          model: DEEPSEEK_MODEL,
-          stream: false,   // ✅ 关键！！！
-          messages: (() => {
-            const messages = [{
-              role: "system",
-              content: `你是一个专业的餐饮行业订单解析助手。请将用户输入的语音识别文本转换为标准化的订单 JSON 数据。
-
-重要规则：
-1. **输入来源**：内容来自腾讯语音识别，可能存在大量同音词错误，需要智能纠正为正确的商品名称。
-2. **品牌识别优先级最高**：如果发音与品牌库中的品牌（如"东古"）完全一致或极度相似，必须优先纠正为品牌名！
-3. **特殊商品名**：如"去叶中葱"、"西兰苔"等是完整名称，不要拆分。
-4. **语音识别错误纠正**："实质"→"10只", "死机"→"4斤", "无间"→"5斤", "溜达"→"6大" 等。
-5. **输出格式**：必须输出**严格符合 JSON 格式**的数组，**严禁使用 Markdown 代码块（如 \`\`\`json）**，不要包含任何其他解释性文字。
-6. **JSON 格式要求**：确保每个字段都有正确的冒号分隔符，例如 "name":"商品名称" 而不是 "name""商品名称"。
-
-格式示例：
-[{"name": "商品名称", "qty": "数量", "unit": "单位", "remark": "备注"}]
-
-默认值：如果没有单位默认"斤"，没有备注默认为空字符串。
-商品名称必须只包含汉字、数字、字母，不要包含 JSON 格式字符。`
-            }];
-
-            // 动态添加品牌提示
-            if (Array.isArray(brandList) && brandList.length > 0) {
-              const HIGH_PRIORITY_CORRECTIONS = [
-                "东古(易误识为:冬菇、东顾、东谷)",
-                "紫林(易误识为:紫菱、子林、紫灵)",
-                "安琪(易误识为:安奇、按期、安记)",
-                "宜客(易误识为:一克、翼克、翼客)",
-                "李锦记(易误识为:李金记、李进记)",
-                "海天(易误识为:海添、海田)",
-                "千禾(易误识为:千和、前和)",
-                "恒顺(易误识为:恒舜、横顺)"
-              ];
-
-              const brandPrompt = `当前配送商常见品牌：${brandList.join('、')}。
-常见语音识别错误修正表：
-${HIGH_PRIORITY_CORRECTIONS.join('\n')}
-请优先匹配上述品牌。`;
-              
-              messages.push({ role: 'system', content: brandPrompt });
-            }
-
-            messages.push({ role: "user", content: text });
-            return messages;
-          })(),
-          temperature: temperature
-        },
-        success: (res) => {
-          console.log('========== DeepSeek API 响应 ==========');
-          console.log('响应状态码:', res.statusCode);
-          console.log('响应数据:', JSON.stringify(res.data, null, 2));
-          
-          if (res.statusCode !== 200) {
-            console.error('API 请求失败，状态码:', res.statusCode);
-            reject(new Error(`API 请求失败，状态码: ${res.statusCode}`));
-            return;
-          }
-          if (!res.data || !res.data.choices || !res.data.choices[0]) {
-            console.error('API 响应格式不正确:', res.data);
-            reject(new Error('API 响应格式不正确'));
-            return;
-          }
-          const optimizedText = res.data.choices[0].message.content;
-          console.log('========== DeepSeek 返回的优化文本 ==========');
-          console.log('优化后的文本:', optimizedText);
-          console.log('文本类型:', typeof optimizedText);
-          console.log('文本长度:', optimizedText ? optimizedText.length : 0);
-          resolve(optimizedText);
-        },
-        fail: (err) => {
-          reject(new Error('API 请求失败: ' + JSON.stringify(err)));
-        }
-      });
-    });
-  } catch (error) {
-    console.error('DeepSeek API 调用错误:', error);
-    return text; // 失败返回原文本
-  }
-}
-
-// 添加优化语音文本的函数
-async function optimizeTextWithDeepSeek1(text, temperature) {
-  try {
-    console.log('开始调用 DeepSeek API，输入文本:', text);
-    
-    return new Promise((resolve, reject) => {
-      wx.request({
-        url: DEEPSEEK_API_URL,
-        method: 'POST',
-        header: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
-        },
-        data: {
-          model: "deepseek-chat",
-          messages: [
-            {
-              role: "system",
-              content: `本场景为饭店/餐饮行业订货录单。所有输入内容都应优先理解为餐饮行业采购相关的商品（如生鲜、调料、餐具等），并结合行业常用词、同音词、近义词进行智能归类和纠正。
-
-请特别注意以下规则：
-1.  **输入来源**：上传的内容主要来自腾讯语音识别，因此很多汉字可能是同音词的错误转换。你需要将它们智能地识别为正确的蔬菜、水果或调料名称，不能只看字面意思。
-2.  **特殊商品名**：以下商品名称是完整的商品名，不要将其拆分为商品名+备注：
-   - "去叶中葱"、"去叶大葱" - 这些都是完整的葱类商品名称
-   - "西兰苔" - 完整的蔬菜名称
-   - "板蓝根" - 完整的药材名称
-   - "手指胡萝卜" - 这是一种特殊的胡萝卜品种，是完整的蔬菜名称，不要识别为普通"胡萝卜"
-   - 其他以"去叶"、"去根"、"去皮"等开头的商品名都是完整的商品名称
-3.  **宽容处理**：不要随便删除无法立刻理解的内容，应尽最大努力将其理解为同音的蔬菜、水果或调料名称。
-
-你是一个专业的订单文本优化助手。请将用户输入的文本转换为标准订单格式，要求：
-1. 每行一个商品
-2. 商品名称和数量用冒号分隔
-3. 数量后面跟单位（斤、个、包、根、棵、条、盒、捆、袋等）
-4. 去除无关内容
-5. 保持商品名称的准确性
-6. 支持"数字+商品名"格式，如"3香菜"应理解为"香菜:3斤"
-7. 如果商品数量后没有单位，请自动补全"斤"作为单位
-8. 如果商品名称后面没有明确的数量和单位，不要随意添加
-9. 备注信息只和具体商品关联：如果备注内容在商品前面或后面（如"要新鲜的西红柿5斤"或"西红柿5斤要新鲜的"），请将其作为该商品的备注内容。
-10. 如果备注内容是独立一句（没有和任何商品直接关联），请不要自动归为任何商品的备注。
-11. 支持"备注+商品+数量"格式（如"小颗的油菜两斤"或"油菜小颗的两斤"），请将备注内容（如"小颗的"）作为该商品的备注。
-12. 如果商品名称或规格中包含数字（如"1000圆餐盒"或"一千圆餐盒"），请优先将数字视为商品名称或规格的一部分，只有在数字紧跟在商品名称后、且后面有单位时，才将其视为数量。
-13. 对于所有输入内容，都尽量理解为饭店采购相关的商品（如生鲜、调料、餐具等），不要简单过滤。
-14. 如果遇到不常见的词汇或疑似地名、备注等，也请尝试用同音词、近义词或常见饭店采购商品进行智能纠正和归类。
-15. 如果无法确定具体商品，也请尽量输出为最接近的生鲜、调料或餐具商品名。
-16. 对于商品名称中的常见同音词或行业错别字要自动归一。例如：
-    - "1000元餐盒"应理解为"1000圆餐盒"（"元"归一为"圆"，表示圆形）。
-    - 其他类似行业常用错别字或同音词，也请自动归一为最常用的采购商品名称。
-17. 如果商品名称中出现"各"字（如"红黄彩椒各"），请整体视为一个商品名，不要拆分为多个商品。
-18. 当遇到不常见或容易混淆的商品名称时，请在输出中添加说明。说明格式为"（说明具体说明内容）"，说明内容应该解释为什么这样识别，以及可能的同音词或近义词。
-19. 注意语音识别错误：由于输入内容来自腾讯语音识别，可能存在识别不准确的情况。当遇到明显不合理的数量或商品名时，请根据上下文和餐饮行业常识进行智能纠正。例如：
-    - "实质"可能是"10只"的语音识别错误
-    - "死机"可能是"4斤"的语音识别错误
-    - "无间"可能是"5斤"的语音识别错误
-    - "溜达"可能是"6大"的语音识别错误
-    - 其他类似的数字同音词错误
-
-示例：
-输入："红黄彩椒各2斤"
-输出：
-红黄彩椒各:2斤
-输入："油菜小颗的两斤"
-输出：
-油菜:2斤（小颗的）
-输入："一千圆餐盒 1 件"
-输出：
-一千圆餐盒:1件
-输入："1000餐盒一件。西湖路。两根。要小的。"
-输出：
-1000餐盒:1件
-西葫芦:2根（要小的）
-输入："去叶中葱5斤"
-输出：
-去叶中葱:5斤
-输入："去叶大葱3斤"
-输出：
-去叶大葱:3斤
-输入："去根胡萝卜2斤"
-输出：
-去根胡萝卜:2斤
-输入："安装5斤"
-输出：
-按酱:5斤（说明"安装"根据餐饮行业常用调料纠正为"按酱"或"安酱"，这是调味酱料的一种）
-输入："鸡蛋实质"
-输出：
-鸡蛋:10只（说明"实质"根据语音识别错误纠正为"10只"）
-`
-            },
-            {
-              role: "user",
-              content: text
-            }
-          ],
-          temperature: temperature
-        },
-        success: (res) => {
-          console.log('API 响应成功:', res);
-          if (res.statusCode === 200 && res.data && res.data.choices && res.data.choices[0]) {
-            const optimizedText = res.data.choices[0].message.content;
-            console.log('优化后的文本:', optimizedText);
-            resolve(optimizedText);
-          } else {
-            console.error('API 响应格式不正确:', res);
-            reject(new Error('API 响应格式不正确'));
-          }
-        },
-        fail: (err) => {
-          console.error('API 请求失败:', err);
-          reject(new Error('API 请求失败: ' + JSON.stringify(err)));
-        }
-      });
-    });
-  } catch (error) {
-    console.error('DeepSeek API 调用错误:', error);
-    console.error('错误详情:', {
-      message: error.message,
-      stack: error.stack,
-      response: error.response
-    });
-    return text; // 如果 API 调用失败，返回原始文本
-  }
-}
-
-// 商品名归一化函数
-function normalizeGoodsName(name) {
-  // 只替换商品名中的"元"为"圆"，可扩展更多规则
-  return name.replace(/1000元/g, '1000圆').replace(/元餐盒/g, '圆餐盒');
-  // 你也可以用更通用的规则，如 name.replace(/元/g, '圆')
-}
 
 var books = "";
 
@@ -328,10 +96,7 @@ Page({
     inputContent: "",
     originSentence: '',
     bottomHeight: 180,
-    showDeepSeekLoading: false,
     hasAiRecognized: false,
-    temperature: 0.2,
-    aiRetryCount: 0,
     isRecording: false,
     showExplanationModal: false,
     explanationContent: "",
@@ -480,41 +245,18 @@ Page({
         const recognizedText = this.data.sentence;
         console.log('【语音识别原始文本】:', recognizedText);
         if (!recognizedText || recognizedText.trim() === '') {
-          console.log('识别文本为空，跳过优化');
+          console.log('识别文本为空，跳过');
           return;
         }
 
-        // DeepSeek 优化前日志
-        console.log('【DeepSeek优化前】:', recognizedText);
-        console.log('【DeepSeek参数】温度:', this.data.temperature, '品牌列表:', this.data.brandPrompts || []);
-        
-        // 显示 DeepSeek loading 动画
-        this.setData({ showDeepSeekLoading: true });
-        
-        // 调用 DeepSeek API 优化文本（可以传入品牌列表，如果有的话）
-        const optimizedText = await optimizeTextWithDeepSeek(recognizedText, this.data.temperature, this.data.brandPrompts || []);
-        
-        // DeepSeek 优化后日志
-        console.log('========== DeepSeek 返回结果 ==========');
-        console.log('【DeepSeek优化后】原始文本:', optimizedText);
-        console.log('【DeepSeek优化后】文本类型:', typeof optimizedText);
-        console.log('【DeepSeek优化后】文本长度:', optimizedText ? optimizedText.length : 0);
-        
-        // 隐藏 DeepSeek loading 动画
+        // 直接显示原始识别结果，不调用 DeepSeek（用户自行修改后点"识别"）
         this.setData({
-          inputContent: optimizedText,
-          sentence: optimizedText,
-          originSentence: recognizedText, // 保存最初的录音文本
-          showDeepSeekLoading: false
+          inputContent: recognizedText,
+          sentence: recognizedText,
+          originSentence: recognizedText,
+          hasAiRecognized: false // 还没解析，保持 false
         });
-
-        // ✅ 自动解析为订单
-        console.log('========== 开始调用 formatContent ==========');
-        this.formatContent();
-
       } catch (error) {
-        // 隐藏 DeepSeek loading 动画（异常时也要隐藏）
-        this.setData({ showDeepSeekLoading: false });
         console.error('========== 处理语音识别结果时出错 ==========');
         console.error('错误信息:', error);
         console.error('错误堆栈:', error.stack);
@@ -693,219 +435,89 @@ Page({
   // --- 文本与订单解析核心逻辑 ---
 
   formatContent: function () {
-    let content = this.data.inputContent;
-    console.log('[formatContent] ========== 开始解析 ==========');
-    console.log('[formatContent] 原始输入内容:', content);
+    var content = this.data.inputContent;
+    console.log('[formatContent] 开始处理内容:', content);
     
     if (!content || content.trim() === '') {
-      console.log('[formatContent] 内容为空，返回');
+      console.log('[formatContent] 内容为空，跳过处理');
+      this.setData({ highlightedContent: '' });
       return;
     }
 
-    // 检测是否包含 JSON 格式（包含 [ 和 ]）
-    const hasJsonFormat = /\[.*\]/.test(content);
-    console.log('[formatContent] 是否包含 JSON 格式:', hasJsonFormat);
+    // 解析前先移除可能存在的修改标记（上次插入的）
+    content = this._stripInvalidMarkers(content);
+
+    // 使用工具函数解析订单（复用老板端 lib/orderParser 的解析方法，统一输出 nxDo* 字段）
+    const result = parseOrderFromText(content, {
+      depId: this.data.depId,
+      depFatherId: this.data.depFatherId,
+      disId: this.data.disId,
+      userId: this.data.userId
+    });
     
-    if (hasJsonFormat) {
-      try {
-        // 1. 强壮的 JSON 提取逻辑
-        let jsonStr = content.trim();
-        console.log('[formatContent] 去除 Markdown 前:', jsonStr);
-        
-        // 去除 Markdown 代码块标记
-        jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-        console.log('[formatContent] 去除 Markdown 后:', jsonStr);
-        
-        // 只提取 [] 之间的内容
-        const firstBracket = jsonStr.indexOf('[');
-        const lastBracket = jsonStr.lastIndexOf(']');
-        console.log('[formatContent] 括号位置 - firstBracket:', firstBracket, 'lastBracket:', lastBracket);
-        
-        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-          jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
-          console.log('[formatContent] 提取的 JSON 字符串:', jsonStr);
-          
-          // 修复常见的 JSON 格式错误：缺少冒号的情况
-          const beforeFix = jsonStr;
-          
-          // 修复连续两个引号的情况（缺少冒号）："name""value" -> "name":"value"
-          // 注意：需要确保是在键值对的位置，而不是在值内部
-          jsonStr = jsonStr.replace(/"(\w+)""([^"]+)"/g, '"$1":"$2"');
-          
-          // 修复键名后跟空格和引号的情况："name" "value" -> "name":"value"
-          jsonStr = jsonStr.replace(/"(\w+)"\s+"([^"]+)"/g, '"$1":"$2"');
-          
-          // 修复其他可能的格式错误：键名后直接跟值（没有引号的情况）
-          // 这个可能不太常见，但为了保险起见
-          
-          if (beforeFix !== jsonStr) {
-            console.log('[formatContent] JSON 格式修复前:', beforeFix);
-            console.log('[formatContent] JSON 格式修复后:', jsonStr);
-          } else {
-            console.log('[formatContent] JSON 格式无需修复');
-          }
-          
-          console.log('[formatContent] 准备解析 JSON...');
-          let ordersJson;
-          try {
-            ordersJson = JSON.parse(jsonStr);
-          } catch (parseError) {
-            console.error('[formatContent] JSON.parse 失败:', parseError);
-            console.error('[formatContent] 尝试解析的 JSON 字符串:', jsonStr);
-            throw parseError;
-          }
-          console.log('[formatContent] JSON 解析成功:', ordersJson);
-
-          if (Array.isArray(ordersJson) && ordersJson.length > 0) {
-            console.log('[formatContent] 订单数组长度:', ordersJson.length);
-            console.log('[formatContent] 原始订单数据:', JSON.stringify(ordersJson, null, 2));
-            
-            const formattedOrders = ordersJson.map((item, index) => {
-              console.log(`[formatContent] 处理第 ${index + 1} 个订单项:`, item);
-              
-              const order = {
-                nxDoGoodsName: item.name || '',
-                nxDoGoodsNameOriginal: item.name || '',
-                nxDoQuantity: item.qty || '',
-                nxDoStandard: item.unit || '斤',
-                nxDoRemark: item.remark || '',
-                nxDoAddRemark: !!(item.remark && item.remark.trim()),
-                nxDoStatus: -1, // 草稿状态
-                nxDoDepartmentId: this.data.depId,
-                nxDoDepartmentFatherId: this.data.depFatherId,
-                nxDoDistributerId: this.data.disId,
-                nxDoOrderUserId: this.data.userId,
-                nxDoIsAgent: 3,
-                nxDoStandardWarn: 0,
-                nxDoDisGoodsId: null,
-                goodsNameWarn: 0,
-                nxDoPurchaseUserId: -1
-              };
-              
-              console.log(`[formatContent] 格式化后的订单项 ${index + 1}:`, order);
-              return order;
-            }).filter(o => {
-              const isValid = o.nxDoGoodsName && o.nxDoGoodsName.trim();
-              if (!isValid) {
-                console.log('[formatContent] 过滤掉无效订单项:', o);
-              }
-              return isValid;
-            });
-
-            console.log('[formatContent] 最终格式化订单数量:', formattedOrders.length);
-            console.log('[formatContent] 最终订单数组:', JSON.stringify(formattedOrders, null, 2));
-
-            this.setData({ orderArr: formattedOrders, saveCount: null });
-            this._updateHasUnsavedOrders(formattedOrders);
-            this._saveToStorage(formattedOrders);
-            console.log('[formatContent] ========== JSON 解析完成 ==========');
-            return { orders: formattedOrders, formatted: '' };
-          } else {
-            console.warn('[formatContent] 订单数组为空或不是数组');
-          }
-        } else {
-          console.warn('[formatContent] 无法找到有效的括号位置');
-        }
-        throw new Error('无法提取有效 JSON');
-      } catch (e) {
-        console.error('[formatContent] ========== JSON 解析失败 ==========');
-        console.error('[formatContent] 错误信息:', e);
-        console.error('[formatContent] 错误堆栈:', e.stack);
-        console.error('[formatContent] 原始内容:', content);
-        // JSON 格式的内容解析失败，不降级到正则解析，而是提示用户
-        wx.showToast({
-          title: 'JSON 格式解析失败，请重试',
-          icon: 'none',
-          duration: 2000
+    if (result.orders && result.orders.length > 0) {
+      // 若存在不合格片段：在原文插入【】标记，回显到输入框
+      if (result.invalidSegments && result.invalidSegments.length > 0) {
+        const contentForHighlight = result.contentForHighlight || content;
+        const modifiedContent = this._insertInvalidMarkersInContent(contentForHighlight, result.invalidSegments);
+        this.setData({
+          orderArr: [],
+          sentence: modifiedContent,
+          inputContent: modifiedContent
         });
-        return;
+        wx.showToast({ title: '存在格式不合格项，【】标记处请修改', icon: 'none', duration: 2500 });
+        return result;
       }
-    }
-    
-    // 非 JSON 格式，使用正则解析
-    console.log('[formatContent] ========== 使用正则解析 ==========');
-    try {
-      content = content.replace(/(\d)\s+/g, '$1').replace(/[^\S\r\n]+/g, ' ');
-      console.log('[formatContent] 正则解析前的处理:', content);
-      const result = this._formatOrderContent(content);
-      console.log('[formatContent] 正则解析结果:', result);
-      this.setData({ formattedContent: result.formatted });
-      return result;
-    } catch (e) {
-      console.error('[formatContent] 正则解析失败:', e);
-      wx.showToast({
-        title: '内容解析失败',
-        icon: 'none',
-        duration: 2000
+      // 无问题，正常生成订单
+      this.setData({ 
+        orderArr: result.orders,
+        saveCount: null,
+        highlightedContent: '',
+        hasAiRecognized: true // 解析成功，底部按钮切换为"重新粘贴"
       });
+      this._updateHasUnsavedOrders(result.orders);
+      this._saveToStorage(result.orders);
+      this.setData({ formattedContent: result.formatted || '' });
+      return result;
+    } else {
+      console.log('[formatContent] 未解析到有效订单');
+      this.setData({ highlightedContent: '' });
+      return { orders: [], formatted: '' };
     }
   },
 
-  _formatOrderContent: function (content) {
-    let orders = [];
-    let lines = content.split(/\r?\n/).filter(line => line.trim());
+  /** 解析前移除插入的标记（【 和 】） */
+  _stripInvalidMarkers: function (content) {
+    if (!content) return '';
+    return String(content).replace(/【/g, '').replace(/】/g, '');
+  },
 
-    // --- 辅助函数：中文数字转阿拉伯 ---
-    const chineseNumberToArabic = (chineseNum) => {
-      const map = { '零':0, '一':1, '二':2, '两':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9, '十':10, '百':100, '半':0.5 };
-      let res = 0, temp = 0;
-      for (let char of chineseNum) {
-        if (char === '半') res += 0.5;
-        else if (map[char] >= 10) { res += (temp || 1) * map[char]; temp = 0; }
-        else if (map[char] !== undefined) temp = temp * 10 + map[char];
-      }
-      return res + temp;
-    };
-
-    // --- 辅助函数：解析单行逻辑 (保留原文件复杂正则逻辑) ---
-    // 为保持原业务逻辑一致性，保留主要的正则匹配块，简化结构
-    lines.forEach(line => {
-      line = line.trim();
-      // 简单处理：如果行以备注开头
-      if (/^备注[:：]/.test(line)) {
-        if (orders.length) orders[orders.length-1].gbDoRemark += ' ' + line.replace(/^备注[:：]/, '');
-        return;
-      }
-
-      // 尝试空格分割解析 (兜底逻辑)
-      let parts = line.split(/\s+/);
-      let parsed = false;
-      
-      // 尝试匹配 "商品 数量 单位"
-      parts.forEach(part => {
-        let mm = part.match(/^(.+?)([\d一二两三四五六七八九十]+)(.+)$/);
-        if (mm) {
-          orders.push({
-            gbDoGoodsName: mm[1].trim(),
-            gbDoGoodsNameOriginal: mm[1].trim(),
-            gbDoQuantity: /[\d]/.test(mm[2]) ? mm[2] : chineseNumberToArabic(mm[2]),
-            gbDoStandard: mm[3].trim(),
-            gbDoRemark: '',
-            gbDoStatus: -2,
-            gbDoDepartmentId: this.data.depId,
-            gbDoDepartmentFatherId: this.data.depFatherId,
-            gbDoDistributerId: this.data.disId,
-            gbDoOrderUserId: this.data.userId,
-            gbDoIsAgent: 1,
-            gbDoAddRemark: false,
-            gbDoStandardWarn: 0
-          });
-          parsed = true;
+  /**
+   * 在原文中按不合格片段插入纯文本标记，开始用【结束用】
+   * @param {string} content - 与解析时一致的内容（contentForHighlight）
+   * @param {Array} invalidSegments - [{ segmentText }]
+   * @returns {string} 插入【】标记后的原文
+   */
+  _insertInvalidMarkersInContent: function (content, invalidSegments) {
+    if (!content || !invalidSegments || invalidSegments.length === 0) return content;
+    let result = '';
+    let remaining = content;
+    while (true) {
+      let best = { pos: -1, seg: null };
+      for (const seg of invalidSegments) {
+        if (!seg.segmentText) continue;
+        const idx = remaining.indexOf(seg.segmentText);
+        if (idx >= 0 && (best.pos < 0 || idx < best.pos)) {
+          best = { pos: idx, seg };
         }
-      });
-      
-      // 如果上述未匹配，尝试简单分割
-      if (!parsed && parts.length >= 2) {
-         // 简易处理：假设第一个是名，第二个是数+单
-         // 实际项目中建议依赖 formatContent 的 AI 解析结果，这里仅作为正则失败的最后防线
       }
-    });
-
-    this.setData({ orderArr: orders, saveCount: null });
-    this._updateHasUnsavedOrders(orders);
-    this._saveToStorage(orders);
-    
-    return { orders };
+      if (best.pos < 0) break;
+      result += remaining.slice(0, best.pos);
+      result += '【' + best.seg.segmentText + '】';
+      remaining = remaining.slice(best.pos + best.seg.segmentText.length);
+    }
+    result += remaining;
+    return result;
   },
 
 
@@ -914,7 +526,7 @@ Page({
 
   _updateHasUnsavedOrders(orders) {
     const arr = orders || this.data.orderArr || [];
-    this.setData({ hasUnsavedOrders: arr.some(o => o.gbDoStatus === -2) });
+    this.setData({ hasUnsavedOrders: arr.some(o => o.nxDoStatus === -2) });
   },
 
   _saveToStorage(orders) {
@@ -976,155 +588,6 @@ Page({
   },
 
 
-  // 统一AI+本地解析处理
-  // async handleContentWithAI(content, temperature) {
-  //   try {
-  //     this.setData({ showDeepSeekLoading: true });
-  //     const optimizedText = await optimizeTextWithDeepSeek(content, temperature || this.data.temperature);
-      
-  //     // 检查是否包含说明性文字
-  //     const explanationMatches = optimizedText.match(/（说明(.+?)）/g);
-  //     if (explanationMatches && explanationMatches.length > 0) {
-  //       // 提取所有说明内容
-  //       const explanations = explanationMatches.map(match => {
-  //         const content = match.match(/（说明(.+?)）/);
-  //         return content ? content[1] : '';
-  //       }).filter(text => text.length > 0);
-        
-  //       // 移除说明文字，只保留订单内容
-  //       let cleanText = optimizedText.replace(/（说明.+?）/g, '').trim();
-        
-  //       // 移除可能的前缀说明文字
-  //       cleanText = cleanText.replace(/^根据餐饮行业.*?：\s*/g, '');
-  //       cleanText = cleanText.replace(/^我将对输入内容进行专业优化处理.*?：\s*/g, '');
-  //       cleanText = cleanText.replace(/^特别注意.*?：\s*/g, '');
-        
-  //       // 移除末尾的总结说明
-  //       cleanText = cleanText.replace(/\n说明：.*$/s, '');
-        
-  //       // 显示说明弹窗
-  //       this.setData({
-  //         showDeepSeekLoading: false,
-  //         showExplanationModal: true,
-  //         explanationContent: explanations.join('\n\n')
-  //       });
-        
-  //       // 如果有清理后的文本，再进行解析
-  //       if (cleanText) {
-  //         this.setData({
-  //           inputContent: cleanText
-  //         });
-  //         const { orders, formatted } = this._formatOrderContent(cleanText);
-  //         this.setData({
-  //           orderArr: orders,
-  //           formattedContent: formatted
-  //         });
-  //       }
-  //     } else {
-  //       // 没有说明文字，正常处理
-  //       let cleanText = optimizedText;
-  //       // 移除可能的前缀说明文字
-  //       cleanText = cleanText.replace(/^根据餐饮行业.*?：\s*/g, '');
-  //       cleanText = cleanText.replace(/^我将对输入内容进行专业优化处理.*?：\s*/g, '');
-  //       cleanText = cleanText.replace(/^特别注意.*?：\s*/g, '');
-        
-  //       // 移除末尾的总结说明
-  //       cleanText = cleanText.replace(/\n说明：.*$/s, '');
-        
-  //       this.setData({
-  //         inputContent: cleanText,
-  //         showDeepSeekLoading: false
-  //       });
-  //       const { orders, formatted } = this._formatOrderContent(cleanText);
-  //       this.setData({
-  //         orderArr: orders,
-  //         formattedContent: formatted
-  //       });
-  //     }
-  //   } catch (e) {
-  //     this.setData({ showDeepSeekLoading: false });
-  //     wx.showToast({ title: 'AI识别失败', icon: 'none' });
-  //   }
-  // },
-
-  // 粘贴内容/按钮入口（已废弃，使用上面的 formatContent）
-  // async formatContent() {
-  //   const content = this.data.inputContent;
-  //   if (!content || !content.trim()) {
-  //     wx.showToast({ title: '内容为空', icon: 'none' });
-  //     return;
-  //   }
-  //   // 只做本地格式化
-  //   const { orders, formatted } = this._formatOrderContent(content);
-  //   this.setData({
-  //     orderArr: orders,
-  //     formattedContent: formatted
-  //   });
-  // },
-
-  // // 录音识别完成后调用
-  // async onRecordRecognizeFinish(originSentence) {
-  //   if (!originSentence || !originSentence.trim()) {
-  //     wx.showToast({ title: '录音内容为空', icon: 'none' });
-  //     return;
-  //   }
-  //   await this.handleContentWithAI(originSentence);
-  // },
-
-
-
-  
-
-  clearSentence() {
-    this.setData({
-      inputContent: '',
-      sentence: '',
-      orderArr: [],
-      orderArrFixed: [],
-    });
-  },
-
- 
-  onInput(e) {
-    const text = e.detail.value;
-    console.log('[onInput] textarea value:', text);
-    this.setData({
-      inputContent: text.trim() !== '' ? text : ''
-    }, () => {
-      console.log('[onInput] setData done, inputContent:', this.data.inputContent);
-    });
-  },
-  
-
-  async again() {
-    const content = this.data.originSentence || this.data.inputContent;
-    let temp = 1.5;
-    let retry = this.data.aiRetryCount;
-
-    if (!content || content.trim() === '') {
-      wx.showToast({ title: '内容为空', icon: 'none' });
-      return;
-    }
-    if (retry >= 1) {
-      wx.showToast({ title: '已达最大尝试次数', icon: 'none' });
-      return;
-    }
-
-    this.setData({ showDeepSeekLoading: true, temperature: temp, aiRetryCount: retry + 1 });
-    try {
-      const optimizedText = await optimizeTextWithDeepSeek(content, temp);
-      this.setData({
-        inputContent: optimizedText,
-        sentence: optimizedText,
-        showDeepSeekLoading: false,
-        hasAiRecognized: true // 1次后显示"重新操作"按钮
-      });
-      this.formatContent();
-    } catch (e) {
-      this.setData({ showDeepSeekLoading: false });
-      wx.showToast({ title: '识别失败', icon: 'none' });
-    }
-  },
   
 
   // 合并被拆开的商品行（如"500"、"黑方餐盒"、"100个"）
@@ -2650,15 +2113,37 @@ Page({
 
 
   backBegin() {
+    console.log('[backBegin] 触发，清空所有内容——hasAiRecognized:', this.data.hasAiRecognized);
     this.setData({
       inputContent: '',
       sentence: '',
       orderArr: [],
       orderArrFixed: [],
       hasAiRecognized: false,
-      temperature: 0.2,
-      aiRetryCount: 0,
       hasUsedExtraTime: false // 重置额外时间使用状态
+    });
+  },
+
+  /**
+   * 重新粘贴：解析完成后回到原始输入状态
+   * 保留 originSentence（原始语音/粘贴内容），恢复到 inputContent 供用户修改
+   */
+  againPaste() {
+    console.log('[againPaste] 触发——orderArr:', this.data.orderArr.length, 'hasAiRecognized:', this.data.hasAiRecognized, 'originSentence:', this.data.originSentence);
+    const originalText = this.data.originSentence || this.data.inputContent || this.data.sentence || '';
+    console.log('[againPaste] 还原文本:', originalText);
+    this.setData({
+      orderArr: [],
+      orderArrFixed: [],
+      sentence: originalText,
+      inputContent: originalText,
+      hasAiRecognized: false,
+      saveCount: null,
+      pasteDepList: null,
+      pasteDepId: null,
+      pasteDep: null,
+      pasteDepIndex: -1,
+      highlightedContent: ''
     });
   },
 

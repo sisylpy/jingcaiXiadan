@@ -16,7 +16,8 @@ import {
   nxDepGetDisFatherGoods,
   saveCash,
   disSaveStandard,
-  deleteDepGoods
+  deleteDepGoods,
+  getGoodsTierPriceList
 } from '../../lib/apiRestraunt';
 
 
@@ -125,31 +126,106 @@ Page({
    * 更新goodsList中对应商品的订单信息
    */
   _updateGoodsListOrder(nxDistributerGoodsId, nxDepartmentOrdersEntity) {
-
-    const goodsList = this.data.goodsList;
-
-    // 遍历goodsList中的所有商品
+    const goodsList = this.data.goodsList || [];
     for (let i = 0; i < goodsList.length; i++) {
-      const goods = goodsList[i];
-      console.log(`检查goodsList[${i}]:`, {
-        goodsId: goods.nxDistributerGoodsId,
-        goodsName: goods.nxDgGoodsName,
-        currentOrder: goods.nxDepartmentOrdersEntity
-      });
-
-      if (goods.nxDistributerGoodsId === nxDistributerGoodsId) {
-        // 找到对应商品，更新其nxDepartmentOrdersEntity
-        const updatePath = `goodsList[${i}].nxDepartmentOrdersEntity`;
-
-        this.setData({
-          [updatePath]: nxDepartmentOrdersEntity
-        });
-        updated = true;
+      if (goodsList[i].nxDistributerGoodsId === nxDistributerGoodsId) {
+        this._upsertGoodsListOrder(i, nxDepartmentOrdersEntity);
         break;
       }
     }
+  },
 
+  _isLargeUnitOrder(order, item) {
+    if (!order || !item) {
+      return false;
+    }
+    if (Number(order.nxDoCostPriceLevel) === 2) {
+      return true;
+    }
+    if (order.nxDoStandard === item.nxDgWillPriceTwoStandard) {
+      return true;
+    }
+    if (item.nxDgCartonUnit && order.nxDoStandard === item.nxDgCartonUnit) {
+      return true;
+    }
+    return false;
+  },
 
+  _normalizeDisGoodsOrders(item) {
+    var orders = [];
+    if (item.disGoodsDepOrderList && item.disGoodsDepOrderList.length) {
+      orders = item.disGoodsDepOrderList;
+    } else if (item.nxDepartmentOrdersEntities && item.nxDepartmentOrdersEntities.length) {
+      orders = item.nxDepartmentOrdersEntities;
+    } else if (item.nxDepartmentOrdersEntity) {
+      orders = [item.nxDepartmentOrdersEntity];
+    }
+    var map = new Map();
+    orders.forEach(function (o) {
+      if (o && o.nxDepartmentOrdersId != null) {
+        map.set(o.nxDepartmentOrdersId, o);
+      }
+    });
+    return Array.from(map.values());
+  },
+
+  _attachDisGoodsOrders(item) {
+    var list = this._normalizeDisGoodsOrders(item);
+    item.disGoodsDepOrderList = list;
+    item.nxDepartmentOrdersEntities = list;
+    item.nxDepartmentOrdersEntity = list.length > 0 ? list[0] : null;
+    item._hasSmallOrder = list.some(o => !this._isLargeUnitOrder(o, item));
+    item._hasLargeOrder = list.some(o => this._isLargeUnitOrder(o, item));
+    return item;
+  },
+
+  _upsertGoodsListOrder(goodsIndex, order) {
+    if (goodsIndex == null || goodsIndex < 0 || !order) {
+      return;
+    }
+    var goods = this.data.goodsList[goodsIndex];
+    if (!goods) {
+      return;
+    }
+    var list = this._normalizeDisGoodsOrders(goods);
+    var found = false;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].nxDepartmentOrdersId === order.nxDepartmentOrdersId) {
+        list[i] = order;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      list.push(order);
+    }
+    this.setData({
+      ['goodsList[' + goodsIndex + '].disGoodsDepOrderList']: list,
+      ['goodsList[' + goodsIndex + '].nxDepartmentOrdersEntities']: list,
+      ['goodsList[' + goodsIndex + '].nxDepartmentOrdersEntity']: list[0] || null,
+      ['goodsList[' + goodsIndex + ']._hasSmallOrder']: list.some(o => !this._isLargeUnitOrder(o, goods)),
+      ['goodsList[' + goodsIndex + ']._hasLargeOrder']: list.some(o => this._isLargeUnitOrder(o, goods)),
+    });
+  },
+
+  _removeGoodsListOrder(goodsIndex, orderId) {
+    if (goodsIndex == null || goodsIndex < 0 || orderId == null) {
+      return;
+    }
+    var goods = this.data.goodsList[goodsIndex];
+    if (!goods) {
+      return;
+    }
+    var list = this._normalizeDisGoodsOrders(goods).filter(function (o) {
+      return o.nxDepartmentOrdersId !== orderId;
+    });
+    this.setData({
+      ['goodsList[' + goodsIndex + '].disGoodsDepOrderList']: list,
+      ['goodsList[' + goodsIndex + '].nxDepartmentOrdersEntities']: list,
+      ['goodsList[' + goodsIndex + '].nxDepartmentOrdersEntity']: list[0] || null,
+      ['goodsList[' + goodsIndex + ']._hasSmallOrder']: list.some(o => !this._isLargeUnitOrder(o, goods)),
+      ['goodsList[' + goodsIndex + ']._hasLargeOrder']: list.some(o => this._isLargeUnitOrder(o, goods)),
+    });
   },
 
 
@@ -165,6 +241,8 @@ Page({
     applyRemark: "",
     applyStandardName: "",
     applySubtotal: "",
+    applySubtotalPending: false,
+    applyPriceStandard: "",
     item: {},
     itemDis: null,
     maskHeight: "",
@@ -192,7 +270,7 @@ Page({
 
     totalPages: 0,
     totalCount: 0,
-    limit: 15,
+    limit: 30,
     currentPage: 1,
     fatherArr: [],
     scrollTopLeft: 0,
@@ -201,7 +279,7 @@ Page({
 
     totalPageDis: 0,
     totalCountDis: 0,
-    limit: 15,
+    limit: 30,
     currentPageDis: 1,
     grandList: [],
     fatherArrDis: [],
@@ -210,6 +288,9 @@ Page({
     leftGreatId: "",
     greatName: "",
     leftIndex: 0,
+    disGoodsScrollTop: 0,
+    manualFilterGrandId: null,
+    manualRequestSeq: 0,
 
     isLoading: false,
 
@@ -228,6 +309,15 @@ Page({
     subcatScrollIntoViewDep: '', // 二级分类横向滚动位置
     scrollIntoViewDep: '', // 商品列表滚动位置
 
+    tierSaleRule: null,
+    tierPrices: [],
+    tierDisplayUnit: '',
+    showTierPricing: false,
+    applyCurrentUnitPrice: '',
+    tierPriceCache: {},
+    tierPriceRequestSeq: 0,
+    activeTierId: '',
+    orderModalClosing: false,
 
   },
 
@@ -557,10 +647,11 @@ Page({
     // list.sort((a, b) => a.nxDdgDisGoodsGrandId - b.nxDdgDisGoodsGrandId);
     let currentCategory = null;
     const result = list.map(item => {
+      const priceItem = this._attachDepPriceCompare(item);
       if (item.nxDdgDisGoodsGrandId !== currentCategory) {
         currentCategory = item.nxDdgDisGoodsGrandId;
         const obj = {
-          ...item,
+          ...priceItem,
           isFirstInCategory: true,
           categoryName: this.getCategoryNameDep(item.nxDdgDisGoodsGrandId)
         };
@@ -568,7 +659,7 @@ Page({
         return obj;
       }
       const obj = {
-        ...item,
+        ...priceItem,
         isFirstInCategory: false,
         categoryName: this.getCategoryNameDep(item.nxDdgDisGoodsGrandId)
       };
@@ -576,6 +667,88 @@ Page({
       return obj;
     });
     return result;
+  },
+
+  _toValidPrice(value) {
+    if (value === null || value === undefined || value === '' || value === 'null') {
+      return null;
+    }
+    var n = Number(value);
+    if (!n || n <= 0 || n === 0.1) {
+      return null;
+    }
+    return n;
+  },
+
+  _formatDisplayPrice(value) {
+    var n = this._toValidPrice(value);
+    if (n === null) {
+      return '';
+    }
+    return String(Number(n.toFixed(2)));
+  },
+
+  _getDepGoodsDisGoods(depGoods) {
+    return depGoods && depGoods.nxDistributerGoodsEntity ? depGoods.nxDistributerGoodsEntity : (depGoods || {});
+  },
+
+  _getDepGoodsBasePriceInfo(depGoods) {
+    var disGoods = this._getDepGoodsDisGoods(depGoods);
+    var depStandard = String((depGoods && (depGoods.nxDdgOrderStandard || depGoods.nxDdgDepGoodsStandardname)) || '').trim();
+    var oneStd = String(disGoods.nxDgWillPriceOneStandard || disGoods.nxDgGoodsStandardname || '').trim();
+    var twoStd = String(disGoods.nxDgWillPriceTwoStandard || disGoods.nxDgCartonUnit || '').trim();
+    var threeStd = String(disGoods.nxDgWillPriceThreeStandard || '').trim();
+    var price = null;
+    var standard = depStandard || oneStd;
+
+    if (depStandard && oneStd && depStandard === oneStd) {
+      price = this._toValidPrice(disGoods.nxDgWillPriceOne);
+      standard = oneStd;
+    } else if (depStandard && twoStd && depStandard === twoStd) {
+      price = this._toValidPrice(disGoods.nxDgWillPriceTwo);
+      standard = twoStd;
+    } else if (depStandard && threeStd && depStandard === threeStd) {
+      price = this._toValidPrice(disGoods.nxDgWillPriceThree);
+      standard = threeStd;
+    } else {
+      price = this._toValidPrice(disGoods.nxDgWillPriceOne);
+      standard = oneStd || depStandard;
+    }
+
+    return {
+      price: price,
+      standard: standard,
+    };
+  },
+
+  _getDepGoodsBasePrice(depGoods) {
+    return this._getDepGoodsBasePriceInfo(depGoods).price;
+  },
+
+  _getDepGoodsFinalPrice(depGoods) {
+    var depPrice = this._toValidPrice(depGoods && depGoods.nxDdgOrderPrice);
+    var goodsPrice = this._getDepGoodsBasePrice(depGoods);
+    if (depPrice !== null && goodsPrice !== null) {
+      return Math.min(depPrice, goodsPrice);
+    }
+    return depPrice !== null ? depPrice : goodsPrice;
+  },
+
+  _attachDepPriceCompare(item) {
+    var depPrice = this._toValidPrice(item.nxDdgOrderPrice);
+    var goodsPriceInfo = this._getDepGoodsBasePriceInfo(item);
+    var goodsPrice = goodsPriceInfo.price;
+    var finalPrice = this._getDepGoodsFinalPrice(item);
+    return Object.assign({}, item, {
+      _depPriceText: this._formatDisplayPrice(depPrice),
+      _goodsPriceText: this._formatDisplayPrice(goodsPrice),
+      _finalPriceText: this._formatDisplayPrice(finalPrice),
+      _goodsPriceStandard: goodsPriceInfo.standard || item.nxDdgOrderStandard || item.nxDdgDepGoodsStandardname,      _showGoodsPrice: goodsPrice !== null && (depPrice === null || goodsPrice !== depPrice),
+      _strikeGoodsPrice: goodsPrice !== null && depPrice !== null && goodsPrice > depPrice,
+      _strikeDepPrice: goodsPrice !== null && depPrice !== null && depPrice > goodsPrice,
+      _useGoodsPrice: goodsPrice !== null && depPrice !== null && depPrice > goodsPrice,
+      _hasDepOrder: !!(item.depGoodsDepOrderList && item.depGoodsDepOrderList.length),
+    });
   },
 
   // 获取分类名称
@@ -730,10 +903,10 @@ Page({
    */
 
   changeStandard: function (e) {
-
+    var name = e.detail ? e.detail.applyStandardName : e.currentTarget.dataset.name;
     this.setData({
-      applyStandardName: e.detail.applyStandardName,
-      priceLevel: e.detail.level,
+      applyStandardName: name,
+      priceLevel: e.detail ? e.detail.level : this.data.priceLevel,
     })
     var levelTwoStandard = "";
     if (this.data.itemDis != null) {
@@ -759,52 +932,66 @@ Page({
         })
       }
     }
+    this._refreshTierRangeText();
+    this._updateShowTierPricing(() => {
+      this._recalcApplySubtotal();
+    });
   },
 
 
   // 
   applyGoodsDep(e) {
+    this._cancelOrderModalCloseTimer();
     var depGoods = e.currentTarget.dataset.depgoods;
+    var standard = depGoods.nxDdgDepGoodsStandardname;
     this.setData({
       editOrderIndex: e.currentTarget.dataset.index,
-      depGoods: e.currentTarget.dataset.depgoods,
-      applyStandardName: e.currentTarget.dataset.standard,
-      applyRemark: depGoods.nxDdgOrderRemark,
-      applyStandardName: depGoods.nxDdgOrderStandard,
-      priceLevel: e.currentTarget.dataset.level,
+      depGoods: depGoods,
+      itemDis: null,
+      applyStandardName: standard,
+      applyRemark: depGoods.nxDdgOrderRemark || '',
+      applyNumber: '1',
+      priceLevel: e.currentTarget.dataset.level || 1,
+      editApply: false,
       canSave: true,
       showCashDep: true,
-      applySubtotal: "0",
-    })
-    
-
+      showCash: false,
+      orderModalClosing: false,
+    }, () => {
+      this._openOrderModalWithTierPrice();
+    });
   },
 
 
   // 
   applyGoods(e) {
+    this._cancelOrderModalCloseTimer();
     var item = e.currentTarget.dataset.item;
     this.setData({
       fatherIndex: e.currentTarget.dataset.fatherindex,
       grandIndex: e.currentTarget.dataset.grandindex,
       editOrderIndex: e.currentTarget.dataset.index,
-    
-      itemDis: e.currentTarget.dataset.item,
+      itemDis: item,
       applyStandardName: e.currentTarget.dataset.standard,
-      applySubtotal: "0.0元",
       depGoods: e.currentTarget.dataset.depgoods,
-      canSave: false,
+      applyNumber: '1',
+      applyRemark: '',
+      editApply: false,
+      canSave: true,
       showCash: true,
-      applySubtotal: "0",
+      showCashDep: false,
+      orderModalClosing: false,
       priceLevel: e.currentTarget.dataset.level,
-    })
-    
+    }, () => {
+      this._openOrderModalWithTierPrice();
+    });
   },
 
 
 
   //depGoodsEdit
   toEditApplyDep(e) {
+    this._cancelOrderModalCloseTimer();
     var applyItem = e.currentTarget.dataset.order;
     var itemStatus = applyItem.nxDoPurchaseStatus;
     console.log("orderitmememememe", applyItem);
@@ -827,14 +1014,19 @@ Page({
         editOrderIndex: e.currentTarget.dataset.index,
         applyItem: e.currentTarget.dataset.order,
         showCashDep: true,
+        showCash: false,
+        orderModalClosing: false,
+        itemDis: null,
         goodsName: e.currentTarget.dataset.depgoods.nxDdgDepGoodsName,
         applyStandardName: applyItem.nxDoStandard,
         editApply: true,
-        applyNumber: applyItem.nxDoQuantity,
+        applyNumber: String(applyItem.nxDoQuantity),
         applyRemark: applyItem.nxDoRemark,
         depGoods: e.currentTarget.dataset.depgoods,
         priceLevel: applyItem.nxDoCostPriceLevel,
         printStandard: applyItem.nxDoPrintStandard,
+      }, () => {
+        this._openOrderModalWithTierPrice();
       })
     }
   },
@@ -842,6 +1034,7 @@ Page({
 
   //nxDisEdit
   toEditApply(e) {
+    this._cancelOrderModalCloseTimer();
    
 
     if (e.currentTarget.dataset.order.nxDoPurchaseStatus < 5) {
@@ -850,15 +1043,20 @@ Page({
         applyItem: e.currentTarget.dataset.order,
         editOrderIndex: e.currentTarget.dataset.index,
         showCash: true,
+        showCashDep: false,
+        orderModalClosing: false,
         applySubtotal: applyItem.nxDoSubtotal,
         applyStandardName: applyItem.nxDoStandard,
         printStandard: applyItem.nxDoPrintStandard,
         itemDis: e.currentTarget.dataset.item,
         depGoods: e.currentTarget.dataset.depgoods,
         editApply: true,
-        applyNumber: applyItem.nxDoQuantity,
+        applyNumber: String(applyItem.nxDoQuantity),
         applyRemark: applyItem.nxDoRemark,
-        priceLevel: applyItem.nxDoCostPriceLevel
+        priceLevel: e.currentTarget.dataset.level || applyItem.nxDoCostPriceLevel,
+        printStandard: applyItem.nxDoPrintStandard,
+      }, () => {
+        this._openOrderModalWithTierPrice();
       })
 
      
@@ -886,11 +1084,15 @@ Page({
 
     this.setData({
       showCashDep: false,
+      showCash: false,
       editApply: false,
       applyItem: "",
       item: "",
       applyNumber: "",
       applyStandardName: "",
+      applySubtotal: "",
+      applySubtotalPending: false,
+      applyPriceStandard: "",
     })
   },
 
@@ -905,11 +1107,16 @@ Page({
 
     this.setData({
       show: false,
+      showCash: false,
+      showCashDep: false,
       editApply: false,
       applyItem: "",
       item: "",
       applyNumber: "",
       applyStandardName: "",
+      applySubtotal: "",
+      applySubtotalPending: false,
+      applyPriceStandard: "",
     })
   },
 
@@ -921,11 +1128,13 @@ Page({
     var weekYear = dateUtils.getArriveWeeksYear(0);
     var week = dateUtils.getArriveWhatDay(0);
     var depDisGoodsId = -1;
-    var price = "";
+    var price = this._getSubmitUnitPrice();
    
 
     var weight = null;
-    var subtotal = null;
+    var subtotal = price && price !== '0.1' && this._canCalculateApplySubtotal()
+      ? (Number(price) * Number(e.detail.applyNumber || 0)).toFixed(1)
+      : null;
     var costSubtotal = 0;
     var profitSubtotal = 0;
     var costPrice = this.data.itemDis.nxDgBuyingPrice;
@@ -957,6 +1166,9 @@ Page({
       nxDoDistributerId: this.data.disId,
       nxDoDepartmentFatherId: this.data.depFatherId,
       nxDoQuantity: e.detail.applyNumber,
+      nxDoPrice: price && price !== '0.1' ? String(price) : null,
+      nxDoWeight: weight,
+      nxDoSubtotal: subtotal,
      
       nxDoStandard: e.detail.applyStandardName,
       nxDoRemark: e.detail.applyRemark,
@@ -971,7 +1183,8 @@ Page({
       nxDoNxGoodsId: this.data.itemDis.nxDgNxGoodsId,
       nxDoNxGoodsFatherId: this.data.itemDis.nxDgNxFatherId,
       nxDoGoodsType: this.data.itemDis.nxDgPurchaseAuto,
-      nxDoPrintStandard: this.data.itemDis.nxDgGoodsStandardname,
+      nxDoCostPriceLevel: this.data.priceLevel,
+      nxDoPrintStandard: this.data.printStandard || e.detail.applyStandardName,
     };
 
     console.log("savcash",dg);
@@ -984,10 +1197,7 @@ Page({
           title: '保存成功',
         })
 
-        var data = "goodsList[" + this.data.editOrderIndex + "].nxDepartmentOrdersEntity";
-        this.setData({
-          [data]: res.result.data
-        })
+        this._upsertGoodsListOrder(this.data.editOrderIndex, res.result.data);
        
         // 新增：同步更新 depGoodsArrAi
         if (res.result.data.nxDoDepDisGoodsId !== -1) {
@@ -1036,13 +1246,19 @@ Page({
 
 
   _updateDisOrderCash(e){
+    var price = this._getSubmitUnitPrice();
+    var subtotal = price && this._canCalculateApplySubtotal()
+      ? (Number(price) * Number(e.detail.applyNumber || 0)).toFixed(1)
+      : null;
     var dg = {
       id: this.data.applyItem.nxDepartmentOrdersId,
       weight: e.detail.applyNumber,
       standard: e.detail.applyStandardName,
       remark: e.detail.applyRemark,
-      printStandard: this.data.printStandard,
-      priceLevel: this.data.priceLevel
+      printStandard: this.data.printStandard || this.data.applyPriceStandard || e.detail.applyStandardName,
+      priceLevel: this.data.priceLevel,
+      price: price,
+      subtotal: subtotal
     };
     console.log("updatate", dg);
     updateOrder(dg).then(res => {
@@ -1109,10 +1325,7 @@ Page({
         for (let i = 0; i < goodsList.length; i++) {
           if (goodsList[i].nxDistributerGoodsId === nxDistributerGoodsId) {
             console.log(`找到匹配的 goodsList[${i}]`);
-            const updatePath = `goodsList[${i}].nxDepartmentOrdersEntity`;
-            this.setData({
-              [updatePath]: updatedOrder
-            });
+            this._upsertGoodsListOrder(i, updatedOrder);
             break;
           }
         }
@@ -1142,9 +1355,10 @@ Page({
     var arriveOnlyDate = dateUtils.getArriveOnlyDate(0);
     var weekYear = dateUtils.getArriveWeeksYear(0);
     var week = dateUtils.getArriveWhatDay(0);
-    var price = null;
+    var priceNum = this._getDepGoodsFinalPrice(this.data.depGoods);
+    var price = priceNum !== null ? String(priceNum) : null;
     var weight = null;
-    var subtotal = null;
+    var subtotal = priceNum !== null && this._canCalculateApplySubtotal() ? (Number(priceNum) * Number(e.detail.applyNumber || 0)).toFixed(1) : null;
     var userId = -1;
     if(this.data.userInfo !== null){
        userId = this.data.userInfo.nxDepartmentUserId;
@@ -1168,7 +1382,7 @@ Page({
       nxDoArriveOnlyDate: arriveOnlyDate,
       nxDoArriveWhatDay: week,
       nxDoCostPriceLevel: this.data.priceLevel,
-      nxDoPrintStandard: this.data.printStandard,
+      nxDoPrintStandard: this.data.printStandard || e.detail.applyStandardName,
     };
    console.log("dg",dg);
     nxDepSaveApply(dg).then(res => {
@@ -1206,12 +1420,8 @@ Page({
         for (let i = 0; i < goodsList.length; i++) {
           console.log(`检查 goodsList[${i}].nxDistributerGoodsId:`, goodsList[i].nxDistributerGoodsId);
           if (goodsList[i].nxDistributerGoodsId === nxDistributerGoodsId) {
-            const updatePath = `goodsList[${i}].nxDepartmentOrdersEntity`;
-            console.log('找到匹配，更新路径:', updatePath, '更新内容:', updatedOrder);
-            this.setData({
-              [updatePath]: updatedOrder
-            });
-         
+            console.log('找到匹配，upsert 订单:', updatedOrder);
+            this._upsertGoodsListOrder(i, updatedOrder);
             break;
           }
         }
@@ -1303,10 +1513,7 @@ Page({
         for (let i = 0; i < goodsList.length; i++) {
           if (goodsList[i].nxDistributerGoodsId === nxDistributerGoodsId) {
             console.log(`找到匹配的 goodsList[${i}]`);
-            const updatePath = `goodsList[${i}].nxDepartmentOrdersEntity`;
-            this.setData({
-              [updatePath]: updatedOrder
-            });
+            this._upsertGoodsListOrder(i, updatedOrder);
             break;
           }
         }
@@ -1341,15 +1548,23 @@ Page({
         var newId = res.result.data.cataArr[0].fatherGoodsEntities[0].nxDistributerFatherGoodsId;
         this.setData({
           grandList: res.result.data.cataArr,
-          sortDepGoodsArrDis: res.result.data.depGoodsArr,
+          sortDepGoodsArrDis: [],
           fatherArrDis: res.result.data.cataArr[0].fatherGoodsEntities,
           leftGreatId: res.result.data.cataArr[0].nxDistributerFatherGoodsId,
           selectedSubCategoryId: res.result.data.cataArr[0].fatherGoodsEntities[0].nxDistributerFatherGoodsId,
           greatName: res.result.data.cataArr[0].nxDfgFatherGoodsName,
           fatherSonsIndex: 0,
           activeSubCatId: newId,
+          manualFilterGrandId: null,
+          goodsList: [],
+          currentPageDis: 1,
+          totalPageDis: 0,
+          totalCountDis: 0,
+          disGoodsScrollTop: 0,
+          scrollIntoView: '',
+          subcatScrollIntoView: '',
         })
-        that._getFatherGoodsDis();
+        that._getFatherGoodsDis(true);
 
 
       }
@@ -1357,33 +1572,47 @@ Page({
   },
 
 
-  _getFatherGoodsDis() {
+  _getFatherGoodsDis(isRefresh, options) {
+    options = options || {};
+    const requestSeq = (this.data.manualRequestSeq || 0) + 1;
+    this.setData({
+      manualRequestSeq: requestSeq,
+      isLoading: true,
+    });
     const data = {
       depId: this.data.depId,
+      disId: this.data.disId,
       fatherId: this.data.leftGreatId,
+      grandId: this.data.manualFilterGrandId,
       limit: this.data.limit,
       page: this.data.currentPageDis,
     };
 
     nxDepGetDisFatherGoods(data).then(res => {
+      if (requestSeq !== this.data.manualRequestSeq) return;
       if (res.result.code == 0) {
 
-        const processedList = this.processGoodsListDis(res.result.page.list);
+        const newItems = res.result.page.list || [];
+        const rawList = isRefresh ? newItems : this.data.goodsList.concat(newItems);
+        const processedList = this.processGoodsListDis(rawList);
 
-        var subCatId = this.data.activeSubCatId;
         this.setData({
           goodsList: processedList,
           currentPageDis: this.data.currentPageDis,
           totalPageDis: res.result.page.totalPage,
           totalCountDis: res.result.page.totalCount,
-
-          subcatScrollIntoView: `subcat-${subCatId}`,
-          scrollIntoView: `cat-${subCatId}` // 右侧商品区锚点
+          isLoading: false,
         }, () => {
-          // 数据更新后计算分类位置
-          this.calculateCategoryPositionsDis();
-
+          if (options.autoFill) {
+            this._autoFillNextSubCatDis(options.autoFillCount || 0);
+          }
         });
+      } else {
+        this.setData({ isLoading: false });
+      }
+    }).catch(() => {
+      if (requestSeq === this.data.manualRequestSeq) {
+        this.setData({ isLoading: false });
       }
     });
   },
@@ -1413,6 +1642,10 @@ Page({
       fatherArrDis: this.data.grandList[e.currentTarget.dataset.index].fatherGoodsEntities,
       selectedSubCategoryId: this.data.grandList[e.currentTarget.dataset.index].fatherGoodsEntities[0].nxDistributerFatherGoodsId,
       activeSubCatId: this.data.grandList[e.currentTarget.dataset.index].fatherGoodsEntities[0].nxDistributerFatherGoodsId,
+      manualFilterGrandId: null,
+      disGoodsScrollTop: 0,
+      scrollIntoView: '',
+      subcatScrollIntoView: '',
 
     }, () => {
       // 用 this.createSelectorQuery() 保证作用域
@@ -1433,10 +1666,8 @@ Page({
           leftScrollTopNx: targetScrollTop
         });
       });
+      this._getFatherGoodsDis(true);
     });
-    // 调用接口获取商品ID列表
-    this._getGoodsIdsByGreatId();
-    this._getFatherGoodsDis();
   },
 
 
@@ -1460,77 +1691,18 @@ Page({
   },
 
   onScrollToLowerDis: function () {
-    // 防止重复请求
-    if (this.data.isLoading || this.data.goodsList.length >= this.data.totalCountDis) return;
-
-    this.setData({
-      isLoading: true
-    });
-
-    const {
-      currentPageDis,
-      totalPageDis,
-      searchFather,
-      leftGreatId,
-      depId,
-      limit
-    } = this.data;
-
-    // 确保非搜索模式，并且当前页数未超过总页数
-    if (currentPageDis <= totalPageDis) {
-      // 先设置下一页页码
-      const nextPage = currentPageDis + 1;
-      this.setData({
-        currentPageDis: nextPage
-      });
-
-      const data = {
-        limit: limit,
-        page: nextPage, // 使用下一页页码请求数据
-        depId: depId,
-        fatherId: leftGreatId,
-      };
-
-
-      nxDepGetDisFatherGoods(data)
-        .then((res) => {
-          if (res.result.code == 0) {
-            const newItems = res.result.page.list || [];
-            const updatedGoodsList = [...this.data.goodsList, ...newItems];
-
-            // 更新商品列表和分页信息
-            this.setData({
-              goodsList: updatedGoodsList,
-              totalPageDis: res.result.page.totalPage,
-              totalCountDis: res.result.page.totalCount,
-              isLoading: false,
-            });
-
-            // 如果已达到 totalCount，停止加载
-            if (updatedGoodsList.length >= this.data.totalCount) {
-              this.setData({
-                isLoading: false
-              });
-            }
-
-            // 重新计算右侧商品高度
-            this.calculateSubCategoryHeightsDis();
-          } else {
-            wx.showToast({
-              title: '获取商品失败',
-              icon: 'none'
-            });
-            this.setData({
-              isLoading: false
-            });
-          }
-        })
-
-    } else {
-      this.setData({
-        isLoading: false
-      });
+    if (this.data.isLoading) return;
+    if (this.data.currentPageDis >= this.data.totalPageDis) {
+      if (this.data.manualFilterGrandId) {
+        this._loadNextSubCatDis(false, 0);
+      }
+      return;
     }
+    this.setData({
+      currentPageDis: this.data.currentPageDis + 1,
+    }, () => {
+      this._getFatherGoodsDis(false);
+    });
   },
 
 
@@ -1578,31 +1750,71 @@ Page({
 
   onSubCatTapDis(e) {
     const subCatId = e.currentTarget.dataset.id;
-
-    const hasGoods = this.data.goodsList.some(item => String(item.nxDgDfgGoodsGrandId) === String(subCatId));
-    
-
     this.setData({
       showAllSubCat: false,
       activeSubCatId: String(subCatId),
-      subcatScrollIntoView: `subcat-${subCatId}`
+      subcatScrollIntoView: `subcat-${subCatId}`,
+      manualFilterGrandId: subCatId,
+      goodsList: [],
+      currentPageDis: 1,
+      totalPageDis: 0,
+      totalCountDis: 0,
+      disGoodsScrollTop: 0,
+      scrollIntoView: '',
     }, () => {
+      this._getFatherGoodsDis(true, { autoFill: true, autoFillCount: 0 });
     });
+  },
 
-    if (hasGoods) {
-      this.setData({
-        scrollIntoView: ''
-      }, () => {
-        setTimeout(() => {
-          this.setData({
-            scrollIntoView: `cat-${subCatId}`
-          }, () => {
-          });
-        }, 50);
-      });
-    } else {
-      this.startLoadingGoodsForSubCat(subCatId);
+  _getCurrentSubCatIndexDis() {
+    var list = this.data.fatherArrDis || [];
+    var currentId = String(this.data.manualFilterGrandId || '');
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].nxDistributerFatherGoodsId) === currentId) {
+        return i;
+      }
     }
+    return -1;
+  },
+
+  _loadNextSubCatDis(autoFill, autoFillCount) {
+    var list = this.data.fatherArrDis || [];
+    var idx = this._getCurrentSubCatIndexDis();
+    var next = idx >= 0 ? list[idx + 1] : null;
+    if (!next) {
+      return false;
+    }
+    var nextId = next.nxDistributerFatherGoodsId;
+    this.setData({
+      activeSubCatId: String(nextId),
+      subcatScrollIntoView: 'subcat-' + nextId,
+      manualFilterGrandId: nextId,
+      currentPageDis: 1,
+      totalPageDis: 0,
+      totalCountDis: 0,
+    }, () => {
+      this._getFatherGoodsDis(false, {
+        autoFill: !!autoFill,
+        autoFillCount: autoFillCount || 0,
+      });
+    });
+    return true;
+  },
+
+  _autoFillNextSubCatDis(autoFillCount) {
+    if (!this.data.manualFilterGrandId) {
+      return;
+    }
+    if (autoFillCount >= 3) {
+      return;
+    }
+    if (this.data.currentPageDis < this.data.totalPageDis) {
+      return;
+    }
+    if ((this.data.goodsList || []).length >= 8) {
+      return;
+    }
+    this._loadNextSubCatDis(true, autoFillCount + 1);
   },
 
   async startLoadingGoodsForSubCat(subCatId) {
@@ -1711,15 +1923,19 @@ Page({
   },
 
   processGoodsListDis(list) {
-    // 排序
-    list.sort((a, b) => {
-      if (a.nxDgDfgGoodsGrandId === b.nxDgDfgGoodsGrandId) return 0;
-      return a.nxDgDfgGoodsGrandId > b.nxDgDfgGoodsGrandId ? 1 : -1;
-    });
-    // 去重
+    // 后端已按配送商商品 sort 分页返回；这里不能再按分类 id 重排，否则会打乱商品管理里的顺序。
     const goodsMap = new Map();
     list.forEach(item => {
-      goodsMap.set(String(item.nxDistributerGoodsId), item);
+      const id = String(item.nxDistributerGoodsId);
+      const normalized = this._attachDisGoodsOrders(Object.assign({}, item));
+      if (!goodsMap.has(id)) {
+        goodsMap.set(id, normalized);
+      } else {
+        const existing = goodsMap.get(id);
+        const merged = this._normalizeDisGoodsOrders(existing).concat(this._normalizeDisGoodsOrders(normalized));
+        const deduped = this._attachDisGoodsOrders({ disGoodsDepOrderList: merged });
+        Object.assign(existing, deduped);
+      }
     });
     const uniqueList = Array.from(goodsMap.values());
     let currentCategory = null;
@@ -1966,11 +2182,8 @@ Page({
         
         for (let i = 0; i < goodsList.length; i++) {
           if (goodsList[i].nxDistributerGoodsId === nxDistributerGoodsId) {
-            console.log(`找到匹配的 goodsList[${i}]，清空订单`);
-            const updatePath = `goodsList[${i}].nxDepartmentOrdersEntity`;
-            this.setData({
-              [updatePath]: null
-            });
+            console.log(`找到匹配的 goodsList[${i}]，删除订单 ${orderId}`);
+            this._removeGoodsListOrder(i, orderId);
             break;
           }
         }
@@ -1990,14 +2203,609 @@ Page({
     this.setData({
       show: false,
       showDep: false,
+      showCash: false,
+      showCashDep: false,
       applyStandardName: "",
       item: "",
       editApply: false,
       applyNumber: "",
       applyRemark: "",
-      applySubtotal: ""
-
+      applySubtotal: "",
+      applySubtotalPending: false,
+      applyPriceStandard: "",
     })
+  },
+
+  closeOrderModal() {
+    if (this.data.orderModalClosing) {
+      return;
+    }
+    if (this._orderModalCloseTimer) {
+      clearTimeout(this._orderModalCloseTimer);
+    }
+    this.setData({
+      orderModalClosing: true,
+    });
+    this._orderModalCloseTimer = setTimeout(() => {
+      this.setData({
+        showCash: false,
+        showCashDep: false,
+        orderModalClosing: false,
+        editApply: false,
+        applyNumber: '',
+        applyRemark: '',
+        canSave: false,
+        tierSaleRule: null,
+        tierPrices: [],
+        tierDisplayUnit: '',
+        showTierPricing: false,
+        applyCurrentUnitPrice: '',
+        applySubtotal: '',
+        applySubtotalPending: false,
+        applyPriceStandard: '',
+        activeTierId: '',
+      });
+      this._orderModalCloseTimer = null;
+    }, 180);
+  },
+
+  _cancelOrderModalCloseTimer() {
+    if (this._orderModalCloseTimer) {
+      clearTimeout(this._orderModalCloseTimer);
+      this._orderModalCloseTimer = null;
+    }
+  },
+
+  _resetOrderModalState() {
+    this.setData({
+      editApply: false,
+      applyNumber: '',
+      applyRemark: '',
+      canSave: false,
+      tierSaleRule: null,
+      tierPrices: [],
+      tierDisplayUnit: '',
+      showTierPricing: false,
+      applyCurrentUnitPrice: '',
+      applySubtotal: '',
+      applySubtotalPending: false,
+      applyPriceStandard: '',
+      activeTierId: '',
+    });
+  },
+
+  orderModalDont() {},
+
+  _shouldShowTierPricing() {
+    var rule = this.data.tierSaleRule;
+    if (!rule || !(this.data.tierPrices && this.data.tierPrices.length)) {
+      return false;
+    }
+    var unitType = String(rule.tierPriceUnitType || '').toUpperCase();
+    var level = Number(this.data.priceLevel);
+    if (level === 2) {
+      return unitType === 'OUTER_PACKAGE';
+    }
+    if (level === 1) {
+      return unitType === 'GOODS_STANDARD';
+    }
+    return false;
+  },
+
+  _updateShowTierPricing(callback) {
+    this.setData({
+      showTierPricing: this._shouldShowTierPricing(),
+    }, callback);
+  },
+
+  _getLargeUnitName() {
+    var item = this._getModalDisGoods();
+    if (!item) {
+      return '';
+    }
+    if (item.nxDgWillPriceTwoStandard) {
+      return String(item.nxDgWillPriceTwoStandard).trim();
+    }
+    if (item.nxDgCartonUnit) {
+      return String(item.nxDgCartonUnit).trim();
+    }
+    return '';
+  },
+
+  _isLargeUnitName(name) {
+    var std = String(name || '').trim();
+    if (!std) {
+      return false;
+    }
+    var largeUnit = this._getLargeUnitName();
+    if (largeUnit && std === largeUnit) {
+      return true;
+    }
+    var rule = this.data.tierSaleRule;
+    if (rule && String(rule.tierPriceUnitType).toUpperCase() === 'OUTER_PACKAGE' && rule.saleUnit) {
+      return std === String(rule.saleUnit).trim();
+    }
+    return false;
+  },
+
+  _getTierDisplayUnit() {
+    var rule = this.data.tierSaleRule;
+    if (rule && rule.saleUnit) {
+      return String(rule.saleUnit).trim();
+    }
+    return this.data.applyStandardName || '';
+  },
+
+  _isOuterPackageUnit(standard) {
+    var std = String(standard || '').trim();
+    if (!std) {
+      return false;
+    }
+    var rule = this.data.tierSaleRule;
+    if (rule && rule.saleUnit && std === String(rule.saleUnit).trim()) {
+      return true;
+    }
+    return this._isCartonStandard(std, this._getModalDisGoods());
+  },
+
+  _applyTierDefaultStandard(rule, callback) {
+    var level = Number(this.data.priceLevel);
+    if (level === 2) {
+      var item = this._getModalDisGoods();
+      var largeStandard = item && item.nxDgWillPriceTwoStandard
+        ? String(item.nxDgWillPriceTwoStandard).trim()
+        : '';
+      if (rule && String(rule.tierPriceUnitType).toUpperCase() === 'OUTER_PACKAGE' && rule.saleUnit) {
+        largeStandard = String(rule.saleUnit).trim();
+      }
+      if (largeStandard) {
+        this.setData({
+          applyStandardName: largeStandard,
+          tierDisplayUnit: largeStandard,
+        }, callback);
+        return;
+      }
+    }
+    if (callback) {
+      callback();
+    }
+  },
+
+  _getModalDisGoods() {
+    if (this.data.itemDis) {
+      return this.data.itemDis;
+    }
+    if (this.data.depGoods && this.data.depGoods.nxDistributerGoodsEntity) {
+      return this.data.depGoods.nxDistributerGoodsEntity;
+    }
+    return null;
+  },
+
+  _getModalDisGoodsId() {
+    if (this.data.itemDis && this.data.itemDis.nxDistributerGoodsId) {
+      return this.data.itemDis.nxDistributerGoodsId;
+    }
+    if (this.data.depGoods) {
+      return this.data.depGoods.nxDdgDisGoodsId || (this.data.depGoods.nxDistributerGoodsEntity
+        ? this.data.depGoods.nxDistributerGoodsEntity.nxDistributerGoodsId
+        : null);
+    }
+    return null;
+  },
+
+  _openOrderModalWithTierPrice() {
+    var goodsId = this._getModalDisGoodsId();
+    this._loadTierPriceForModal(goodsId, () => {
+      this._updateShowTierPricing(() => {
+        this._recalcApplySubtotal();
+      });
+    });
+  },
+
+  _refreshTierRangeText() {
+    var unit = this._getTierDisplayUnit();
+    var tiers = (this.data.tierPrices || []).map(function (t) {
+      var rangeText = t.maxQuantity == null
+        ? (t.minQuantity + unit + ' 以上')
+        : (t.minQuantity + '～' + t.maxQuantity + unit);
+      return Object.assign({}, t, { _rangeText: rangeText });
+    });
+    this.setData({
+      tierPrices: tiers,
+      tierDisplayUnit: unit,
+    });
+  },
+
+  _loadTierPriceForModal(distributerGoodsId, callback) {
+    var emptyTier = { saleRule: null, tierPrices: [] };
+    if (!distributerGoodsId) {
+      this._applyTierPriceDataForModal(emptyTier, callback);
+      return;
+    }
+    var cacheKey = String(distributerGoodsId);
+    var cache = this.data.tierPriceCache || {};
+    if (Object.prototype.hasOwnProperty.call(cache, cacheKey)) {
+      this._applyTierPriceDataForModal(cache[cacheKey], callback);
+      return;
+    }
+    var requestSeq = (this.data.tierPriceRequestSeq || 0) + 1;
+    this.setData({ tierPriceRequestSeq: requestSeq });
+    getGoodsTierPriceList(distributerGoodsId).then((res) => {
+      if (requestSeq !== this.data.tierPriceRequestSeq) {
+        return;
+      }
+      if (res.result.code !== 0 || !res.result.data) {
+        this.setData({
+          ['tierPriceCache.' + cacheKey]: emptyTier,
+        }, () => {
+          this._applyTierPriceDataForModal(emptyTier, callback);
+        });
+        return;
+      }
+      this.setData({
+        ['tierPriceCache.' + cacheKey]: res.result.data,
+      }, () => {
+        this._applyTierPriceDataForModal(res.result.data, callback);
+      });
+    }).catch(() => {
+      if (requestSeq !== this.data.tierPriceRequestSeq) {
+        return;
+      }
+      this.setData({
+        ['tierPriceCache.' + cacheKey]: emptyTier,
+      }, () => {
+        this._applyTierPriceDataForModal(emptyTier, callback);
+      });
+    });
+  },
+
+  _applyTierPriceDataForModal(data, callback) {
+    var rule = data && data.saleRule;
+    var tiers = data && data.tierPrices ? data.tierPrices : [];
+    var that = this;
+    if (!rule || (rule.status !== 'ACTIVE' && rule.ruleStatus !== 'ACTIVE')) {
+      this.setData({ tierSaleRule: null, tierPrices: [], tierDisplayUnit: '', showTierPricing: false }, callback);
+      return;
+    }
+    var unitType = String(rule.tierPriceUnitType || '').toUpperCase();
+    var displayUnit = unitType === 'OUTER_PACKAGE' && rule.saleUnit
+      ? String(rule.saleUnit).trim()
+      : (this.data.applyStandardName || '');
+    tiers = tiers.filter(function (t) {
+      return t.status === 'ACTIVE' || t.tierStatus === 'ACTIVE';
+    }).map(function (t) {
+      var rangeText = t.maxQuantity == null
+        ? (t.minQuantity + displayUnit + ' 以上')
+        : (t.minQuantity + '～' + t.maxQuantity + displayUnit);
+      return Object.assign({}, t, { _rangeText: rangeText });
+    });
+    this.setData({
+      tierSaleRule: rule,
+      tierPrices: tiers,
+      tierDisplayUnit: displayUnit,
+    }, function () {
+      that._applyTierDefaultStandard(rule, callback);
+    });
+  },
+
+  _isCartonStandard(standard, disGoods) {
+    if (!standard || !disGoods || !disGoods.nxDgCartonUnit) {
+      return false;
+    }
+    var orderStd = String(standard).trim();
+    var carton = String(disGoods.nxDgCartonUnit).trim();
+    if (!orderStd || !carton) {
+      return false;
+    }
+    if (orderStd === carton) {
+      return true;
+    }
+    var groups = [
+      ['件', '箱'],
+      ['袋', '包', '代']
+    ];
+    for (var i = 0; i < groups.length; i++) {
+      var group = groups[i];
+      if (group.indexOf(orderStd) >= 0 && group.indexOf(carton) >= 0) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  _matchesTierUnitType(tierPriceUnitType) {
+    if (!tierPriceUnitType) {
+      return false;
+    }
+    var unitType = String(tierPriceUnitType).trim().toUpperCase();
+    var currentStd = String(this.data.applyStandardName || '').trim();
+    var isOuterPackage = this._isOuterPackageUnit(currentStd);
+    if (unitType === 'OUTER_PACKAGE') {
+      return isOuterPackage;
+    }
+    if (unitType === 'GOODS_STANDARD') {
+      return !isOuterPackage;
+    }
+    return false;
+  },
+
+  _parseTierQuantity(raw) {
+    if (raw == null || String(raw).trim() === '') {
+      return null;
+    }
+    var qty = Number(String(raw).trim());
+    if (!qty || qty <= 0) {
+      return null;
+    }
+    return Math.floor(qty);
+  },
+
+  _findMatchingTierPrice(quantity) {
+    var tier = this._findMatchingTier(quantity);
+    return tier ? tier.unitPrice : null;
+  },
+
+  _findMatchingTier(quantity) {
+    if (!this._shouldShowTierPricing()) {
+      return null;
+    }
+    var tiers = this.data.tierPrices || [];
+    var rule = this.data.tierSaleRule;
+    if (!rule || !tiers.length || !this._matchesTierUnitType(rule.tierPriceUnitType)) {
+      return null;
+    }
+    for (var i = 0; i < tiers.length; i++) {
+      var tier = tiers[i];
+      var min = Number(tier.minQuantity);
+      var max = tier.maxQuantity == null ? Number.MAX_SAFE_INTEGER : Number(tier.maxQuantity);
+      if (quantity >= min && quantity <= max) {
+        return tier;
+      }
+    }
+    return null;
+  },
+
+  _getTierId(tier) {
+    if (!tier) {
+      return '';
+    }
+    return String(tier.id || tier.tierPriceId || '');
+  },
+
+  _getOrderQtyStep() {
+    var rule = this.data.tierSaleRule;
+    if (rule && Number(rule.incrementStep) > 0) {
+      return Number(rule.incrementStep);
+    }
+    var standard = this.data.applyStandardName || '';
+    return standard === '斤' ? 0.1 : 1;
+  },
+
+  _getOrderQtyMin() {
+    var rule = this.data.tierSaleRule;
+    if (rule && Number(rule.minOrderQuantity) > 0) {
+      return Number(rule.minOrderQuantity);
+    }
+    return this._getOrderQtyStep();
+  },
+
+  _formatOrderQty(qty) {
+    var step = this._getOrderQtyStep();
+    if (step < 1) {
+      return Number(qty).toFixed(1);
+    }
+    return String(Math.round(Number(qty)));
+  },
+
+  _getBaseUnitPrice() {
+    if (this.data.showCashDep && this.data.depGoods) {
+      var depFinalPrice = this._getDepGoodsFinalPrice(this.data.depGoods);
+      return depFinalPrice !== null ? String(depFinalPrice) : this.data.depGoods.nxDdgOrderPrice;
+    }
+    if (!this.data.itemDis) {
+      return '0';
+    }
+    if (Number(this.data.priceLevel) === 2) {
+      return this.data.itemDis.nxDgWillPriceTwo;
+    }
+    return this.data.itemDis.nxDgWillPriceOne;
+  },
+
+  _getModalUnitPrice() {
+    var basePrice = this._getBaseUnitPrice();
+    if (basePrice === '0.1') {
+      return basePrice;
+    }
+    var tierQty = this._parseTierQuantity(this.data.applyNumber);
+    if (tierQty != null) {
+      var tierPrice = this._findMatchingTierPrice(tierQty);
+      if (this._toValidPrice(tierPrice) !== null) {
+        return String(tierPrice);
+      }
+    }
+    return basePrice;
+  },
+
+  _getSubmitUnitPrice() {
+    var shownPrice = this._toValidPrice(this.data.applyCurrentUnitPrice);
+    if (shownPrice !== null) {
+      return String(shownPrice);
+    }
+    var modalPrice = this._toValidPrice(this._getModalUnitPrice());
+    if (modalPrice !== null) {
+      return String(modalPrice);
+    }
+    return null;
+  },
+
+  _getModalPriceStandard() {
+    if (this.data.showCashDep && this.data.depGoods) {
+      var depGoods = this.data.depGoods;
+      var depPrice = this._toValidPrice(depGoods.nxDdgOrderPrice);
+      var goodsPriceInfo = this._getDepGoodsBasePriceInfo(depGoods);
+      var goodsPrice = goodsPriceInfo.price;
+      if (goodsPrice !== null && (depPrice === null || goodsPrice < depPrice)) {
+        return goodsPriceInfo.standard || '';
+      }
+      return depGoods.nxDdgOrderStandard || depGoods.nxDdgDepGoodsStandardname || '';
+    }
+    if (!this.data.itemDis) {
+      return '';
+    }
+    if (Number(this.data.priceLevel) === 2) {
+      return this.data.itemDis.nxDgWillPriceTwoStandard || '';
+    }
+    return this.data.itemDis.nxDgGoodsStandardname || '';
+  },
+
+  _canCalculateApplySubtotal() {
+    var orderStandard = String(this.data.applyStandardName || '').trim();
+    var priceStandard = String(this._getModalPriceStandard() || '').trim();
+    return !!orderStandard && !!priceStandard && orderStandard === priceStandard;
+  },
+
+  _recalcApplySubtotal() {
+    var price = this._getModalUnitPrice();
+    var priceStandard = this._getModalPriceStandard();
+    var qty = Number(this.data.applyNumber);
+    if (!qty || qty <= 0 || price === '0.1') {
+      this.setData({
+        applySubtotal: price === '0.1' ? '-' : '0',
+        applySubtotalPending: false,
+        applyPriceStandard: priceStandard,
+        applyCurrentUnitPrice: price === '0.1' ? '-' : price,
+        canSave: false,
+        activeTierId: '',
+      });
+      return;
+    }
+    var matchedTier = this._findMatchingTier(this._parseTierQuantity(qty));
+    if (!this._canCalculateApplySubtotal()) {
+      this.setData({
+        applyCurrentUnitPrice: price,
+        applyPriceStandard: priceStandard,
+        applySubtotal: '',
+        applySubtotalPending: true,
+        canSave: true,
+        activeTierId: this._getTierId(matchedTier),
+      });
+      return;
+    }
+    this.setData({
+      applyCurrentUnitPrice: price,
+      applyPriceStandard: priceStandard,
+      applySubtotal: (Number(price) * qty).toFixed(1),
+      applySubtotalPending: false,
+      canSave: true,
+      activeTierId: this._getTierId(matchedTier),
+    });
+  },
+
+  orderQtyReduce() {
+    var step = this._getOrderQtyStep();
+    var min = this._getOrderQtyMin();
+    var qty = Number(this.data.applyNumber || 0) - step;
+    if (qty < min) {
+      qty = min;
+    }
+    this.setData({
+      applyNumber: this._formatOrderQty(qty),
+    }, () => {
+      this._recalcApplySubtotal();
+    });
+  },
+
+  orderQtyAdd() {
+    var step = this._getOrderQtyStep();
+    var qty = Number(this.data.applyNumber || 0) + step;
+    if (qty > 9999) {
+      wx.showToast({
+        title: '最大不能超过9999',
+        icon: 'none',
+      });
+      return;
+    }
+    this.setData({
+      applyNumber: this._formatOrderQty(qty),
+    }, () => {
+      this._recalcApplySubtotal();
+    });
+  },
+
+  onSelectTierPrice(e) {
+    var tier = e.currentTarget.dataset.tier;
+    if (!tier) {
+      return;
+    }
+    var minQty = Number(tier.minQuantity);
+    if (!minQty || minQty <= 0) {
+      return;
+    }
+    this.setData({
+      applyNumber: this._formatOrderQty(minQty),
+      activeTierId: this._getTierId(tier),
+    }, () => {
+      this._recalcApplySubtotal();
+    });
+  },
+
+  onApplyRemarkInput(e) {
+    if (e.detail.value.length < 15) {
+      this.setData({
+        applyRemark: e.detail.value,
+      });
+    } else {
+      wx.showToast({
+        title: '最多输入15个字符。',
+        icon: 'none',
+      });
+    }
+  },
+
+  onSelectStandard(e) {
+    var name = e.currentTarget.dataset.name;
+    if (Number(this.data.priceLevel) === 1 && this._isLargeUnitName(name)) {
+      return;
+    }
+    this.setData({
+      applyStandardName: name,
+    });
+    var levelTwoStandard = '';
+    if (this.data.itemDis != null) {
+      levelTwoStandard = this.data.itemDis.nxDgWillPriceTwoStandard;
+      this.setData({
+        printStandard: name === levelTwoStandard ? levelTwoStandard : this.data.itemDis.nxDgGoodsStandardname,
+      });
+    } else if (this.data.depGoods != null) {
+      levelTwoStandard = this.data.depGoods.nxDgWillPriceTwoStandard;
+      this.setData({
+        printStandard: name === levelTwoStandard ? levelTwoStandard : this.data.depGoods.nxDdgDepGoodsStandardname,
+      });
+    }
+    this._refreshTierRangeText();
+    this._updateShowTierPricing(() => {
+      this._recalcApplySubtotal();
+    });
+  },
+
+  confirmOrderModal() {
+    if (!this.data.canSave || !this.data.applyNumber || Number(this.data.applyNumber) <= 0) {
+      wx.showToast({
+        title: '请填写有效数量',
+        icon: 'none',
+      });
+      return;
+    }
+    var detail = {
+      applyNumber: this.data.applyNumber,
+      applyStandardName: this.data.applyStandardName,
+      applyRemark: this.data.applyRemark,
+    };
+    if (this.data.showCashDep) {
+      this.confirmCashDep({ detail: detail });
+    } else {
+      this.confirmCash({ detail: detail });
+    }
   },
 
 

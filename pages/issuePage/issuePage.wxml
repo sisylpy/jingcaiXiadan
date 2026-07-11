@@ -36,6 +36,27 @@
         </view>
 
       </view>
+      
+
+      <view class="flex-row small bill-extra-row" wx:if="{{showCouponDiscount}}">
+        <text class="index"></text>
+        <text class="goods_name" style="margin-left: 40rpx;">
+          优惠券<text wx:if="{{bill.nxDbCouponName}}" class="bill-extra-sub">（{{bill.nxDbCouponName}}）</text>
+        </text>
+        <text class="standard"></text>
+        <text class="weight"></text>
+        <text class="order_price"></text>
+        <text class="subtotal bill-fee-discount">-{{billCouponDiscount}}</text>
+      </view>
+
+      <view class="flex-row small bill-extra-row" wx:if="{{showDeliveryFee}}">
+        <text class="index"></text>
+        <text class="goods_name" style="margin-left: 40rpx;">配送费</text>
+        <text class="standard"></text>
+        <text class="weight"></text>
+        <text class="order_price"></text>
+        <text class="subtotal">{{billDeliveryFee}}</text>
+      </view>
 
       <view class="flex-row  small fromTitle">
         <!-- <text class="index">序号</text> -->
@@ -111,7 +132,7 @@
     <view class="flex-column with-padding  weight_five normal" style="margin-bottom: 80rpx;">
       <view class="section_head flex-row-between  " style="width: {{(windowWidth - 44 ) / 2}}rpx; margin-left: {{(windowWidth - 80 ) / 2}}rpx;">
         <text>合计:</text>
-        <text class="total ">{{bill.nxDbTotal}}元</text>
+        <text class="total ">{{(showDeliveryFee || showCouponDiscount) && bill.nxDbPayAmount ? bill.nxDbPayAmount : bill.nxDbTotal}}元</text>
       </view>
     </view>
   </view>

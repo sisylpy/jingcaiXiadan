@@ -211,6 +211,9 @@ Page({
     leftGreatId: "",
     greatName: "",
     leftIndex: 0,
+    disGoodsScrollTop: 0,
+    manualFilterGrandId: null,
+    manualRequestSeq: 0,
 
     isLoading: false,
 
@@ -1440,47 +1443,69 @@ Page({
         var newId = res.result.data.cataArr[0].fatherGoodsEntities[0].nxDistributerFatherGoodsId;
         this.setData({
           grandList: res.result.data.cataArr,
-          sortDepGoodsArrDis: res.result.data.depGoodsArr,
+          sortDepGoodsArrDis: [],
           fatherArrDis: res.result.data.cataArr[0].fatherGoodsEntities,
           leftGreatId: res.result.data.cataArr[0].nxDistributerFatherGoodsId,
           selectedSubCategoryId: res.result.data.cataArr[0].fatherGoodsEntities[0].nxDistributerFatherGoodsId,
           greatName: res.result.data.cataArr[0].nxDfgFatherGoodsName,
           fatherSonsIndex: 0,
           activeSubCatId: newId,
+          manualFilterGrandId: null,
+          goodsList: [],
+          currentPageDis: 1,
+          totalPageDis: 0,
+          totalCountDis: 0,
+          disGoodsScrollTop: 0,
+          scrollIntoView: '',
+          subcatScrollIntoView: '',
         })
-        that._getFatherGoodsDis();
+        that._getFatherGoodsDis(true);
       }
     })
   },
 
 
-  _getFatherGoodsDis() {
+  _getFatherGoodsDis(isRefresh, options) {
+    options = options || {};
+    const requestSeq = (this.data.manualRequestSeq || 0) + 1;
+    this.setData({
+      manualRequestSeq: requestSeq,
+      isLoading: true,
+    });
     const data = {
       depId: this.data.depId,
+      disId: this.data.disId,
       fatherId: this.data.leftGreatId,
+      grandId: this.data.manualFilterGrandId,
       limit: this.data.limit,
       page: this.data.currentPageDis,
     };
 
     nxDepGetDisFatherGoods(data).then(res => {
+      if (requestSeq !== this.data.manualRequestSeq) return;
       if (res.result.code == 0) {
 
-        const processedList = this.processGoodsListDis(res.result.page.list);
+        const newItems = res.result.page.list || [];
+        const rawList = isRefresh ? newItems : this.data.goodsList.concat(newItems);
+        const processedList = this.processGoodsListDis(rawList);
 
-        var subCatId = this.data.activeSubCatId;
         this.setData({
           goodsList: processedList,
           currentPageDis: this.data.currentPageDis,
           totalPageDis: res.result.page.totalPage,
           totalCountDis: res.result.page.totalCount,
-
-          subcatScrollIntoView: `subcat-${subCatId}`,
-          scrollIntoView: `cat-${subCatId}` // 右侧商品区锚点
+          isLoading: false,
         }, () => {
-          // 数据更新后计算分类位置
-          this.calculateCategoryPositionsDis();
-
+          if (options.autoFill) {
+            this._autoFillNextSubCatDis(options.autoFillCount || 0);
+          }
         });
+      } else {
+        this.setData({ isLoading: false });
+      }
+    }).catch(() => {
+      if (requestSeq === this.data.manualRequestSeq) {
+        this.setData({ isLoading: false });
       }
     });
   },
@@ -1509,6 +1534,10 @@ Page({
       fatherArrDis: this.data.grandList[e.currentTarget.dataset.index].fatherGoodsEntities,
       selectedSubCategoryId: this.data.grandList[e.currentTarget.dataset.index].fatherGoodsEntities[0].nxDistributerFatherGoodsId,
       activeSubCatId: this.data.grandList[e.currentTarget.dataset.index].fatherGoodsEntities[0].nxDistributerFatherGoodsId,
+      manualFilterGrandId: null,
+      disGoodsScrollTop: 0,
+      scrollIntoView: '',
+      subcatScrollIntoView: '',
 
     }, () => {
       // 用 this.createSelectorQuery() 保证作用域
@@ -1529,11 +1558,8 @@ Page({
           leftScrollTopNx: targetScrollTop
         });
       });
+      this._getFatherGoodsDis(true);
     });
-    
-    // 调用接口获取商品ID列表
-    this._getGoodsIdsByGreatId();
-    this._getFatherGoodsDis();
   },
 
 
@@ -1557,77 +1583,18 @@ Page({
   },
 
   onScrollToLowerDis: function () {
-    // 防止重复请求
-    if (this.data.isLoading || this.data.goodsList.length >= this.data.totalCountDis) return;
-
-    this.setData({
-      isLoading: true
-    });
-
-    const {
-      currentPageDis,
-      totalPageDis,
-      searchFather,
-      leftGreatId,
-      depId,
-      limit
-    } = this.data;
-
-    // 确保非搜索模式，并且当前页数未超过总页数
-    if (currentPageDis <= totalPageDis) {
-      // 先设置下一页页码
-      const nextPage = currentPageDis + 1;
-      this.setData({
-        currentPageDis: nextPage
-      });
-
-      const data = {
-        limit: limit,
-        page: nextPage, // 使用下一页页码请求数据
-        depId: depId,
-        fatherId: leftGreatId,
-      };
-
-
-      nxDepGetDisFatherGoods(data)
-        .then((res) => {
-          if (res.result.code == 0) {
-            const newItems = res.result.page.list || [];
-            const updatedGoodsList = [...this.data.goodsList, ...newItems];
-
-            // 更新商品列表和分页信息
-            this.setData({
-              goodsList: updatedGoodsList,
-              totalPageDis: res.result.page.totalPage,
-              totalCountDis: res.result.page.totalCount,
-              isLoading: false,
-            });
-
-            // 如果已达到 totalCount，停止加载
-            if (updatedGoodsList.length >= this.data.totalCount) {
-              this.setData({
-                isLoading: false
-              });
-            }
-
-            // 重新计算右侧商品高度
-            this.calculateSubCategoryHeightsDis();
-          } else {
-            wx.showToast({
-              title: '获取商品失败',
-              icon: 'none'
-            });
-            this.setData({
-              isLoading: false
-            });
-          }
-        })
-
-    } else {
-      this.setData({
-        isLoading: false
-      });
+    if (this.data.isLoading) return;
+    if (this.data.currentPageDis >= this.data.totalPageDis) {
+      if (this.data.manualFilterGrandId) {
+        this._loadNextSubCatDis(false, 0);
+      }
+      return;
     }
+    this.setData({
+      currentPageDis: this.data.currentPageDis + 1,
+    }, () => {
+      this._getFatherGoodsDis(false);
+    });
   },
 
 
@@ -1672,23 +1639,73 @@ Page({
   },
 
 
-  // Dis点击标签事件
   onSubCatTapDis(e) {
     const subCatId = e.currentTarget.dataset.id;
-    const hasGoods = this.data.goodsList.some(item => String(item.nxDgDfgGoodsGrandId) === String(subCatId));
     this.setData({
       showAllSubCat: false,
       activeSubCatId: String(subCatId),
-      subcatScrollIntoView: `subcat-${subCatId}`
+      subcatScrollIntoView: `subcat-${subCatId}`,
+      manualFilterGrandId: subCatId,
+      goodsList: [],
+      currentPageDis: 1,
+      totalPageDis: 0,
+      totalCountDis: 0,
+      disGoodsScrollTop: 0,
+      scrollIntoView: '',
+    }, () => {
+      this._getFatherGoodsDis(true, { autoFill: true, autoFillCount: 0 });
     });
-    if (hasGoods) {
-      // 已有商品，直接滚动
-      this.setData({
-        scrollIntoView: `cat-${subCatId}`
-      });
-    } else {
-      this.startLoadingGoodsForSubCat(subCatId);
+  },
+
+  _getCurrentSubCatIndexDis() {
+    var list = this.data.fatherArrDis || [];
+    var currentId = String(this.data.manualFilterGrandId || '');
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].nxDistributerFatherGoodsId) === currentId) {
+        return i;
+      }
     }
+    return -1;
+  },
+
+  _loadNextSubCatDis(autoFill, autoFillCount) {
+    var list = this.data.fatherArrDis || [];
+    var idx = this._getCurrentSubCatIndexDis();
+    var next = idx >= 0 ? list[idx + 1] : null;
+    if (!next) {
+      return false;
+    }
+    var nextId = next.nxDistributerFatherGoodsId;
+    this.setData({
+      activeSubCatId: String(nextId),
+      subcatScrollIntoView: 'subcat-' + nextId,
+      manualFilterGrandId: nextId,
+      currentPageDis: 1,
+      totalPageDis: 0,
+      totalCountDis: 0,
+    }, () => {
+      this._getFatherGoodsDis(false, {
+        autoFill: !!autoFill,
+        autoFillCount: autoFillCount || 0,
+      });
+    });
+    return true;
+  },
+
+  _autoFillNextSubCatDis(autoFillCount) {
+    if (!this.data.manualFilterGrandId) {
+      return;
+    }
+    if (autoFillCount >= 3) {
+      return;
+    }
+    if (this.data.currentPageDis < this.data.totalPageDis) {
+      return;
+    }
+    if ((this.data.goodsList || []).length >= 8) {
+      return;
+    }
+    this._loadNextSubCatDis(true, autoFillCount + 1);
   },
 
   async startLoadingGoodsForSubCat(subCatId) {
@@ -1823,7 +1840,16 @@ Page({
     // 去重处理：确保每个商品ID只出现一次
     const goodsMap = new Map();
     list.forEach(item => {
-      goodsMap.set(String(item.nxDistributerGoodsId), item);
+      const id = String(item.nxDistributerGoodsId);
+      const normalized = this._attachDisGoodsOrders(Object.assign({}, item));
+      if (!goodsMap.has(id)) {
+        goodsMap.set(id, normalized);
+      } else {
+        const existing = goodsMap.get(id);
+        const merged = this._normalizeDisGoodsOrders(existing).concat(this._normalizeDisGoodsOrders(normalized));
+        const deduped = this._attachDisGoodsOrders({ nxDepartmentOrdersEntities: merged });
+        Object.assign(existing, deduped);
+      }
     });
     const uniqueList = Array.from(goodsMap.values());
     let currentCategory = null;
@@ -1844,6 +1870,32 @@ Page({
     });
 
     return result;
+  },
+
+  _normalizeDisGoodsOrders(item) {
+    var orders = [];
+    if (item.disGoodsDepOrderList && item.disGoodsDepOrderList.length) {
+      orders = item.disGoodsDepOrderList;
+    } else if (item.nxDepartmentOrdersEntities && item.nxDepartmentOrdersEntities.length) {
+      orders = item.nxDepartmentOrdersEntities;
+    } else if (item.nxDepartmentOrdersEntity) {
+      orders = [item.nxDepartmentOrdersEntity];
+    }
+    var map = new Map();
+    orders.forEach(function (o) {
+      if (o && o.nxDepartmentOrdersId != null) {
+        map.set(o.nxDepartmentOrdersId, o);
+      }
+    });
+    return Array.from(map.values());
+  },
+
+  _attachDisGoodsOrders(item) {
+    var list = this._normalizeDisGoodsOrders(item);
+    item.disGoodsDepOrderList = list;
+    item.nxDepartmentOrdersEntities = list;
+    item.nxDepartmentOrdersEntity = list.length > 0 ? list[0] : null;
+    return item;
   },
 
   // 计算分类位置

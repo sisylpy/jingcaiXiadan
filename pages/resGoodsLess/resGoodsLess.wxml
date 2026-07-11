@@ -237,14 +237,14 @@
             <!-- 商品列表 scroll-view -->
 
 
-            <scroll-view class="goods-list" scroll-y="true" style="width: {{windowWidth - 180}}rpx; height: {{windowHeight - 200- statusBarHeight}}rpx; " bindscroll="onGoodsScrollDis" bindscrolltolower="onScrollToLowerDis" scroll-with-animation scroll-into-view="{{scrollIntoView}}" show-scrollbar="false">
+            <scroll-view class="goods-list" scroll-y="true" style="width: {{windowWidth - 180}}rpx; height: {{windowHeight - 200- statusBarHeight}}rpx; " bindscrolltolower="onScrollToLowerDis" scroll-top="{{disGoodsScrollTop}}" show-scrollbar="false">
               <block wx:for="{{goodsList}}" wx:for-item="sons" wx:key="nxDistributerGoodsId" wx:for-index="goodsIndex">
                 <view wx:if="{{sons.isFirstInCategory}}" id="cat-{{sons.nxDgDfgGoodsGrandId}}" class="goods-category-title">
                   <!-- {{item.categoryName}} -->
                 </view>
                 <view class="flex-row-default  product-item p-10">
                   <view class="flex-row-default">
-                    <image bindtap="showDisImageModal" data-goods="{{sons}}" data-item="{{sons}}" data-nxgoods="{{sons.nxGoodsEntity}}" src="{{sons.nxDgGoodsFile !== null ? url + sons.nxDgGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="goods_item mr-20" />
+                    <image lazy-load="true" bindtap="showDisImageModal" data-goods="{{sons}}" data-item="{{sons}}" data-nxgoods="{{sons.nxGoodsEntity}}" src="{{sons.nxDgGoodsFile !== null ? url + sons.nxDgGoodsFile : '/images/logo.jpg'}}" mode="aspectFill" class="goods_item mr-20" />
                     <view class="flex-row-default" catch:tap="{{sons.nxDepartmentOrdersEntity == null ? 'applyGoods' : 'toEditApply'}}" data-order="{{sons.nxDepartmentOrdersEntity}}" data-disgoods="{{sons}}" data-index="{{goodsIndex}}" data-depgoods="{{sons.departmentDisGoodsEntity}}" hover-class="{{sons.nxDepartmentOrdersEntity == null ? 'hover' :''}}">
                       <view class="flex-column" style="width: {{windowWidth - 480}}rpx; ">
                         <view class="flex-row-wrap middle">

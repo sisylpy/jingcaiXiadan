@@ -18,7 +18,8 @@
      "pages/getPhone/getPhone",
     "pages/resGoodsSearch/resGoodsSearch",
     "pages/resGoodsCashSearch/resGoodsCashSearch",
-    "pages/depUserEdit/depUserEdit"
+    "pages/depUserEdit/depUserEdit",
+    "pages/couponList/couponList"
   ],
   "window": {
     "navigationBarTextStyle": "black",

@@ -1,6 +1,6 @@
 <view class="flex flex-column page-bg">
 
-  <back-navbar style="height: {{navBarHeight}}rpx;" title="{{hasUsedExtraTime ? '可录音下单额外' + (restSeconds > 0 ? restSeconds : 0) + '秒' : '可录音下单' + (restSeconds > 0 ? restSeconds : 0) + '秒'}}" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
+  <back-navbar style="height: {{navBarHeight}}rpx;" title="快速转订单" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
 
   <view class="flex-column p-20">
 
@@ -30,7 +30,6 @@
             </view>
           </block>
 
-
           <view class="flex-column-center" style="width: 100%;" wx:if="{{inputContent === ''}}">
             <view class="pulse-ring" wx:if="{{isRecording}}"></view>
             <view class="circle-btn {{isRecording ? 'red' : 'green'}}" bindtap="toggleRecord">
@@ -42,20 +41,19 @@
       </block>
       <block wx:else="">
 
+        <view class="flex-row bg-gray radius-10 p-10 mb-20" wx:if="{{hasAiRecognized}}" bindtap="againPaste" style="margin-top: 20rpx; width: {{windowWidth - 40}}rpx;">
+          <text>重新粘贴</text>
+        </view>
+
         <view class="flex-row" style="width: {{windowWidth - 40}}rpx; " wx:if="{{saveCount == null}}">
-          <view class="flex-column-center half-row" wx:if="{{hasAiRecognized}}">
-            <view class="circle-btn orange" bindtap="backBegin">
-              <image src="/images/delete.svg" class="btn-icon" />
-            </view>
-          </view>
-
+          <!-- 解析前：橙色删除按钮；解析后：蓝色"重新粘贴"按钮 -->
           <view class="flex-column-center half-row">
-
-            <view class="circle-btn orange" bindtap="backBegin" >
+            <view class="circle-btn {{hasAiRecognized ? 'blue' : 'orange'}}" bindtap="{{hasAiRecognized ? 'againPaste' : 'backBegin'}}" style="{{hasAiRecognized ? 'background-color: #4A90D9;' : ''}}">
               <image src="/images/delete.svg" class="btn-icon" />
             </view>
-
+            <text wx:if="{{hasAiRecognized}}" style="font-size: 20rpx; color: #666; margin-top: 4rpx;">重新粘贴</text>
           </view>
+
           <view class="flex-column-center half-row">
             <view class="circle-btn green" bindtap="depPasteSearchGoods">
               <image src="/images/correct.svg" class="btn-icon" />

@@ -20,6 +20,8 @@ Page({
     toOpenMini: false,
     isTishi: false,
     toSharePurchase: false,
+    disInfo: {},
+    userArr: [],
   },
 
   onShow: function () {
@@ -55,10 +57,17 @@ Page({
         userInfo: userInfo,
       })
     }
+    var disInfo = wx.getStorageSync('disInfo');
+    if (disInfo) {
+      this.setData({
+        disInfo: disInfo,
+      })
+    }
     var depValue = wx.getStorageSync('depInfo');
     if (depValue) {
       this.setData({
         depInfo: depValue,
+        disInfo: disInfo || depValue.nxDistributerEntity || {},
         subAmount: depValue.nxDepartmentSubAmount,
         disId: depValue.nxDepartmentDisId,
         depName: depValue.nxDepartmentName,
@@ -159,15 +168,26 @@ Page({
    * 删除用户
    */
   delUser() {
-    load.showLoading("删除用户")
-    deleteDepUser(this.data.selectUserId).then(res => {
-      if (res.result.code !== -1) {
-        load.hideLoading();
-        this._initData();
-      } else {
-        load.hideLoading();
-        wx.showToast({
-          title: res.result.msg,
+    wx.showModal({
+      title: '删除订货员',
+      content: '删除后该员工将不能继续使用这个门店账号，确定删除吗？',
+      confirmText: '删除',
+      confirmColor: '#d84235',
+      success: (modalRes) => {
+        if (!modalRes.confirm) return;
+        load.showLoading("删除用户")
+        deleteDepUser(this.data.selectUserId).then(res => {
+          if (res.result.code !== -1) {
+            load.hideLoading();
+            this.setData({ showOperation: false });
+            this._initData();
+          } else {
+            load.hideLoading();
+            wx.showToast({
+              title: res.result.msg,
+              icon: 'none'
+            })
+          }
         })
       }
     })
@@ -211,13 +231,29 @@ Page({
         url: '../billList/billList?depFatherId=' + this.data.depFatherId ,
       })
     }
-    if(this.data.depInfo.nxDepartmentSettleType  == 1){
+    if(this.data.depInfo.nxDepartmentSettleType  != 0){
       wx.navigateTo({
         url: '../accountList/accountList?depFatherId=' + this.data.depFatherId ,
       })
     }
   },
 
+
+  toCouponList(){
+    wx.navigateTo({
+      url: '../couponList/couponList?disId=' + this.data.depInfo.nxDepartmentDisId,
+    })
+
+  },  
+
+  toPurchaseAnalysis(){
+    wx.showToast({
+      title: '采购分析开发中',
+      icon: 'none'
+    })
+  },
+
+  noop(){},
 
   toBack(){
       wx.navigateBack({

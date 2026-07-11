@@ -1,11 +1,8 @@
 {
   "navigationBarTitleText": "商品",
   "usingComponents": {
-   
     "depGoodsImg": "/components/depGoodsImg/depGoodsImg",
     "myIndependent": "/components/myIndependent/myIndependent",
-    "myDismodalCashSingle": "/components/myDismodalCashSingle/myDismodalCashSingle",
-    "myDismodalCashSingleDep": "/components/myDismodalCashSingleDep/myDismodalCashSingleDep",
     "delWarnModal": "/components/delWarnModal/delWarnModal"
   }
 }

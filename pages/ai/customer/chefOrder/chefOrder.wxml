@@ -5,10 +5,10 @@
   <main-navbar style="height: {{navBarHeight + 110}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null  ? '/images/logo.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" bindnavbuttontap="onNavButtonTap" bind:sortby="onSortByChange" bind:searchinput="onSearchInput" bind:searchcancel="onSearchCancel" searchValue="{{searchValue}}"></main-navbar>
 
   <view class="content flex-1 flex-column">
-    <block wx:if="{{depInfo.fatherDepartmentEntity == null}}">
+    <!-- <block wx:if="{{depInfo.fatherDepartmentEntity == null}}">
       <view class="flex-column-center" style="padding: 10rpx 0; font-size: 34rpx; font-weight: 500;">{{depInfo.nxDepartmentName}}-订货单</view>
-    </block>
-    <block wx:else="">
+    </block> -->
+    <block  wx:if="{{depInfo.fatherDepartmentEntity !== null}}">
       <view class="flex-column-center">
         <view class="flex-row" style="padding: 10rpx 0; font-size: 34rpx; font-weight: 500;" bind:tap="toSwitchDep">
           <text>{{depInfo.fatherDepartmentEntity.nxDepartmentName}}</text>
@@ -20,6 +20,40 @@
         </view>
       </view>
     </block>
+
+    <!-- 首页订单金额摘要：与订单列表合为一个模块 -->
+    <view wx:if="{{showCashSettle && bill === -1 && homeBenefitSummary && homeBenefitSummary.showFeeCard}}" class="home-benefit-wrap">
+      <view class="home-benefit-card">
+        <view class="home-summary-row">
+          <text class="home-summary-label">商品金额</text>
+          <text class="home-summary-value">¥{{homeBenefitSummary.goodsAmount}}</text>
+        </view>
+
+        <view class="home-summary-row" wx:if="{{homeBenefitSummary.hasCoupon}}" bindtap="openClaimableCouponPopup">
+          <view class="home-summary-label-group">
+            <text class="home-summary-label">优惠券优惠</text>
+            <text class="home-benefit-badge" wx:for="{{homeBenefitSummary.couponBadges}}" wx:key="*this">{{item}}</text>
+          </view>
+          <text class="home-summary-discount" wx:if="{{homeBenefitSummary.hasCouponDiscount}}">-¥{{homeBenefitSummary.couponDiscount}}</text>
+          <text class="home-summary-muted" wx:else>{{homeBenefitSummary.couponText}}</text>
+        </view>
+
+        <view class="home-summary-row" wx:if="{{homeBenefitSummary.hasDeliveryFee}}">
+          <view class="home-summary-label-group">
+            <text class="home-summary-label">配送费</text>
+            <text class="home-benefit-estimate" wx:if="{{homeBenefitSummary.deliveryFeeEstimate}}">预估</text>
+          </view>
+          <text class="home-summary-value">¥{{homeBenefitSummary.deliveryFee}}</text>
+        </view>
+
+        <view class="home-summary-divider"></view>
+
+        <view class="home-summary-row total">
+          <text class="home-summary-total-label">预计应付</text>
+          <text class="home-summary-total-value">¥{{homeBenefitSummary.estimatedPayAmount}}</text>
+        </view>
+      </view>
+    </view>
 
 
     <scroll-view scroll-y="true" class="scroll-content " show-scrollbar="true">
@@ -531,18 +565,18 @@
 
 <view>
   <!-- 背景蒙版 -->
-  <view wx:if="{{showPage }}" class="popup-mask" bindtap="hidePopup"></view>
+  <view wx:if="{{showPage }}" class="popup-mask"></view>
 
   <!-- 弹出层 -->
-  <view wx:if="{{showPage}}" class="popup-overlay" bindtap="hidePopup">
+  <view wx:if="{{showPage}}" class="popup-overlay">
     <!-- 点击遮罩可关闭弹层 -->
     <view class="popup-container font-lg" animation="{{popupAnimation}}" catchtap="noop">
-      <view class="flex-row-between p-20" bindtap="hidePopup">
+      <view class="flex-row-between p-20">
         <view class="flex-column-center font-lg-2 font-bold p-10" style="width: 100%;">
           <text class="">注册用户</text>
         </view>
 
-        <image src="/images/del.png" mode="aspectFill" class="icon p-10" />
+        <image wx:if="{{userInfo}}" src="/images/del.png" mode="aspectFill" class="icon p-10" bindtap="hidePopup" />
       </view>
 
       <view class="popup-content1 p-30">
@@ -662,18 +696,123 @@
   </scroll-view>
 
   <!-- 购物车底部 -->
-  <view class="cart-footer">
-    <view class="payPart flex-column-center" bindtap="gorRunnerLobby" style="width: {{windowWidth - 120}}rpx; background-color: #ff7200; font-weight: 500; border-radius: 20rpx;margin-left: 40rpx; color: rgb(255, 255, 255); ">
+  <view class="cart-footer flex-column">
+    <view class="order-fee-card-wrap cart-fee-panel-wrap" wx:if="{{billSummary && (billSummary.showFeeCard || (orderPreview && (orderPreview.hasCoupons || orderPreview.hasCouponDiscount)) || claimableCoupons.length > 0)}}">
+      <view class="order-fee-card">
+        <view wx:if="{{claimableLoading}}" class="order-fee-loading">正在加载可领取优惠券...</view>
+        <view wx:elif="{{claimableCoupons.length > 0}}" class="order-fee-claim-block">
+          <view class="order-fee-claim-item" wx:for="{{claimableCoupons}}" wx:key="couponId">
+            <view class="order-fee-claim-left">
+              <view class="order-fee-coupon-badge">{{item.descText || item.couponName}}</view>
+              <text class="order-fee-claim-name">{{item.couponName}}</text>
+            </view>
+            <view class="order-fee-claim-btn {{claimingCouponId == item.couponId ? 'is-loading' : ''}}" catchtap="onClaimCoupon" data-id="{{item.couponId}}">
+              {{claimingCouponId == item.couponId ? '领取中' : '领取'}}
+            </view>
+          </view>
+        </view>
 
+        <view wx:if="{{orderPreviewLoading}}" class="order-fee-loading">正在计算优惠...</view>
+
+        <view class="order-fee-row">
+          <text class="order-fee-label">商品金额</text>
+          <text class="order-fee-value">¥{{billSummary.goodsAmount}}</text>
+        </view>
+
+        <view class="order-fee-row" wx:if="{{billSummary.hasCouponDiscount || (orderPreview && orderPreview.hasCouponDiscount)}}">
+          <view class="order-fee-label-group">
+            <text class="order-fee-label">优惠券优惠</text>
+            <view class="order-fee-coupon-badge" wx:if="{{billSummary.couponBadgeText || (orderPreview && orderPreview.couponBadgeText)}}">
+              {{billSummary.couponBadgeText || orderPreview.couponBadgeText}}
+            </view>
+          </view>
+          <text class="order-fee-discount">-¥{{billSummary.hasCouponDiscount ? billSummary.couponDiscount : orderPreview.estimatedDiscount}}</text>
+        </view>
+
+        <view class="order-fee-row" wx:if="{{billSummary.showDeliveryFee}}">
+          <view class="order-fee-label-group">
+            <text class="order-fee-label">配送费</text>
+            <text class="order-fee-sub-label" wx:if="{{billSummary.deliveryModeLabel}}">（{{billSummary.deliveryModeLabel}}）</text>
+          </view>
+          <view class="order-fee-value-wrap">
+            <text class="order-fee-value">¥{{billSummary.deliveryFee}}</text>
+          </view>
+        </view>
+
+        <view class="order-fee-delivery-detail" wx:if="{{billSummary.showDeliveryFeeDetail}}">
+          <view class="order-fee-detail-title">运费说明</view>
+          <view class="order-fee-detail-row" wx:if="{{billSummary.deliveryAddress}}">
+            <text class="order-fee-detail-label">配送地址</text>
+            <text class="order-fee-detail-value order-fee-detail-address">{{billSummary.deliveryAddress}}</text>
+          </view>
+          <view class="order-fee-detail-row" wx:if="{{billSummary.distanceKm}}">
+            <text class="order-fee-detail-label">配送距离</text>
+            <text class="order-fee-detail-value">{{billSummary.distanceKm}} km</text>
+          </view>
+          <view class="order-fee-detail-row" wx:if="{{billSummary.deliveryModeLabel}}">
+            <text class="order-fee-detail-label">配送方式</text>
+            <text class="order-fee-detail-value">{{billSummary.deliveryModeLabel}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{!billSummary.hasCouponDiscount && orderPreview && orderPreview.unavailableCoupons.length > 0}}" class="order-fee-unavailable">
+          <view class="order-fee-unavailable-line" wx:for="{{orderPreview.unavailableCoupons}}" wx:key="userCouponId">{{item.couponName}}：{{item.reason || '暂不可用'}}</view>
+        </view>
+
+        <view class="order-fee-divider"></view>
+
+        <view class="order-fee-row order-fee-total-row">
+          <text class="order-fee-total-label">应付总计</text>
+          <text class="order-fee-total-value order-fee-pay-total">¥{{billSummary.payAmount}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="payPart flex-column-center" bindtap="gorRunnerLobby" style="width: {{windowWidth - 120}}rpx; background-color: #ff7200; font-weight: 500; border-radius: 20rpx;margin-left: 40rpx; color: rgb(255, 255, 255); ">
       <view class="with-s-padding flex-row">
         <text class="middle margin-l-right">支付总计</text>
-        <text class="big">¥{{bill.nxDbTotal}}</text>
+        <text class="big">¥{{billSummary ? billSummary.payAmount : bill.nxDbTotal}}</text>
       </view>
     </view>
   </view>
 
 </view>
 
+
+<!-- 可领取优惠券弹窗 -->
+<view class="claim-coupon-mask" wx:if="{{showClaimableCouponPopup}}" catchtouchmove="noop" bindtap="closeClaimableCouponPopup"></view>
+<view class="claim-coupon-popup" wx:if="{{showClaimableCouponPopup}}" catchtap="noop">
+  <view class="claim-coupon-head">
+    <view class="claim-coupon-coin coin-left"></view>
+    <view class="claim-coupon-title-pill">新鲜优惠 看得见</view>
+    <view class="claim-coupon-coin coin-right"></view>
+    <text class="claim-coupon-title">有优惠券可领取</text>
+    <text class="claim-coupon-subtitle">领取后下单自动匹配可用优惠</text>
+  </view>
+
+  <scroll-view scroll-y="true" class="claim-coupon-list">
+    <view class="claim-coupon-item" wx:for="{{claimableCouponViews}}" wx:key="couponId">
+      <view class="claim-coupon-left">
+        <text class="claim-coupon-amount">{{item.amountText}}</text>
+        <text class="claim-coupon-threshold">{{item.thresholdText}}</text>
+      </view>
+      <view class="claim-coupon-divider"></view>
+      <view class="claim-coupon-main">
+        <text class="claim-coupon-name">{{item.displayName}}</text>
+        <text class="claim-coupon-date">{{item.dateText}}</text>
+        <text class="claim-coupon-scope" wx:if="{{item.scopeText}}">适用：{{item.scopeText}}</text>
+      </view>
+      <view class="claim-coupon-btn {{claimingCouponId == item.couponId ? 'is-loading' : ''}}" catchtap="onClaimCoupon" data-id="{{item.couponId}}">
+        {{claimingCouponId == item.couponId ? '领取中' : '领取'}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="claim-coupon-footer {{claimingAllCoupons ? 'is-loading' : ''}}" bindtap="claimAllCoupons">
+    {{claimingAllCoupons ? '领取中...' : '一键领取'}}
+  </view>
+  <view class="claim-coupon-close" bindtap="closeClaimableCouponPopup">×</view>
+</view>
 
 
 

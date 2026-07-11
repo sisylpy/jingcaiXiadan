@@ -121,6 +121,22 @@ page{
   
 }
 
+.bill-extra-row {
+  background: #fff;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #e8e8e8;
+  color: #333;
+}
+
+.bill-extra-sub {
+  font-size: 22rpx;
+  color: #888;
+}
+
+.bill-fee-discount {
+  color: #e64340;
+}
+
 
 .sentence{
   padding: 60rpx 60rpx 20rpx 60rpx;

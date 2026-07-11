@@ -1,0 +1,142 @@
+.page-body {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.coupon-loading {
+  padding: 80rpx 0;
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.empty-wrap {
+  text-align: center;
+}
+
+.empty-sub {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.coupon-container {
+  position: relative;
+  border-radius: 20rpx;
+  overflow: hidden;
+  background: #fff;
+}
+
+.coupon-card {
+  min-height: 180rpx;
+}
+
+.coupon-left {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 24rpx 12rpx;
+  background: #fff7f2;
+}
+
+.coupon-right {
+  flex: 2.5;
+  padding: 24rpx;
+  background: #fff;
+}
+
+.coupon-amount-row {
+  align-items: baseline;
+}
+
+.coupon-currency {
+  font-size: 28rpx;
+  color: #f13506;
+  font-weight: 600;
+}
+
+.coupon-amount {
+  font-size: 52rpx;
+  line-height: 1;
+  color: #f13506;
+  font-weight: 700;
+}
+
+.coupon-threshold {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #999;
+}
+
+.coupon-right-top {
+  align-items: flex-start;
+}
+
+.coupon-info {
+  flex: 1;
+  min-width: 0;
+  padding-right: 16rpx;
+}
+
+.order-fee-coupon-badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  background: #fff3e8;
+  color: #ff6a00;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.coupon-name {
+  margin-top: 10rpx;
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.coupon-scope,
+.coupon-valid {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #999;
+  line-height: 1.4;
+}
+
+.coupon-status-badge {
+  flex-shrink: 0;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(to right, #ff4e00, #f13506);
+  color: #fff;
+  font-size: 22rpx;
+}
+
+.dotted-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 28%;
+  width: 1px;
+  border-left: 2px dashed #eee;
+}
+
+.dotted-line::before,
+.dotted-line::after {
+  content: '';
+  position: absolute;
+  width: 20rpx;
+  height: 20rpx;
+  background: #f5f5f5;
+  border-radius: 50%;
+  left: -10rpx;
+}
+
+.dotted-line::before {
+  top: -10rpx;
+}
+
+.dotted-line::after {
+  bottom: -10rpx;
+}
