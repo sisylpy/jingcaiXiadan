@@ -16,24 +16,21 @@
       <block wx:if="{{orderArr.length == 0}}">
         <view class="flex-row" style=" width: 100%;">
 
-          <block wx:if="{{inputContent !== ''}}">
-            <view class="flex-column-center half-row">
-              <view class="circle-btn orange" bindtap="clearSentence">
-                <image src="/images/delete.svg" class="btn-icon" />
-              </view>
-            </view>
-
-            <view class="flex-column-center half-row">
-              <view class="circle-btn green" bindtap="formatContent">
-                <image src="/images/zhuanhuan.svg" class="btn-icon" />
-              </view>
-            </view>
-          </block>
-
-          <view class="flex-column-center" style="width: 100%;" wx:if="{{inputContent === ''}}">
-            <view class="pulse-ring" wx:if="{{isRecording}}"></view>
-            <view class="circle-btn {{isRecording ? 'red' : 'green'}}" bindtap="toggleRecord">
+          <!-- 输入为空：录音按钮；输入非空：删除按钮 -->
+          <view class="flex-column-center half-row" style="position: relative;">
+            <view class="pulse-ring" wx:if="{{inputContent === '' && isRecording}}"></view>
+            <view wx:if="{{inputContent === ''}}" class="circle-btn {{isRecording ? 'red' : 'green'}}" bindtap="toggleRecord">
               <image src="/images/chat_record.svg" class="btn-icon" />
+            </view>
+            <view wx:else="" class="circle-btn orange" bindtap="clearSentence">
+              <image src="/images/delete.svg" class="btn-icon" />
+            </view>
+          </view>
+
+          <!-- 解析按钮始终显示 -->
+          <view class="flex-column-center half-row">
+            <view class="circle-btn green" bindtap="formatContent">
+              <image src="/images/zhuanhuan.svg" class="btn-icon" />
             </view>
           </view>
 
@@ -41,15 +38,11 @@
       </block>
       <block wx:else="">
 
-        <view class="flex-row bg-gray radius-10 p-10 mb-20" wx:if="{{hasAiRecognized}}" bindtap="againPaste" style="margin-top: 20rpx; width: {{windowWidth - 40}}rpx;">
-          <text>重新粘贴</text>
-        </view>
-
         <view class="flex-row" style="width: {{windowWidth - 40}}rpx; " wx:if="{{saveCount == null}}">
           <!-- 解析前：橙色删除按钮；解析后：蓝色"重新粘贴"按钮 -->
           <view class="flex-column-center half-row">
             <view class="circle-btn {{hasAiRecognized ? 'blue' : 'orange'}}" bindtap="{{hasAiRecognized ? 'againPaste' : 'backBegin'}}" style="{{hasAiRecognized ? 'background-color: #4A90D9;' : ''}}">
-              <image src="/images/delete.svg" class="btn-icon" />
+              <image src="/images/zhuanhuan.svg" class="btn-icon" />
             </view>
             <text wx:if="{{hasAiRecognized}}" style="font-size: 20rpx; color: #666; margin-top: 4rpx;">重新粘贴</text>
           </view>

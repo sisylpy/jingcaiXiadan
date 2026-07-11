@@ -430,7 +430,23 @@ Page({
 
   },
 
+  clearSentence() {
+    this.setData({
+      inputContent: '',
+      sentence: '',
+      orderArr: [],
+      orderArrFixed: [],
+      highlightedContent: ''
+    });
+  },
 
+  onInput(e) {
+    const text = e.detail.value;
+    this.setData({
+      sentence: text,
+      inputContent: text.trim() !== '' ? text : null
+    });
+  },
 
   // --- 文本与订单解析核心逻辑 ---
 
