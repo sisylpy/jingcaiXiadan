@@ -24,10 +24,18 @@ Page({
     this.setData({
       windowWidth: globalData.windowWidth * globalData.rpxR,
       windowHeight: globalData.windowHeight * globalData.rpxR,
-      
-      resId: options.resId,
-      comId: options.comId,
+      navBarHeight: globalData.navBarHeight * globalData.rpxR,
+      statusBarHeight: globalData.statusBarHeight * globalData.rpxR,  
+      depFatherId: options.depFatherId,
     })
+
+    var depValue = wx.getStorageSync('depInfo');
+    if (depValue) {
+      this.setData({
+        depInfo: depValue,
+        disId: depValue.nxDepartmentDisId,
+      })
+    }
     
     this._initData();
 
@@ -36,8 +44,8 @@ Page({
 
   _initData(){
     var data = {
-      resFatherId: this.data.resId,
-      comId: this.data.comId
+      depFatherId: this.data.depFatherId,
+      disId: this.data.disId
     }
 
     restrauntAndComGetSalesBills(data)
@@ -62,8 +70,14 @@ Page({
 
   openAccountBill(e){
     wx.navigateTo({
-      url: '../bill/bill?billId=' + e.currentTarget.dataset.id,
+      url: '../issuePage/issuePage?billId=' + e.currentTarget.dataset.id 
+        + '&depName=' + this.data.depName + '&depFatherId=' + this.data.depFatherId,
     })
+  },
+
+  toBack(){
+      wx.navigateBack({delta : 1})
+
   },
 
 
