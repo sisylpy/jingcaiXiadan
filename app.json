@@ -11,6 +11,7 @@
     "pages/resGoodsLessCash/resGoodsLessCash",
     "pages/disAddGoods/disAddGoods",
     "pages/resGroup/resGroup",
+    "pages/billList/billList",
     "pages/resGoodsAll/resGoodsAll",
     "pages/registerCusomer/registerCusomer",
     "pages/accountList/accountList",
