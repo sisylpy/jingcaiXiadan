@@ -1,0 +1,16 @@
+<view class="dep-switch-mask" wx:if="{{visible}}" bindtap="close"></view>
+<view class="dep-switch-popup" wx:if="{{visible}}" animation="{{animation}}" catchtap="noop">
+  <view class="dep-switch-title">
+    <image src="/images/icons/record.svg" class="dep-switch-icon" />
+    <text>选择下单部门</text>
+  </view>
+  <scroll-view scroll-y="true" class="dep-switch-list">
+    <block wx:for="{{departments}}" wx:key="nxDepartmentId">
+      <view class="dep-switch-item {{item.nxDepartmentId == selectedId ? 'selected' : ''}}" bindtap="select" data-item="{{item}}">
+        <text class="dep-switch-name">{{item.nxDepartmentName}}</text>
+        <image wx:if="{{item.nxDepartmentId == selectedId}}" src="/images/correct-2.svg" class="dep-switch-check" />
+      </view>
+    </block>
+  </scroll-view>
+  <view class="dep-switch-tip">切换部门后，下单将归属所选部门</view>
+</view>

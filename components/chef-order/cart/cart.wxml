@@ -1,0 +1,120 @@
+<view class="maskPay" wx:if="{{visible}}" bindtap="close"></view>
+
+<view class="cart-popup {{visible ? 'show' : ''}}">
+  <view class="cart-header" style="background-color: rgb(241, 241, 241); border-top-left-radius: 20rpx; border-top-right-radius: 20rpx;">
+    <view style="width: {{windowWidth / 2 - 80 - 180}}rpx;">
+      <text class="car-top-words" style="padding-left: 30rpx;">商品</text>
+    </view>
+    <view style="width: 100rpx;">
+      <text class="car-top-words" style="padding-left: 30rpx;">规格</text>
+    </view>
+    <view class="flex-row" style="width: {{windowWidth / 2 + 120}}rpx;">
+      <text class="car-top-words" style="width: 35%; text-align: center;">单价</text>
+      <text class="car-top-words" style="width: 35%; text-align: center;">数量</text>
+      <text class="car-top-words" style="width: 30%; text-align: center;">小计</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-y="true" class="cart-content">
+    <view class="flex-column p-10 with-border-bottom" wx:for="{{bill.nxDepartmentOrdersEntities}}" wx:key="index" wx:for-item="item">
+      <view class="one-row">
+        <view class="flex-row" style="width:{{(windowWidth / 2) - 80 - 100}}rpx;">
+          <text>{{index + 1}}.{{item.nxDistributerGoodsEntity.nxDgGoodsName}}</text>
+        </view>
+        <view class="flex-row" style="width: 100rpx;">
+          <text>{{item.nxDistributerGoodsEntity.nxDgGoodsStandardname}}</text>
+        </view>
+        <view class="flex-row" style="width:{{(windowWidth / 2) + 80}}rpx;">
+          <text style="width: 35%;">{{item.nxDoPrice}}元</text>
+          <text style="width: 35%;">{{item.nxDoWeight}}</text>
+          <text style="width: 30%;">¥{{item.nxDoSubtotal}}</text>
+        </view>
+      </view>
+
+      <view class="flex-row" style="margin-left: {{(windowWidth / 2) - 80}}rpx;" wx:if="{{item.nxDoPriceDifferent !== '0.0' && item.nxDoPriceDifferent !== null && item.nxDoPriceDifferent !== ''}}">
+        <image class="price_img" src="{{item.nxDoPriceDifferent > 0 ? '/images/arrow_up_right_square_fill-2.png' : '/images/arrow_down_right_square_fill.png'}}"></image>
+        <text class="{{item.nxDoPriceDifferent > 0 ? 'red' : 'greenText'}} changeNumber">{{item.nxDoPriceDifferent}}元</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="cart-footer flex-column">
+    <view class="order-fee-card-wrap cart-fee-panel-wrap" wx:if="{{billSummary && (billSummary.showFeeCard || (orderPreview && (orderPreview.hasCoupons || orderPreview.hasCouponDiscount)) || claimableCoupons.length > 0)}}">
+      <view class="order-fee-card">
+        <view wx:if="{{claimableLoading}}" class="order-fee-loading">正在加载可领取优惠券...</view>
+        <view wx:elif="{{claimableCoupons.length > 0}}" class="order-fee-claim-block">
+          <view class="order-fee-claim-item" wx:for="{{claimableCoupons}}" wx:key="couponId">
+            <view class="order-fee-claim-left">
+              <view class="order-fee-coupon-badge">{{item.descText || item.couponName}}</view>
+              <text class="order-fee-claim-name">{{item.couponName}}</text>
+            </view>
+            <view class="order-fee-claim-btn {{claimingCouponId == item.couponId ? 'is-loading' : ''}}" catchtap="claim" data-id="{{item.couponId}}">
+              {{claimingCouponId == item.couponId ? '领取中' : '领取'}}
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{orderPreviewLoading}}" class="order-fee-loading">正在计算优惠...</view>
+
+        <view class="order-fee-row">
+          <text class="order-fee-label">商品金额</text>
+          <text class="order-fee-value">¥{{billSummary.goodsAmount}}</text>
+        </view>
+
+        <view class="order-fee-row" wx:if="{{billSummary.hasCouponDiscount || (orderPreview && orderPreview.hasCouponDiscount)}}">
+          <view class="order-fee-label-group">
+            <text class="order-fee-label">优惠券优惠</text>
+            <view class="order-fee-coupon-badge" wx:if="{{billSummary.couponBadgeText || (orderPreview && orderPreview.couponBadgeText)}}">
+              {{billSummary.couponBadgeText || orderPreview.couponBadgeText}}
+            </view>
+          </view>
+          <text class="order-fee-discount">-¥{{billSummary.hasCouponDiscount ? billSummary.couponDiscount : orderPreview.estimatedDiscount}}</text>
+        </view>
+
+        <view class="order-fee-row" wx:if="{{billSummary.showDeliveryFee}}">
+          <view class="order-fee-label-group">
+            <text class="order-fee-label">配送费</text>
+            <text class="order-fee-sub-label" wx:if="{{billSummary.deliveryModeLabel}}">（{{billSummary.deliveryModeLabel}}）</text>
+          </view>
+          <view class="order-fee-value-wrap">
+            <text class="order-fee-value">¥{{billSummary.deliveryFee}}</text>
+          </view>
+        </view>
+
+        <view class="order-fee-delivery-detail" wx:if="{{billSummary.showDeliveryFeeDetail}}">
+          <view class="order-fee-detail-title">运费说明</view>
+          <view class="order-fee-detail-row" wx:if="{{billSummary.deliveryAddress}}">
+            <text class="order-fee-detail-label">配送地址</text>
+            <text class="order-fee-detail-value order-fee-detail-address">{{billSummary.deliveryAddress}}</text>
+          </view>
+          <view class="order-fee-detail-row" wx:if="{{billSummary.distanceKm}}">
+            <text class="order-fee-detail-label">配送距离</text>
+            <text class="order-fee-detail-value">{{billSummary.distanceKm}} km</text>
+          </view>
+          <view class="order-fee-detail-row" wx:if="{{billSummary.deliveryModeLabel}}">
+            <text class="order-fee-detail-label">配送方式</text>
+            <text class="order-fee-detail-value">{{billSummary.deliveryModeLabel}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{!billSummary.hasCouponDiscount && orderPreview && orderPreview.unavailableCoupons.length > 0}}" class="order-fee-unavailable">
+          <view class="order-fee-unavailable-line" wx:for="{{orderPreview.unavailableCoupons}}" wx:key="userCouponId">{{item.couponName}}：{{item.reason || '暂不可用'}}</view>
+        </view>
+
+        <view class="order-fee-divider"></view>
+
+        <view class="order-fee-row order-fee-total-row">
+          <text class="order-fee-total-label">应付总计</text>
+          <text class="order-fee-total-value order-fee-pay-total">¥{{billSummary.payAmount}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="payPart flex-column-center" bindtap="pay" style="width: {{windowWidth - 120}}rpx; background-color: #ff7200; font-weight: 500; border-radius: 20rpx; margin-left: 40rpx; color: rgb(255, 255, 255);">
+      <view class="with-s-padding flex-row">
+        <text class="middle margin-l-right">支付总计</text>
+        <text class="big">¥{{billSummary ? billSummary.payAmount : bill.nxDbTotal}}</text>
+      </view>
+    </view>
+  </view>
+</view>

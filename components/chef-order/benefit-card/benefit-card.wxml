@@ -1,0 +1,32 @@
+<view class="home-benefit-wrap">
+  <view class="home-benefit-card">
+    <view class="home-summary-row">
+      <text class="home-summary-label">商品金额</text>
+      <text class="home-summary-value">¥{{summary.goodsAmount}}</text>
+    </view>
+
+    <view class="home-summary-row" wx:if="{{summary.hasCoupon}}" bindtap="openCoupon">
+      <view class="home-summary-label-group">
+        <text class="home-summary-label">优惠券优惠</text>
+        <text class="home-benefit-badge" wx:for="{{summary.couponBadges}}" wx:key="*this">{{item}}</text>
+      </view>
+      <text class="home-summary-discount" wx:if="{{summary.hasCouponDiscount}}">-¥{{summary.couponDiscount}}</text>
+      <text class="home-summary-muted" wx:else>{{summary.couponText}}</text>
+    </view>
+
+    <view class="home-summary-row" wx:if="{{summary.hasDeliveryFee}}">
+      <view class="home-summary-label-group">
+        <text class="home-summary-label">配送费</text>
+        <text class="home-benefit-estimate" wx:if="{{summary.deliveryFeeEstimate}}">预估</text>
+      </view>
+      <text class="home-summary-value">¥{{summary.deliveryFee}}</text>
+    </view>
+
+    <view class="home-summary-divider"></view>
+
+    <view class="home-summary-row total">
+      <text class="home-summary-total-label">预计应付</text>
+      <text class="home-summary-total-value">¥{{summary.estimatedPayAmount}}</text>
+    </view>
+  </view>
+</view>

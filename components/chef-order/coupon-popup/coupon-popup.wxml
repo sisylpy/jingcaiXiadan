@@ -1,0 +1,33 @@
+<view class="claim-coupon-mask" wx:if="{{visible}}" catchtouchmove="noop" bindtap="close"></view>
+<view class="claim-coupon-popup" wx:if="{{visible}}" catchtap="noop">
+  <view class="claim-coupon-head">
+    <view class="claim-coupon-coin coin-left"></view>
+    <view class="claim-coupon-title-pill">新鲜优惠 看得见</view>
+    <view class="claim-coupon-coin coin-right"></view>
+    <text class="claim-coupon-title">有优惠券可领取</text>
+    <text class="claim-coupon-subtitle">领取后下单自动匹配可用优惠</text>
+  </view>
+
+  <scroll-view scroll-y="true" class="claim-coupon-list">
+    <view class="claim-coupon-item" wx:for="{{coupons}}" wx:key="couponId">
+      <view class="claim-coupon-left">
+        <text class="claim-coupon-amount">{{item.amountText}}</text>
+        <text class="claim-coupon-threshold">{{item.thresholdText}}</text>
+      </view>
+      <view class="claim-coupon-divider"></view>
+      <view class="claim-coupon-main">
+        <text class="claim-coupon-name">{{item.displayName}}</text>
+        <text class="claim-coupon-date">{{item.dateText}}</text>
+        <text class="claim-coupon-scope" wx:if="{{item.scopeText}}">适用：{{item.scopeText}}</text>
+      </view>
+      <view class="claim-coupon-btn {{claimingCouponId == item.couponId ? 'is-loading' : ''}}" catchtap="claim" data-id="{{item.couponId}}">
+        {{claimingCouponId == item.couponId ? '领取中' : '领取'}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="claim-coupon-footer {{claimingAll ? 'is-loading' : ''}}" bindtap="claimAll">
+    {{claimingAll ? '领取中...' : '一键领取'}}
+  </view>
+  <view class="claim-coupon-close" bindtap="close">×</view>
+</view>

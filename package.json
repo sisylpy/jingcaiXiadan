@@ -6,10 +6,11 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "npm run check:secrets && npm run check:auth && npm run check:sales-ocr",
+    "test": "npm run check:secrets && npm run check:auth && npm run check:sales-ocr && npm run check:chef-order",
     "check:secrets": "./scripts/check-client-secrets.sh",
     "check:auth": "node scripts/verify-shop-auth.js",
-    "check:sales-ocr": "node scripts/verify-sales-quote-ocr.js"
+    "check:sales-ocr": "node scripts/verify-sales-quote-ocr.js",
+    "check:chef-order": "node scripts/verify-chef-order-components.js"
   },
   "keywords": [],
   "author": "",

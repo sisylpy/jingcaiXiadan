@@ -1,0 +1,28 @@
+.search-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 280rpx;
+  bottom: 0;
+  background: rgba(255,255,255,0.85);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* padding-top: 0; */
+}
+.search-result-list {
+  width: 100%;
+  max-width: none;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+.search-no-result {
+  text-align: center;
+  color: #888;
+  font-size: 28rpx;
+  padding: 40rpx 0;
+}

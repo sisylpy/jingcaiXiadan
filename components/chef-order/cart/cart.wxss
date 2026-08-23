@@ -1,0 +1,385 @@
+/* dddd */
+
+.maskPay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+.maskPay.hidden{
+  display: none;
+}
+
+
+.modal-content {
+  background: #fff;
+  margin-bottom: 0;
+  position: relative;
+  float: left;
+  /* position: fixed; */
+
+}
+.car-top{
+   display: flex;
+  flex-flow: row nowrap;
+  background: lightgray;
+
+
+
+}
+
+.car-top-words{
+  line-height: 80rpx;
+  font-size: 30rpx;
+}
+.one-row{
+  display: flex;
+  flex-flow: row nowrap;
+  /* height: 80rpx; */
+  justify-content: center;
+  align-items: center;
+  padding: 10rpx 0;
+
+
+}
+
+.car-left{
+  /* background: green; */
+  /* width: 80%; */
+    /* height: 100rpx; */
+    padding-left: 14rpx;
+
+}
+
+.price_img{
+  width: 40rpx;
+  height: 40rpx;
+
+  margin-right: 10rpx;
+  /* margin-left: 40rpx; */
+}
+.changeNumber{
+  font-size: 28rpx;
+}
+
+
+.order_send {
+  font-size: 36rpx;
+  color: #f7ca03;
+  padding: 20rpx 0;
+  /* background: gray; */
+}
+
+
+
+/* 遮罩层样式 */
+.maskPay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* 购物车弹出层样式 */
+.cart-popup {
+  position: fixed;
+  bottom: -100%;
+  left: 0;
+  width: 100%;
+  max-height: 80%; /* 最大高度设置为屏幕高度的80% */
+  background-color: #fff;
+  border-top-left-radius: 20rpx;
+  border-top-right-radius: 20rpx;
+  z-index: 1000;
+  transition: bottom 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 弹出时的样式 */
+.cart-popup.show {
+  bottom: 0;
+}
+
+/* 购物车头部样式 */
+.cart-header {
+  padding: 20rpx;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 关闭按钮样式 */
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 30rpx;
+}
+
+/* 购物车内容区域样式 */
+.cart-content {
+  flex: 1;
+  overflow-y: scroll;
+}
+
+/* 购物车商品项样式 */
+.cart-item {
+  padding: 20rpx;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 购物车底部样式 */
+.cart-footer {
+  padding: 20rpx;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.order-fee-card-wrap {
+  flex-shrink: 0;
+  padding: 0 20rpx 16rpx;
+}
+
+.order-fee-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+
+.order-fee-loading {
+  font-size: 26rpx;
+  color: #888;
+  text-align: center;
+  padding: 12rpx 0;
+}
+
+.order-fee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 28rpx;
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+}
+
+.order-fee-label {
+  color: #333;
+}
+
+.order-fee-label-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.order-fee-value {
+  color: #333;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.order-fee-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+.order-fee-estimate-tag {
+  font-size: 20rpx;
+  color: #ff7200;
+  background: #fff3e6;
+  border-radius: 8rpx;
+  padding: 2rpx 10rpx;
+  line-height: 1.4;
+}
+
+.order-fee-sub-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.order-fee-discount {
+  color: #ff7200;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.order-fee-coupon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 2rpx 16rpx;
+  border-radius: 999rpx;
+  background: #fff3e6;
+  color: #ff7200;
+  font-size: 22rpx;
+  line-height: 1.5;
+  border: 1rpx solid #ffd591;
+  white-space: nowrap;
+}
+
+.order-fee-divider {
+  border-top: 2rpx dashed #e8e8e8;
+  margin: 8rpx 0 20rpx;
+}
+
+.order-fee-total-row {
+  margin-bottom: 12rpx;
+  align-items: baseline;
+}
+
+.order-fee-total-label {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #222;
+}
+
+.order-fee-total-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #07c160;
+}
+
+.order-fee-total-value.order-fee-pay-total {
+  color: #ff7200;
+}
+
+.cart-fee-panel-wrap {
+  padding: 0;
+  width: 100%;
+}
+
+.cart-fee-panel-wrap .order-fee-card {
+  box-shadow: none;
+  padding: 8rpx 0 0;
+}
+
+.order-fee-footer {
+  padding-top: 4rpx;
+}
+
+.order-fee-footer-text {
+  font-size: 22rpx;
+  color: #999;
+  line-height: 1.5;
+}
+
+.order-fee-tip {
+  font-size: 22rpx;
+  color: #ff7200;
+  margin-top: 12rpx;
+  line-height: 1.5;
+}
+.order-fee-delivery-detail {
+  margin-top: 8rpx;
+  padding: 16rpx 20rpx;
+  background: #f8faf8;
+  border-radius: 12rpx;
+}
+.order-fee-detail-title {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+.order-fee-detail-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 24rpx;
+  line-height: 1.5;
+  margin-bottom: 8rpx;
+}
+.order-fee-detail-label {
+  color: #888;
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+.order-fee-detail-value {
+  color: #555;
+  text-align: right;
+  flex: 1;
+}
+.order-fee-detail-address {
+  word-break: break-all;
+}
+.order-fee-detail-formula {
+  margin-top: 8rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx dashed #e0e0e0;
+  font-size: 22rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+.order-fee-unavailable {
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  background: #fafafa;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  color: #d4380d;
+  line-height: 1.5;
+}
+
+.order-fee-unavailable-line + .order-fee-unavailable-line {
+  margin-top: 8rpx;
+}
+
+.order-fee-claim-block {
+  margin-bottom: 16rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.order-fee-claim-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 8rpx 0;
+}
+
+.order-fee-claim-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.order-fee-claim-name {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.order-fee-claim-btn {
+  flex-shrink: 0;
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+  background: #07c160;
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.order-fee-claim-btn.is-loading {
+  opacity: 0.7;
+}

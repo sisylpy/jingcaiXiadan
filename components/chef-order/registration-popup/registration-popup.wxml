@@ -1,0 +1,64 @@
+<view wx:if="{{visible}}" class="popup-mask"></view>
+
+<view wx:if="{{visible}}" class="popup-overlay">
+  <view class="popup-container font-lg" animation="{{animation}}" catchtap="noop">
+    <view class="flex-row-between p-20">
+      <view class="flex-column-center font-lg-2 font-bold p-10" style="width: 100%;">
+        <text>注册用户</text>
+      </view>
+      <image src="/images/del.png" mode="aspectFill" class="icon p-10" bindtap="close" />
+    </view>
+
+    <view class="popup-content1 p-30">
+      <block wx:if="{{depInfo.nxDepartmentEntities.length > 0}}">
+        <view class="flex-row-default">
+          <text class="form-label" style="width: 180rpx; line-height: 90rpx;">订货范围</text>
+          <view class="flex-column">
+            <view class="radio-option1 {{workScope === 'all' ? 'selected' : ''}}" bindtap="selectScope" data-scope="all">
+              <text class="font-md">多个部门</text>
+              <view class="radio-circle {{workScope === 'all' ? 'checked' : ''}}"></view>
+            </view>
+            <view class="radio-option1 {{workScope === 'single' ? 'selected' : ''}}" bindtap="selectScope" data-scope="single">
+              <text class="font-md">单一部门</text>
+              <view class="radio-circle {{workScope === 'single' ? 'checked' : ''}}"></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="flex-row-default" wx:if="{{workScope === 'single'}}">
+          <text class="form-label" style="width: 180rpx; line-height: 90rpx;">工作部门</text>
+          <view class="form-group" style="width: {{windowWidth - 300}}rpx;">
+            <picker mode="selector" range="{{depInfo.nxDepartmentEntities}}" range-key="nxDepartmentName" bindchange="departmentChange">
+              <view class="department-picker1 flex-row" aria-label="选择工作部门">
+                <view style="width: {{windowWidth - 500}}rpx; height: 70rpx; line-height: 70rpx;">{{selectedDepartmentName || '请选择工作部门'}}</view>
+                <image class="picker-arrow-img" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMiBsNiA0IDYtNCIgZmlsbD0iIzg4OCI+PC9wYXRoPjwvc3ZnPg==" />
+              </view>
+            </picker>
+          </view>
+        </view>
+      </block>
+
+      <view class="form-group flex-row">
+        <view class="form-label mr-30">用户头像</view>
+        <view class="flex-column-center">
+          <button class="ava" open-type="chooseAvatar" bind:chooseavatar="chooseAvatar">
+            <image class="avaImg" src="{{avatarUrl}}" mode="aspectFill" />
+          </button>
+          <text wx:if="{{avatarUrl == '/images/User2.png'}}" class="avatar-tip">请上传头像</text>
+        </view>
+      </view>
+
+      <view class="form-group mt-10">
+        <view class="flex-row">
+          <view class="form-label" style="width: 180rpx;">用户名</view>
+          <input name="input" type="text" class="inputName" bindinput="nameInput" placeholder="请输入昵称" maxlength="20" aria-label="输入昵称" />
+          <text wx:if="{{nameError}}" class="error-text">{{nameError}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="popup-footer" style="padding: 10rpx 40rpx;">
+      <view class="save-btn {{!formValid ? 'disabled' : 'next'}}" bindtap="save" disabled="{{!formValid || loading}}" loading="{{loading}}" aria-label="完成注册">注册</view>
+    </view>
+  </view>
+</view>

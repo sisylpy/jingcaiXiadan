@@ -1,0 +1,206 @@
+.claim-coupon-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1300;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.claim-coupon-popup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 620rpx;
+  max-height: 78vh;
+  z-index: 1301;
+  border-radius: 34rpx;
+  background: linear-gradient(180deg, #fff8e8 0%, #00816f 34%, #007765 100%);
+  box-shadow: 0 18rpx 60rpx rgba(0, 0, 0, 0.28);
+  overflow: visible;
+}
+
+.claim-coupon-head {
+  position: relative;
+  padding: 38rpx 32rpx 22rpx;
+  text-align: center;
+}
+
+.claim-coupon-title-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 34rpx;
+  border-radius: 0 0 26rpx 26rpx;
+  background: #008a77;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 700;
+  box-shadow: 0 6rpx 16rpx rgba(0, 122, 105, 0.18);
+}
+
+.claim-coupon-title {
+  display: block;
+  margin-top: 26rpx;
+  color: #007765;
+  font-size: 44rpx;
+  font-weight: 900;
+  letter-spacing: 1rpx;
+}
+
+.claim-coupon-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  color: #c07010;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.claim-coupon-coin {
+  position: absolute;
+  width: 54rpx;
+  height: 54rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffe79b, #ffb735);
+  box-shadow: inset 0 0 0 6rpx rgba(255, 255, 255, 0.35);
+}
+
+.claim-coupon-coin.coin-left {
+  left: 28rpx;
+  top: 36rpx;
+}
+
+.claim-coupon-coin.coin-right {
+  right: 28rpx;
+  top: 76rpx;
+}
+
+.claim-coupon-list {
+  max-height: 520rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+}
+
+.claim-coupon-item {
+  display: flex;
+  align-items: center;
+  min-height: 132rpx;
+  margin-bottom: 14rpx;
+  border-radius: 18rpx;
+  background: #fffdf2;
+  overflow: hidden;
+}
+
+.claim-coupon-left {
+  width: 170rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #f33535;
+}
+
+.claim-coupon-amount {
+  font-size: 46rpx;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.claim-coupon-threshold {
+  margin-top: 10rpx;
+  max-width: 150rpx;
+  font-size: 22rpx;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.claim-coupon-divider {
+  width: 1rpx;
+  height: 92rpx;
+  border-left: 2rpx dashed #efddd2;
+}
+
+.claim-coupon-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0 16rpx 0 22rpx;
+}
+
+.claim-coupon-name {
+  display: block;
+  color: #f33535;
+  font-size: 27rpx;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claim-coupon-date {
+  display: block;
+  margin-top: 10rpx;
+  color: #f33535;
+  font-size: 23rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claim-coupon-scope {
+  display: block;
+  margin-top: 6rpx;
+  color: #9d6c67;
+  font-size: 21rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claim-coupon-btn {
+  flex-shrink: 0;
+  margin-right: 14rpx;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  background: #ff9d16;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.claim-coupon-btn.is-loading {
+  opacity: 0.72;
+}
+
+.claim-coupon-footer {
+  height: 82rpx;
+  margin: 22rpx 56rpx 32rpx;
+  border-radius: 999rpx;
+  line-height: 82rpx;
+  text-align: center;
+  color: #a85100;
+  font-size: 30rpx;
+  font-weight: 700;
+  background: linear-gradient(180deg, #fff4ad, #ffd15c);
+  box-shadow: 0 8rpx 18rpx rgba(0, 0, 0, 0.12);
+}
+
+.claim-coupon-footer.is-loading {
+  opacity: 0.72;
+}
+
+.claim-coupon-close {
+  position: absolute;
+  left: 50%;
+  bottom: -86rpx;
+  transform: translateX(-50%);
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  line-height: 52rpx;
+  text-align: center;
+  color: #fff;
+  font-size: 48rpx;
+  border: 3rpx solid #fff;
+}

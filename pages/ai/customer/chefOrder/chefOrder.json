@@ -6,7 +6,16 @@
     "delWarnModal": "/components/delWarnModal/delWarnModal",
     "myDismodalCashSingle": "/components/myDismodalCashSingle/myDismodalCashSingle",
     "myDismodalCashSingleDep": "/components/myDismodalCashSingleDep/myDismodalCashSingleDep",
-     "addOrder": "/components/addOrder/addOrder"
+    "addOrder": "/components/addOrder/addOrder",
+    "chef-order-benefit-card": "/components/chef-order/benefit-card/benefit-card",
+    "chef-order-action-menu": "/components/chef-order/action-menu/action-menu",
+    "chef-order-registration-popup": "/components/chef-order/registration-popup/registration-popup",
+    "chef-order-search-results": "/components/chef-order/search-results/search-results",
+    "chef-order-category-list": "/components/chef-order/category-list/category-list",
+    "chef-order-time-list": "/components/chef-order/time-list/time-list",
+    "chef-order-cart": "/components/chef-order/cart/cart",
+    "chef-order-coupon-popup": "/components/chef-order/coupon-popup/coupon-popup",
+    "chef-order-department-switcher": "/components/chef-order/department-switcher/department-switcher"
 
   }
 }
