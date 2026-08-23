@@ -154,6 +154,10 @@ assert(registrationJs.indexOf('36 * 60 * 60 * 1000') >= 0,
   '未注册用户的注册弹窗必须延迟 36 小时显示')
 assert(registrationJs.indexOf('Date.now() - firstVisitTimestamp >= REGISTRATION_POPUP_DELAY_MS') >= 0,
   '注册弹窗缺少首次访问时间判断')
+assert(pageJs.indexOf("wx.getStorageSync('showChefOrderRegistration')") >= 0,
+  '商品页发起下单时必须返回 chefOrder 显示注册弹窗')
+assert(registrationJs.indexOf('this.data.forceRegistration') >= 0,
+  '用户主动下单时注册弹窗不能受 36 小时延迟限制')
 
 const onLoadSource = pageJs.slice(pageJs.indexOf('onLoad(options)'), pageJs.indexOf('_getDisInfo()'))
 assert(onLoadSource.indexOf('showPage: true') < 0,

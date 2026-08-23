@@ -234,6 +234,7 @@ export const chefOrderRegistrationMethods = {
       const timestamp = Date.now();
       wx.setStorageSync('firstVisitTimestamp', timestamp);
       this.setData({
+        forceRegistration: false,
         showPage: false,
       })
     }
@@ -249,7 +250,8 @@ export const chefOrderRegistrationMethods = {
         wx.setStorageSync('firstVisitTimestamp', firstVisitTimestamp)
       }
 
-      const shouldShowRegistration = Date.now() - firstVisitTimestamp >= REGISTRATION_POPUP_DELAY_MS
+      const shouldShowRegistration = this.data.forceRegistration
+        || Date.now() - firstVisitTimestamp >= REGISTRATION_POPUP_DELAY_MS
       this.setData({
         showPage: shouldShowRegistration,
       })

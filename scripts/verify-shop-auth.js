@@ -43,6 +43,8 @@ let lastUpload = null
 let requestHandler = null
 let uploadHandler = null
 let reLaunchUrl = ''
+let navigateBackDelta = 0
+let pageStack = []
 const wx = {
   getStorageSync(key) { return storage[key] || '' },
   setStorageSync(key, value) { storage[key] = value },
@@ -50,6 +52,10 @@ const wx = {
   showToast() {},
   reLaunch(options) {
     reLaunchUrl = options.url
+    if (options.complete) options.complete()
+  },
+  navigateBack(options) {
+    navigateBackDelta = options.delta
     if (options.complete) options.complete()
   },
   request(options) {
@@ -65,9 +71,10 @@ const wx = {
   downloadFile(options) { return options }
 }
 const moduleRef = { exports: {} }
-new Function('wx', 'setTimeout', 'module', 'exports', source)(
+new Function('wx', 'setTimeout', 'getCurrentPages', 'module', 'exports', source)(
   wx,
   callback => { callback(); return 1 },
+  () => pageStack,
   moduleRef,
   moduleRef.exports
 )
@@ -89,6 +96,20 @@ auth.shopRequest({
 assert.ok(lastRequest.url.includes('/api/nxdepartmentdisgoods/depGetDepGoodsPage'))
 assert.ok(!lastRequest.url.includes('/api/shop/'))
 assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], undefined)
+
+pageStack = [
+  { route: 'pages/ai/customer/chefOrder/chefOrder' },
+  { route: 'pages/resGoodsLess/resGoodsLess' }
+]
+let registrationFailure = null
+auth.shopRequest({
+  url: 'https://example.test/nongxinle/api/nxdepartmentorders/save',
+  fail(error) { registrationFailure = error }
+})
+assert.strictEqual(navigateBackDelta, 1)
+assert.strictEqual(storage.showChefOrderRegistration, true)
+assert.strictEqual(reLaunchUrl, '')
+assert.strictEqual(registrationFailure.statusCode, 401)
 
 requestHandler = options => options.success({
   statusCode: 200,

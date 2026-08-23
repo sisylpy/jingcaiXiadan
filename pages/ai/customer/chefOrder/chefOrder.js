@@ -72,6 +72,7 @@ Page({
     billSummary: null,
     showCashSettle: false,
     homeBenefitSummary: null,
+    forceRegistration: false,
 
   },
 
@@ -82,6 +83,16 @@ Page({
       windowHeight: wx.getWindowInfo().windowHeight * globalData.rpxR,
       navBarHeight: globalData.navBarHeight * globalData.rpxR,
     });
+
+    if (wx.getStorageSync('showChefOrderRegistration')) {
+      wx.removeStorageSync('showChefOrderRegistration')
+      this.setData({
+        forceRegistration: true,
+        showPage: true,
+        bill: -1,
+      })
+      this._aaa()
+    }
 
     // 检查是否需要立即刷新（从添加订单页面返回）
     const needImmediateRefresh = wx.getStorageSync('needRefreshOrderData');
