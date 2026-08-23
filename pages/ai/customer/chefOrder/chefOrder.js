@@ -863,15 +863,7 @@ Page({
           '&gbDepFatherId=-1&resFatherId=-1&depSettleType=' + this.data.depSettleType + '&disId=' + this.data.disId,
       })
     } else if (this.data.openType == 'books') {
-      if (this.data.depInfo.nxDepartmentSettleType == 0) {
-        wx.navigateTo({
-          url: '../../../resGoodsLessCash/resGoodsLessCash',
-        })
-      } else if (this.data.depInfo.nxDepartmentSettleType == 1) {
-        wx.navigateTo({
-          url: '../../../resGoodsLess/resGoodsLess',
-        })
-      }
+      this._openGoodsCatalog();
 
     } else if (this.data.openType == 'ai') {
       wx.navigateTo({
@@ -898,6 +890,17 @@ Page({
   toAddOrder(e) {
     var type = (e.detail && e.detail.type) || e.currentTarget.dataset.type;
     console.log(type)
+    if (!this.data.userInfo && type !== 'books') {
+      this.setData({
+        showPopup: false,
+        showPage: true,
+      });
+      wx.showToast({
+        title: '注册后可以下单',
+        icon: 'none'
+      });
+      return;
+    }
     if (this.data.depInfo.nxDepartmentEntities.length > 0) {
       this.setData({
         showChoice: true,
@@ -918,15 +921,7 @@ Page({
           url: '../customerGoodsAi/customerGoodsAi?depId=' + this.data.depFatherId + '&disId=' + this.data.disId,
         })
       } else if (type == 'books') {
-        if (this.data.depInfo.nxDepartmentSettleType == 0) {
-          wx.navigateTo({
-            url: '../../../resGoodsLessCash/resGoodsLessCash',
-          })
-        } else if (this.data.depInfo.nxDepartmentSettleType == 1) {
-          wx.navigateTo({
-            url: '../../../resGoodsLess/resGoodsLess',
-          })
-        }
+        this._openGoodsCatalog();
       } else {
         wx.navigateTo({
           url: '../resGoodsList/resGoodsList?depFatherId=' + this.data.depFatherId +
@@ -935,6 +930,28 @@ Page({
             '&beforeId=-1' + '&disId=' + this.data.disId,
         })
       }
+    }
+  },
+
+  _openGoodsCatalog() {
+    if (!this.data.userInfo) {
+      const disInfo = this.data.disInfo || {};
+      const disName = encodeURIComponent(disInfo.nxDistributerName || '配送商品');
+      wx.navigateTo({
+        url: '../../../resGoodsAll/resGoodsAll?guest=1&disId=' + this.data.disId
+          + '&depFatherId=' + this.data.depFatherId
+          + '&disName=' + disName,
+      });
+      return;
+    }
+    if (this.data.depInfo.nxDepartmentSettleType == 0) {
+      wx.navigateTo({
+        url: '../../../resGoodsLessCash/resGoodsLessCash',
+      });
+    } else if (this.data.depInfo.nxDepartmentSettleType == 1) {
+      wx.navigateTo({
+        url: '../../../resGoodsLess/resGoodsLess',
+      });
     }
   },
 

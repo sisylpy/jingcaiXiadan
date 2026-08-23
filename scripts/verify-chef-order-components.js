@@ -143,6 +143,21 @@ assert(pageJs.indexOf("'&disId=' + this.data.disId") >= 0, '客户分享链接�
 assert(pageJs.indexOf("'customerInvite'") >= 0, '客户邀请链接未强制进入客户注册流程')
 assert(pageJs.indexOf('_getDepInfo({ loadOrders: false })') >= 0,
   '未注册客户读取门店资料时不能提前请求受保护的订单数据')
+assert(pageJs.indexOf("resGoodsAll/resGoodsAll?guest=1&disId=") >= 0,
+  '未注册客户的商品目录必须进入公开浏览页面')
+
+const guestCatalogSource = read(path.join(projectRoot, 'pages/resGoodsAll/resGoodsAll.js'))
+const guestCatalogWxmlPath = path.join(projectRoot, 'pages/resGoodsAll/resGoodsAll.wxml')
+const guestCatalogWxml = read(guestCatalogWxmlPath)
+verifyTagBalance(guestCatalogWxmlPath)
+assert(guestCatalogSource.indexOf('if (guestMode)') >= 0
+  && guestCatalogSource.indexOf('this.initDisData()') >= 0,
+  '公开商品目录不能先执行登录或受保护的订单请求')
+assert(guestCatalogSource.indexOf("depId: guestMode ? '-1'") >= 0,
+  '游客商品目录不能携带部门订单数据')
+assert(guestCatalogWxml.indexOf('sons.nxDgWillPriceOne') >= 0
+  && guestCatalogWxml.indexOf('注册后订货') >= 0,
+  '游客商品目录必须展示价格，并将下单动作引导到注册')
 
 const onLoadSource = pageJs.slice(pageJs.indexOf('onLoad(options)'), pageJs.indexOf('_getDisInfo()'))
 assert(onLoadSource.indexOf('showPage: true') < 0,
