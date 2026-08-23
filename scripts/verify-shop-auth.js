@@ -73,6 +73,23 @@ new Function('wx', 'setTimeout', 'module', 'exports', source)(
 )
 const auth = moduleRef.exports
 
+requestHandler = options => options.success({ statusCode: 200, data: { code: 0 } })
+auth.shopRequest({
+  url: 'https://example.test/nongxinle/api/nxdepartmentdisgoods/depGetDepDisGoodsCata',
+  success() {}
+})
+assert.ok(lastRequest.url.includes('/api/nxdepartmentdisgoods/depGetDepDisGoodsCata'))
+assert.ok(!lastRequest.url.includes('/api/shop/'))
+assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], undefined)
+
+auth.shopRequest({
+  url: 'https://example.test/nongxinle/api/nxdepartmentdisgoods/depGetDepGoodsPage',
+  success() {}
+})
+assert.ok(lastRequest.url.includes('/api/nxdepartmentdisgoods/depGetDepGoodsPage'))
+assert.ok(!lastRequest.url.includes('/api/shop/'))
+assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], undefined)
+
 requestHandler = options => options.success({
   statusCode: 200,
   data: {

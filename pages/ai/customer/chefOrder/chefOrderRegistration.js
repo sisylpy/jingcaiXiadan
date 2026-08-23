@@ -4,6 +4,8 @@ import {
   depOrderUserSaveWithFileLaodu
 } from '../../../../lib/apiRestraunt'
 
+const REGISTRATION_POPUP_DELAY_MS = 36 * 60 * 60 * 1000
+
 export const chefOrderRegistrationMethods = {
   _login() {
     wx.login({
@@ -241,20 +243,31 @@ export const chefOrderRegistrationMethods = {
 
   _checkIfShowPage() {
     if (this.data.userInfo == null && this.data.disId && this.data.depFatherId) {
-      if(this.data.depInfo.nxDepartmentEntities.length > 0){
+      let firstVisitTimestamp = Number(wx.getStorageSync('firstVisitTimestamp'))
+      if (!Number.isFinite(firstVisitTimestamp) || firstVisitTimestamp <= 0) {
+        firstVisitTimestamp = Date.now()
+        wx.setStorageSync('firstVisitTimestamp', firstVisitTimestamp)
+      }
+
+      const shouldShowRegistration = Date.now() - firstVisitTimestamp >= REGISTRATION_POPUP_DELAY_MS
+      this.setData({
+        showPage: shouldShowRegistration,
+      })
+      if (!shouldShowRegistration) return
+
+      const depInfo = this.data.depInfo || {}
+      const departments = depInfo.nxDepartmentEntities || []
+      if(departments.length > 0){
         this.setData({
-          selDepId: this.data.depInfo.nxDepartmentEntities[0].nxDepartmentId,
+          selDepId: departments[0].nxDepartmentId,
 
         })
       }else{
         this.setData({
-          selDepId: this.data.depInfo.nxDepartmentId,
+          selDepId: depInfo.nxDepartmentId,
         })
       }
-      this.setData({
-        showPage: true,
-      });
-      this._aaa();
+      this._aaa()
     }
 
   },

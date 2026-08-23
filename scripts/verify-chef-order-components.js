@@ -129,6 +129,7 @@ assert(read(pageWxmlPath).split('\n').length < 300, 'chefOrder.wxml 再次膨胀
 assert(read(pageWxssPath).split('\n').length < 240, 'chefOrder.wxss 再次膨胀到 240 行以上')
 
 const pageJs = read(pageJsPath)
+const registrationJs = read(path.join(pageDir, 'chefOrderRegistration.js'))
 assert(pageJs.indexOf('isSalesAgent') >= 0, '业务员代下单模式入口丢失')
 assert(pageJs.indexOf('backFromSalesAgent') >= 0, '业务员代下单返回逻辑丢失')
 
@@ -149,6 +150,10 @@ assert(pageJs.indexOf("url: '../../../resGoodsLess/resGoodsLess'") >= 0,
   '记账客户商品目录入口丢失')
 assert(pageJs.indexOf('Number(currentDepartment.nxDepartmentSettleType)') >= 0,
   '游客商品目录必须按照当前部门结算类型分流')
+assert(registrationJs.indexOf('36 * 60 * 60 * 1000') >= 0,
+  '未注册用户的注册弹窗必须延迟 36 小时显示')
+assert(registrationJs.indexOf('Date.now() - firstVisitTimestamp >= REGISTRATION_POPUP_DELAY_MS') >= 0,
+  '注册弹窗缺少首次访问时间判断')
 
 const onLoadSource = pageJs.slice(pageJs.indexOf('onLoad(options)'), pageJs.indexOf('_getDisInfo()'))
 assert(onLoadSource.indexOf('showPage: true') < 0,
