@@ -29,15 +29,3 @@
 .quote-delete { margin-top: 10rpx; color: #b45f4d; font-size: 20rpx; }
 .arrow { margin-left: 14rpx; color: #9ba59f; font-size: 38rpx; }
 .empty, .loading { padding: 70rpx 20rpx; color: #8c9891; text-align: center; font-size: 25rpx; }
-
-.menu-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 90; background: rgba(0,0,0,.45); }
-.create-menu { position: fixed; left: 0; right: 0; bottom: 0; z-index: 91; padding: 30rpx 24rpx calc(30rpx + env(safe-area-inset-bottom)); background: #f4f7f5; border-radius: 28rpx 28rpx 0 0; }
-.menu-title { padding: 6rpx 8rpx 20rpx; color: #839087; font-size: 23rpx; text-align: center; }
-.menu-item { margin-bottom: 14rpx; padding: 22rpx 24rpx; display: flex; align-items: center; background: #fff; border-radius: 20rpx; }
-.menu-icon { width: 60rpx; height: 60rpx; flex: none; color: #fff; background: #287657; border-radius: 16rpx; line-height: 60rpx; text-align: center; font-size: 26rpx; }
-.menu-icon.industry { background: #4e68c8; }
-.menu-icon.manual { background: #b87530; }
-.menu-text { min-width: 0; margin-left: 20rpx; }
-.menu-name { font-size: 28rpx; font-weight: 650; }
-.menu-note { margin-top: 5rpx; color: #849088; font-size: 21rpx; line-height: 1.4; }
-.menu-cancel { margin-top: 6rpx; padding: 22rpx 0; color: #55625b; background: #fff; border-radius: 20rpx; font-size: 27rpx; font-weight: 650; text-align: center; }

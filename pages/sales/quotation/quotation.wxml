@@ -5,6 +5,48 @@
     <view class="nav-space"></view>
   </view>
 
+  <view class="section add-section" wx:if="{{!locked}}">
+    <view class="section-head">
+      <view class="section-title">添加商品</view>
+    </view>
+
+    <view class="quote-entry-row">
+      <view class="search-row">
+        <input value="{{keyword}}" placeholder="输入商品名称，如：青椒" data-field="keyword" bindinput="onInput" confirm-type="search" bindconfirm="search" />
+        <view class="search-button" bindtap="search">搜索</view>
+      </view>
+      <view class="quote-entry-shortcut industry-shortcut {{showBusinessTypes ? 'active' : ''}}" data-mode="industry" bindtap="openAddMode">按行业报价</view>
+      <view class="quote-entry-shortcut image-shortcut" data-mode="ocr" bindtap="openAddMode">拍图片报价</view>
+    </view>
+
+    <view class="business-panel" wx:if="{{showBusinessTypes}}">
+      <view class="panel-title">选择客户业态</view>
+      <view class="type-group" wx:for="{{businessTypeGroups}}" wx:key="category" wx:for-item="group">
+        <view class="group-name">{{group.name}}</view>
+        <view class="type-tags">
+          <view class="type-tag" wx:for="{{group.types}}" wx:key="businessTypeId" wx:for-item="type"
+            data-id="{{type.businessTypeId}}" data-name="{{type.typeName}}" bindtap="chooseBusinessType">{{type.typeName}}</view>
+        </view>
+      </view>
+      <view class="panel-empty" wx:if="{{businessTypesLoading}}">正在加载业态…</view>
+      <view class="panel-empty" wx:elif="{{businessTypeGroups.length === 0}}">暂无可选业态</view>
+    </view>
+
+    <view class="manual-results">
+      <view class="candidate" wx:for="{{candidates}}" wx:key="goodsId">
+        <image src="{{item.imageUrl}}" mode="aspectFill" />
+        <view class="candidate-main">
+          <view class="candidate-name">{{item.goodsName}}</view>
+          <view class="candidate-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
+          <view class="reason">{{item.matchReason || '商品名称匹配'}}</view>
+          <view class="candidate-price">{{item.priceLabel}}</view>
+        </view>
+        <view class="choose" data-id="{{item.goodsId}}" bindtap="chooseCandidate">选择</view>
+      </view>
+      <view class="searching" wx:if="{{searching}}">正在查找商品…</view>
+    </view>
+  </view>
+
   <view class="target-card">
     <view class="card-kicker">报价对象</view>
     <view class="target-head">
@@ -46,52 +88,6 @@
     </view>
   </view>
 
-  <view class="section add-section" wx:if="{{!locked}}">
-    <view class="section-head">
-      <view>
-        <view class="section-title">添加商品</view>
-        <view class="section-note">三种方式都加入下方同一张报价单</view>
-      </view>
-    </view>
-    <view class="add-methods">
-      <view class="add-method ocr-method" data-mode="ocr" bindtap="openAddMode"><text>拍</text><view>拍采购单</view></view>
-      <view class="add-method industry-method {{showBusinessTypes ? 'active' : ''}}" data-mode="industry" bindtap="openAddMode"><text>荐</text><view>行业推荐</view></view>
-      <view class="add-method manual-method {{manualSearchExpanded ? 'active' : ''}}" data-mode="manual" bindtap="openAddMode" wx:if="{{!manualSearchExpanded}}"><text>加</text><view>手工添加</view></view>
-    </view>
-
-    <view class="business-panel" wx:if="{{showBusinessTypes}}">
-      <view class="panel-title">选择客户业态</view>
-      <view class="type-group" wx:for="{{businessTypeGroups}}" wx:key="category" wx:for-item="group">
-        <view class="group-name">{{group.name}}</view>
-        <view class="type-tags">
-          <view class="type-tag" wx:for="{{group.types}}" wx:key="businessTypeId" wx:for-item="type"
-            data-id="{{type.businessTypeId}}" data-name="{{type.typeName}}" bindtap="chooseBusinessType">{{type.typeName}}</view>
-        </view>
-      </view>
-      <view class="panel-empty" wx:if="{{businessTypesLoading}}">正在加载业态…</view>
-      <view class="panel-empty" wx:elif="{{businessTypeGroups.length === 0}}">暂无可选业态</view>
-    </view>
-
-    <view class="manual-panel" wx:if="{{manualSearchExpanded}}">
-      <view class="search-row">
-        <input value="{{keyword}}" placeholder="输入系统商品名称，如：青椒" data-field="keyword" bindinput="onInput" confirm-type="search" bindconfirm="search" />
-        <view class="search-button" bindtap="search">搜索</view>
-      </view>
-      <view class="search-note">系统返回商品候选，最终商品由业务员人工确认。</view>
-      <view class="candidate" wx:for="{{candidates}}" wx:key="goodsId">
-        <image src="{{item.imageUrl}}" mode="aspectFill" />
-        <view class="candidate-main">
-          <view class="candidate-name">{{item.goodsName}}</view>
-          <view class="candidate-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
-          <view class="reason">{{item.matchReason || '商品名称匹配'}}</view>
-          <view class="candidate-price">{{item.priceLabel}}</view>
-        </view>
-        <view class="choose" data-id="{{item.goodsId}}" bindtap="chooseCandidate">选择</view>
-      </view>
-      <view class="searching" wx:if="{{searching}}">正在查找商品…</view>
-    </view>
-  </view>
-
   <view class="section products-section">
     <view class="section-head">
       <view class="section-title">报价商品（{{items.length}}项）</view>
@@ -100,12 +96,6 @@
 
     <view class="products-empty" wx:if="{{items.length === 0}}">
       <view class="empty-title">还没有报价商品</view>
-      <view class="empty-note">可以从采购单、行业推荐或系统商品中添加</view>
-      <view class="empty-actions" wx:if="{{!locked}}">
-        <view data-mode="ocr" bindtap="openAddMode">拍采购单</view>
-        <view data-mode="industry" bindtap="openAddMode">行业推荐</view>
-        <view data-mode="manual" bindtap="openAddMode">手工添加</view>
-      </view>
     </view>
 
     <view class="quote-item" wx:for="{{items}}" wx:key="goodsId">

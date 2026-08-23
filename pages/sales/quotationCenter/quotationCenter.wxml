@@ -12,7 +12,7 @@
   <view class="content">
     <view class="quote-bar">
       <view class="section-title">我的报价</view>
-      <view class="plus-btn" bindtap="showCreateMenu">＋</view>
+      <view class="plus-btn" bindtap="startQuotation">＋</view>
     </view>
     <view class="tabs">
       <view class="tab {{quoteSwiperIndex === 0 ? 'active' : ''}}" data-tab="draft" bindtap="switchQuoteTab">草稿 {{drafts.length}}</view>
@@ -57,22 +57,4 @@
   </view>
 
   <view class="loading" wx:if="{{loading}}">正在加载报价中心…</view>
-
-  <view class="menu-mask" wx:if="{{createMenuVisible}}" bindtap="hideCreateMenu"></view>
-  <view class="create-menu" wx:if="{{createMenuVisible}}">
-    <view class="menu-title">选择一种商品录入方式</view>
-    <view class="menu-item" data-mode="ocr" bindtap="chooseCreateMode">
-      <view class="menu-icon ocr">拍</view>
-      <view class="menu-text"><view class="menu-name">拍采购单</view><view class="menu-note">识别采购明细后人工确认</view></view>
-    </view>
-    <view class="menu-item" data-mode="industry" bindtap="chooseCreateMode">
-      <view class="menu-icon industry">荐</view>
-      <view class="menu-text"><view class="menu-name">按行业推荐</view><view class="menu-note">从业态常购商品中选择</view></view>
-    </view>
-    <view class="menu-item" data-mode="manual" bindtap="chooseCreateMode">
-      <view class="menu-icon manual">加</view>
-      <view class="menu-text"><view class="menu-name">手工添加</view><view class="menu-note">按系统商品名称查找</view></view>
-    </view>
-    <view class="menu-cancel" bindtap="hideCreateMenu">取消</view>
-  </view>
 </view>

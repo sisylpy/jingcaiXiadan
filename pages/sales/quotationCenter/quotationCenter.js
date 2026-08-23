@@ -34,8 +34,7 @@ Page({
     swiperHeight: 500,
     quoteSwiperIndex: 0,
     drafts: [],
-    history: [],
-    createMenuVisible: false
+    history: []
   },
 
   onLoad() {
@@ -88,30 +87,11 @@ Page({
     })).finally(() => this.setData({ loading: false }))
   },
 
-  showCreateMenu() {
-    this.setData({ createMenuVisible: true })
-  },
-
-  hideCreateMenu() {
-    this.setData({ createMenuVisible: false })
-  },
-
-  chooseCreateMode(e) {
-    const mode = e.currentTarget.dataset.mode || 'manual'
-    this.hideCreateMenu()
-    this.startQuotation(mode)
-  },
-
-  startQuotation(mode) {
+  startQuotation() {
     wx.removeStorageSync(BASKET_KEY)
     wx.removeStorageSync(OCR_TRANSFER_KEY)
-    const modeQuery = {
-      ocr: 'openOcr=1',
-      industry: 'openIndustry=1',
-      manual: 'openManual=1'
-    }[mode] || 'openManual=1'
     wx.navigateTo({
-      url: '/pages/sales/quotation/quotation?' + modeQuery
+      url: '/pages/sales/quotation/quotation'
     })
   },
 

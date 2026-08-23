@@ -96,7 +96,6 @@ Page({
     hasVisitContext: false,
     validUntil: '',
     remark: '',
-    manualSearchExpanded: false,
     showBusinessTypes: false,
     businessTypesLoading: false,
     businessTypeGroups: [],
@@ -142,14 +141,9 @@ Page({
     }
     this._openOcrOnReady = String(options.openOcr || '') === '1'
     this._openIndustryOnReady = String(options.openIndustry || '') === '1'
-    this._openManualOnReady = String(options.openManual || '') === '1'
   },
 
   onReady() {
-    if (this._openManualOnReady) {
-      this._openManualOnReady = false
-      this.setData({ manualSearchExpanded: true })
-    }
     if (this._openIndustryOnReady) {
       this._openIndustryOnReady = false
       this.setData({ showBusinessTypes: true })
@@ -286,14 +280,7 @@ Page({
     if (mode === 'ocr') this.openOcr()
     if (mode === 'industry') {
       this.setData({
-        showBusinessTypes: !this.data.showBusinessTypes,
-        manualSearchExpanded: false
-      })
-    }
-    if (mode === 'manual') {
-      this.setData({
-        manualSearchExpanded: !this.data.manualSearchExpanded,
-        showBusinessTypes: false
+        showBusinessTypes: !this.data.showBusinessTypes
       })
     }
   },
@@ -644,7 +631,6 @@ Page({
       attachments,
       editingIndex: -1,
       candidates: [],
-      manualSearchExpanded: false,
       showBusinessTypes: false
     }, meta))
     this.setQuoteItems(items)
