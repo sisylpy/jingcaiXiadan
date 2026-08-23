@@ -141,5 +141,11 @@ assert(actionMenuWxml.indexOf('popupWidth') < 0 && actionMenuWxml.indexOf('popup
 assert(pageJs.indexOf('&entry=customerInvite') >= 0, '客户分享链接缺少客户邀请标识')
 assert(pageJs.indexOf("'&disId=' + this.data.disId") >= 0, '客户分享链接缺少配送商参数')
 assert(pageJs.indexOf("'customerInvite'") >= 0, '客户邀请链接未强制进入客户注册流程')
+assert(pageJs.indexOf('_getDepInfo({ loadOrders: false })') >= 0,
+  '未注册客户读取门店资料时不能提前请求受保护的订单数据')
+
+const onLoadSource = pageJs.slice(pageJs.indexOf('onLoad(options)'), pageJs.indexOf('_getDisInfo()'))
+assert(onLoadSource.indexOf('showPage: true') < 0,
+  '注册弹窗不能在自动登录结果返回前显示，否则会重复闪现')
 
 console.log('Chef order component checks passed')

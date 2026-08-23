@@ -161,7 +161,8 @@ Page({
     if (!cachedUserInfo) {
       this.setData({
         userInfo: null,
-        showPage: true,
+        // 等自动登录确认用户不存在、门店资料加载完成后再显示注册框，避免重复闪现。
+        showPage: false,
       });
     } else {
       this.setData({
@@ -364,8 +365,10 @@ Page({
               if (this.data.disId && this.data.depFatherId) {
                 console.log("用户不存在，执行_getDepInfo和_checkIfShowPage");
                 wx.removeStorageSync('userInfo');
-                this._aaa();
-                this._getDepInfo().then(() => {
+                this.setData({ userInfo: null, showPage: false });
+                // 新用户没有订货端凭证，此时只能读取公开的门店资料。
+                // 订单数据要等注册成功并取得凭证后再加载。
+                this._getDepInfo({ loadOrders: false }).then(() => {
                   this._checkIfShowPage();
                 });
               } else {
@@ -534,7 +537,8 @@ Page({
     return share;
   },
 
-  _getDepInfo() {
+  _getDepInfo(options = {}) {
+    const loadOrders = options.loadOrders !== false;
     return new Promise((resolve, reject) => {
       getDepInfo(this.data.depFatherId).then(res => {
         load.hideLoading();
@@ -561,10 +565,12 @@ Page({
             })
           }
 
-          if (this.data.showType === 'time') {
-            this._initData();
-          } else if (this.data.showType === 'category') {
-            this._initDataByFather();
+          if (loadOrders) {
+            if (this.data.showType === 'time') {
+              this._initData();
+            } else if (this.data.showType === 'category') {
+              this._initDataByFather();
+            }
           }
         } else {
           wx.showToast({
