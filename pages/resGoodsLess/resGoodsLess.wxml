@@ -17,11 +17,13 @@
           <view class='navbar-title'>配送手册</view>
         </view>
       </block>
-      <block wx:else wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
-        <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click' hover-class="hover">
-          <view class='navbar-title'>{{tabs.words}}
+      <block wx:else>
+        <block wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
+          <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click' hover-class="hover">
+            <view class='navbar-title'>{{tabs.words}}
+            </view>
           </view>
-        </view>
+        </block>
       </block>
       <!-- <view class="navbar-slider" style="left: {{sliderLeft}}px; width:{{windowWidth / 4}}rpx; transform: translateX({{sliderOffset}}px); -webkit-transform: translateX({{sliderOffset}}px);">
       </view> -->

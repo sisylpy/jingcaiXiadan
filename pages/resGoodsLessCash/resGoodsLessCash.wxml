@@ -18,10 +18,12 @@
           <view class='navbar-title'>配送手册</view>
         </view>
       </block>
-      <block wx:else wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
-        <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click'>
-          <view class='navbar-title'>{{tabs.words}}</view>
-        </view>
+      <block wx:else>
+        <block wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
+          <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click'>
+            <view class='navbar-title'>{{tabs.words}}</view>
+          </view>
+        </block>
       </block>
     </view>
 

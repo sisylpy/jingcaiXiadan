@@ -154,14 +154,17 @@ assert(pageJs.indexOf('Number(currentDepartment.nxDepartmentSettleType)') >= 0,
   const guestPageDir = path.join(projectRoot, 'pages', pageName)
   const guestPageJs = read(path.join(guestPageDir, pageName + '.js'))
   const guestPageWxml = path.join(guestPageDir, pageName + '.wxml')
+  const guestPageWxmlSource = read(guestPageWxml)
   verifyTagBalance(guestPageWxml)
   assert(guestPageJs.indexOf("String(options.guest || '') === '1'") >= 0,
     pageName + ' 缺少游客模式入口')
   assert(guestPageJs.indexOf("depId: '-1'") >= 0
     && guestPageJs.indexOf('this.initDisData()') >= 0,
     pageName + ' 游客模式不能读取部门订单数据')
-  assert(read(guestPageWxml).indexOf('disable-touch="{{guestMode}}"') >= 0,
+  assert(guestPageWxmlSource.indexOf('disable-touch="{{guestMode}}"') >= 0,
     pageName + ' 游客模式不能滑入受保护的部门订单页')
+  assert(!/<block\b[^>]*\bwx:else\b[^>]*\bwx:for=/.test(guestPageWxmlSource),
+    pageName + ' 不能在同一个 block 上组合 wx:else 和 wx:for')
 })
 
 const onLoadSource = pageJs.slice(pageJs.indexOf('onLoad(options)'), pageJs.indexOf('_getDisInfo()'))
