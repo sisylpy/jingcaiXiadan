@@ -1,0 +1,202 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">报价工作区</view>
+    <view class="nav-space"></view>
+  </view>
+
+  <view class="target-card">
+    <view class="card-kicker">报价对象</view>
+    <view class="target-head">
+      <view class="target-main">
+        <view class="target-name">{{targetDisplayName}}</view>
+        <view class="context-badges">
+          <text class="target-badge">{{targetTypeLabel}}</text>
+          <text wx:if="{{hasVisitContext}}">已关联拜访</text>
+          <text wx:if="{{hasLeadContext}}">已关联线索</text>
+          <text wx:if="{{hasCustomerContext}}">已关联客户</text>
+        </view>
+      </view>
+      <view class="target-side">
+        <view class="status-badge {{locked ? 'locked-status' : ''}}">{{statusLabel}}</view>
+        <view class="change-target" wx:if="{{!locked}}" bindtap="openTargetPicker">{{isAnonymous ? '选择客户' : '更换对象'}}</view>
+      </view>
+    </view>
+
+    <view class="anonymous-field" wx:if="{{isAnonymous}}">
+      <text>门店简称</text>
+      <input disabled="{{locked}}" value="{{shopName}}" placeholder="可选，方便识别这张报价" data-field="shopName" bindinput="onInput" />
+    </view>
+
+    <view class="quote-meta-grid">
+      <view class="meta-item">
+        <text>报价编号</text>
+        <view>{{quotationNo || '保存草稿后生成'}}</view>
+      </view>
+      <view class="meta-item">
+        <text>有效期</text>
+        <picker disabled="{{locked}}" mode="date" value="{{validUntil}}" bindchange="onDateChange">
+          <view class="date-picker">{{validUntil}}<text wx:if="{{!locked}}"> ›</text></view>
+        </picker>
+      </view>
+    </view>
+    <view class="snapshot-note" wx:if="{{locked}}">本次商品和报价快照已锁定，平台现价变化不会改动这张报价。</view>
+    <view class="target-card-actions" wx:if="{{quotationId}}">
+      <view bindtap="requestDeleteQuotation">删除报价</view>
+    </view>
+  </view>
+
+  <view class="section add-section" wx:if="{{!locked}}">
+    <view class="section-head">
+      <view>
+        <view class="section-title">添加商品</view>
+        <view class="section-note">三种方式都加入下方同一张报价单</view>
+      </view>
+    </view>
+    <view class="add-methods">
+      <view class="add-method ocr-method" data-mode="ocr" bindtap="openAddMode"><text>拍</text><view>拍采购单</view></view>
+      <view class="add-method industry-method {{showBusinessTypes ? 'active' : ''}}" data-mode="industry" bindtap="openAddMode"><text>荐</text><view>行业推荐</view></view>
+      <view class="add-method manual-method {{manualSearchExpanded ? 'active' : ''}}" data-mode="manual" bindtap="openAddMode" wx:if="{{!manualSearchExpanded}}"><text>加</text><view>手工添加</view></view>
+    </view>
+
+    <view class="business-panel" wx:if="{{showBusinessTypes}}">
+      <view class="panel-title">选择客户业态</view>
+      <view class="type-group" wx:for="{{businessTypeGroups}}" wx:key="category" wx:for-item="group">
+        <view class="group-name">{{group.name}}</view>
+        <view class="type-tags">
+          <view class="type-tag" wx:for="{{group.types}}" wx:key="businessTypeId" wx:for-item="type"
+            data-id="{{type.businessTypeId}}" data-name="{{type.typeName}}" bindtap="chooseBusinessType">{{type.typeName}}</view>
+        </view>
+      </view>
+      <view class="panel-empty" wx:if="{{businessTypesLoading}}">正在加载业态…</view>
+      <view class="panel-empty" wx:elif="{{businessTypeGroups.length === 0}}">暂无可选业态</view>
+    </view>
+
+    <view class="manual-panel" wx:if="{{manualSearchExpanded}}">
+      <view class="search-row">
+        <input value="{{keyword}}" placeholder="输入系统商品名称，如：青椒" data-field="keyword" bindinput="onInput" confirm-type="search" bindconfirm="search" />
+        <view class="search-button" bindtap="search">搜索</view>
+      </view>
+      <view class="search-note">系统返回商品候选，最终商品由业务员人工确认。</view>
+      <view class="candidate" wx:for="{{candidates}}" wx:key="goodsId">
+        <image src="{{item.imageUrl}}" mode="aspectFill" />
+        <view class="candidate-main">
+          <view class="candidate-name">{{item.goodsName}}</view>
+          <view class="candidate-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
+          <view class="reason">{{item.matchReason || '商品名称匹配'}}</view>
+          <view class="candidate-price">{{item.priceLabel}}</view>
+        </view>
+        <view class="choose" data-id="{{item.goodsId}}" bindtap="chooseCandidate">选择</view>
+      </view>
+      <view class="searching" wx:if="{{searching}}">正在查找商品…</view>
+    </view>
+  </view>
+
+  <view class="section products-section">
+    <view class="section-head">
+      <view class="section-title">报价商品（{{items.length}}项）</view>
+      <view class="section-amount" wx:if="{{items.length}}">合计 ¥{{quoteTotalLabel}}</view>
+    </view>
+
+    <view class="products-empty" wx:if="{{items.length === 0}}">
+      <view class="empty-title">还没有报价商品</view>
+      <view class="empty-note">可以从采购单、行业推荐或系统商品中添加</view>
+      <view class="empty-actions" wx:if="{{!locked}}">
+        <view data-mode="ocr" bindtap="openAddMode">拍采购单</view>
+        <view data-mode="industry" bindtap="openAddMode">行业推荐</view>
+        <view data-mode="manual" bindtap="openAddMode">手工添加</view>
+      </view>
+    </view>
+
+    <view class="quote-item" wx:for="{{items}}" wx:key="goodsId">
+      <view class="item-summary">
+        <image class="item-image" src="{{item.imageUrl}}" mode="aspectFill" />
+        <view class="item-main">
+          <view class="item-name">{{item.goodsName}}</view>
+          <view class="item-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
+          <view class="item-quote-line">
+            <text>数量 {{item.quantity || '待填'}} {{item.unit}}</text>
+            <text>我方报价 {{item.unitPriceLabel}}</text>
+          </view>
+        </view>
+        <view class="item-subtotal"><text>小计</text><view>{{item.subtotalDisplayLabel}}</view></view>
+      </view>
+      <view class="item-toolbar" wx:if="{{!locked}}">
+        <view data-index="{{index}}" bindtap="toggleItemEdit">{{editingIndex === index ? '收起编辑' : '编辑数量/价格'}}</view>
+        <view class="remove" data-index="{{index}}" bindtap="removeItem">删除</view>
+      </view>
+      <view class="edit-panel" wx:if="{{!locked && editingIndex === index}}">
+        <view class="edit-grid">
+          <view><text>数量</text><input type="digit" value="{{item.quantity}}" data-index="{{index}}" data-field="quantity" bindinput="onItemInput" /></view>
+          <view><text>我方报价</text><input type="digit" value="{{item.ourQuotePrice}}" placeholder="价格待确认" data-index="{{index}}" data-field="ourQuotePrice" bindinput="onItemInput" /></view>
+        </view>
+        <view class="private-price">
+          <text>客户当前采购价（内部参考）</text>
+          <input type="digit" value="{{item.customerCurrentPurchasePrice}}" placeholder="可不填" data-index="{{index}}" data-field="customerCurrentPurchasePrice" bindinput="onItemInput" />
+          <view>仅业务员私域可见，不进入客户报价预览。</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section summary-section" wx:if="{{items.length}}">
+    <view class="section-title">报价汇总</view>
+    <view class="summary-row"><text>商品项数</text><view>{{items.length}} 项</view></view>
+    <view class="summary-row total"><text>报价合计</text><view>¥{{quoteTotalLabel}}</view></view>
+    <view class="summary-pending" wx:if="{{totalPricePending}}">部分商品价格或数量待确认，定稿前必须补齐。</view>
+    <view class="summary-row"><text>有效期</text><view>{{validUntil}}</view></view>
+  </view>
+
+  <view class="section" wx:if="{{attachments.length}}">
+    <view class="section-title">原采购单附件</view>
+    <view class="attachment-note">图片私有保存，仅有权限的业务员可查看。</view>
+    <scroll-view scroll-x class="attachment-scroll">
+      <view class="attachment" wx:for="{{attachments}}" wx:key="attachmentId">
+        <image wx:if="{{item.localPath}}" src="{{item.localPath}}" mode="aspectFill" />
+        <view wx:else class="attachment-loading">加载中</view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="target-picker-mask" wx:if="{{showTargetPicker}}" bindtap="closeTargetPicker">
+    <view class="target-picker" catchtap="noop">
+      <view class="picker-handle"></view>
+      <view class="picker-head">
+        <view><view class="picker-title">选择报价对象</view><view class="picker-note">选择后保存到当前这张草稿报价</view></view>
+        <view class="picker-close" bindtap="closeTargetPicker">×</view>
+      </view>
+      <view class="target-tabs">
+        <view class="target-tab {{targetPickerTab === 'customer' ? 'active' : ''}}" data-tab="customer" bindtap="switchTargetPickerTab">正式客户 {{formalCustomers.length}}</view>
+        <view class="target-tab {{targetPickerTab === 'visit' ? 'active' : ''}}" data-tab="visit" bindtap="switchTargetPickerTab">陌生拜访 {{strangerVisits.length}}</view>
+      </view>
+      <view class="target-search">
+        <text>⌕</text><input value="{{targetKeyword}}" placeholder="搜索名称或地址" bindinput="onTargetKeywordInput" />
+      </view>
+      <scroll-view class="target-list" scroll-y="true" enhanced="true" show-scrollbar="false">
+        <view class="target-option" wx:for="{{visibleTargets}}" wx:key="targetKey"
+          data-kind="{{item.targetKind}}" data-id="{{item.targetId}}" bindtap="selectQuoteTarget">
+          <view class="target-avatar">{{item.avatarText}}</view>
+          <view class="target-option-main">
+            <view class="target-option-name">{{item.targetName}}</view>
+            <view class="target-option-subtitle">{{item.targetSubtitle}}</view>
+            <view class="target-option-time" wx:if="{{item.visitTimeLabel}}">最近记录 {{item.visitTimeLabel}}</view>
+          </view>
+          <view class="target-select">选择</view>
+        </view>
+        <view class="picker-empty" wx:if="{{targetPickerLoading}}">正在加载报价对象…</view>
+        <view class="picker-empty" wx:elif="{{visibleTargets.length === 0}}">{{targetPickerTab === 'customer' ? '没有找到正式客户' : '没有找到陌生拜访门店'}}</view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view class="bottom-actions draft-actions" wx:if="{{!locked}}">
+    <view class="preview-link" bindtap="preview">报价预览</view>
+    <button class="draft" loading="{{saving}}" disabled="{{saving}}" bindtap="saveDraft">保存草稿</button>
+    <button class="finalize" loading="{{saving}}" disabled="{{saving}}" bindtap="finalizeQuotation">确认定稿</button>
+  </view>
+  <view class="bottom-actions locked-actions" wx:else>
+    <button class="close" wx:if="{{canClose}}" loading="{{saving}}" disabled="{{saving}}" bindtap="closeQuotation">关闭报价</button>
+    <button class="readonly-preview" bindtap="preview">查看报价预览</button>
+  </view>
+  <view class="loading" wx:if="{{loading}}">正在打开报价…</view>
+</view>

@@ -2,13 +2,13 @@
 
 <view class="flex flex-column page-bg">
 
-  <main-navbar style="height: {{navBarHeight + 110}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null  ? '/images/logo.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" bindnavbuttontap="onNavButtonTap" bind:sortby="onSortByChange" bind:searchinput="onSearchInput" bind:searchcancel="onSearchCancel" searchValue="{{searchValue}}"></main-navbar>
+  <main-navbar style="height: {{navBarHeight + 110}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null ? '/images/logo.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" show-back="{{isSalesAgent}}" bind:backtap="backFromSalesAgent" bindnavbuttontap="onNavButtonTap" bind:sortby="onSortByChange" bind:searchinput="onSearchInput" bind:searchcancel="onSearchCancel" searchValue="{{searchValue}}"></main-navbar>
 
   <view class="content flex-1 flex-column">
     <!-- <block wx:if="{{depInfo.fatherDepartmentEntity == null}}">
       <view class="flex-column-center" style="padding: 10rpx 0; font-size: 34rpx; font-weight: 500;">{{depInfo.nxDepartmentName}}-订货单</view>
     </block> -->
-    <block  wx:if="{{depInfo.fatherDepartmentEntity !== null}}">
+    <block wx:if="{{depInfo.fatherDepartmentEntity !== null}}">
       <view class="flex-column-center">
         <view class="flex-row" style="padding: 10rpx 0; font-size: 34rpx; font-weight: 500;" bind:tap="toSwitchDep">
           <text>{{depInfo.fatherDepartmentEntity.nxDepartmentName}}</text>
@@ -511,11 +511,6 @@
 
 </view>
 
-
-
-
-
-
 <!-- 采购员链接打开页面之前判断是否有子部门 -->
 <view class='overlay {{showChoice ? "show" : ""}}' catchtap="hideChoiceMask">
   <view class='popup' style="width:{{windowWidth/3 * 2}}rpx; ">
@@ -576,7 +571,7 @@
           <text class="">注册用户</text>
         </view>
 
-        <image wx:if="{{userInfo}}" src="/images/del.png" mode="aspectFill" class="icon p-10" bindtap="hidePopup" />
+        <image  src="/images/del.png" mode="aspectFill" class="icon p-10" bindtap="hidePopup" />
       </view>
 
       <view class="popup-content1 p-30">

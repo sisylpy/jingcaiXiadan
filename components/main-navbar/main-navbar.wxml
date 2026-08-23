@@ -2,7 +2,10 @@
 <view class="custom-navbar" style="height: {{navBarHeight}}px; padding-top: {{statusBarHeight}}px;">
   <view class="nav-container" style="height: {{navBarContentHeight}}px; ">
     <!-- 左侧区域 -->
-    <view class="nav-left"  bindtap="navbuttontap" >
+    <view wx:if="{{showBack}}" class="nav-left nav-back" bindtap="backtap">
+      <image src="/images/back-white.png" mode="aspectFit" class="nav-back-icon" />
+    </view>
+    <view wx:else class="nav-left" bindtap="navbuttontap">
       <image src="{{avatar}}" mode="aspectFill" class="user-avatar"/>
     </view>
     <!-- 中间标题 -->

@@ -1,0 +1,39 @@
+<view class="page">
+  <view class="top-bar" style="padding-top: {{statusBarHeight}}rpx;">
+    <view class="back" bindtap="toBack">‹</view>
+    <view class="title">业务员注册</view>
+    <view class="back placeholder">‹</view>
+  </view>
+
+  <view class="card">
+    <image class="logo" src="/images/logo.png" mode="aspectFill" />
+    <text class="company">{{disName || '配送商'}}</text>
+    <text class="intro">注册后，老板可以把客户分配给你负责。</text>
+    <button wx:if="{{!registered}}" class="share-button" open-type="share">转发给业务员注册</button>
+    <text wx:if="{{!registered}}" class="share-hint">如果你就是被邀请的业务员，请直接填写下面资料。</text>
+  </view>
+
+  <view class="form-card" wx:if="{{!registered}}">
+    <view class="form-row avatar-row">
+      <text class="label">头像</text>
+      <button class="avatar-button" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+        <image class="avatar" src="{{avatarUrl}}" mode="aspectFill" />
+      </button>
+    </view>
+    <view class="form-row">
+      <text class="label">姓名</text>
+      <input class="input" type="nickname" value="{{nickName}}" bindinput="onNameInput" placeholder="请输入姓名" />
+    </view>
+    <view class="form-row">
+      <text class="label">手机号</text>
+      <input class="input" type="number" maxlength="11" value="{{phone}}" bindinput="onPhoneInput" placeholder="请输入手机号" />
+    </view>
+    <button class="submit" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">注册业务员</button>
+  </view>
+
+  <view class="success-card" wx:else>
+    <text class="success-mark">✓</text>
+    <text class="success-title">注册成功</text>
+    <text class="success-text">请通知老板为你分配客户。</text>
+  </view>
+</view>

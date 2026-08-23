@@ -1,7 +1,21 @@
 {
   "pages": [
-   
     "pages/ai/customer/chefOrder/chefOrder",
+    "pages/salesRegister/salesRegister",
+    "pages/sales/home/home",
+    "pages/sales/customers/customers",
+    "pages/sales/quotationCenter/quotationCenter",
+    "pages/sales/leads/leads",
+    "pages/sales/profile/profile",
+    "pages/sales/customerBusinessType/customerBusinessType",
+    "pages/sales/recommendations/recommendations",
+    "pages/sales/quotation/quotation",
+    "pages/sales/ocrQuotePreview/ocrQuotePreview",
+    "pages/sales/quotationPreview/quotationPreview",
+    "pages/sales/customerAdd/customerAdd",
+    "pages/sales/customerDetail/customerDetail",
+    "pages/sales/customerGoods/customerGoods",
+    "pages/sales/customerGoodsStandard/customerGoodsStandard",
     "pages/ai/customer/paste/paste",
     "pages/ai/customer/resGoodsList/resGoodsList",
     "pages/ai/customer/customerGoodsAi/customerGoodsAi",
@@ -20,7 +34,17 @@
     "pages/resGoodsSearch/resGoodsSearch",
     "pages/resGoodsCashSearch/resGoodsCashSearch",
     "pages/depUserEdit/depUserEdit",
-    "pages/couponList/couponList"
+    "pages/couponList/couponList",
+    "pages/mangement/purGoodsFenxi/purGoodsFenxi",
+    "pages/sel/searchDate/searchDate"
+  ],
+  "subPackages": [
+    {
+      "root": "subPackage-charts",
+      "pages": [
+        "pages/mangement/goodsFenxiPurchase/goodsFenxiPurchase"
+      ]
+    }
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -31,6 +55,14 @@
   "networkTimeout": {
     "request": 60000,
     "downloadFile": 10000
+  },
+  "requiredPrivateInfos": [
+    "chooseLocation"
+  ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于选择客户配送地址和记录业务员拜访门店位置"
+    }
   },
   "plugins": {
     "QCloudAIVoice": {

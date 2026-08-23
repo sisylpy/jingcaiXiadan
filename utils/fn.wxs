@@ -62,6 +62,19 @@ function getDaysBetween(dateString1, dateString2){
 function getPankuId(index){
   return "panku" + index;
 }
+
+function transferDateString(date){
+  date = date.substring(5);
+  var str = date.split("-");
+  var dateString = ""
+  if(str.length == 2){
+    var yue = str[0];
+    var ri = str[1];
+    dateString = yue + "月" + ri + "日";
+  }
+  return dateString;
+}
+
 module.exports = {
   getGongli:getGongli,
   getPercent: getPercent,
@@ -70,5 +83,6 @@ module.exports = {
   getAttrDate:getAttrDate,
   getAttrFullTime: getAttrFullTime,
   getDaysBetween: getDaysBetween,
-  getPankuId: getPankuId
+  getPankuId: getPankuId,
+  transferDateString: transferDateString
 }

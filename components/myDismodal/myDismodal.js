@@ -257,25 +257,6 @@ Component({
         })
       }
 
-      // var three = this.data.item.nxDgBuyingPriceThreeUpdate;
-      // var two = this.data.item.nxDgBuyingPriceTwoUpdate;
-      // console.log(three);
-      // console.log(two);
-
-      // if(Number(this.data.applyNumber) > Number(three) || Number(this.data.applyNumber) == Number(three)){
-      //   this.setData({
-      //     level: 3
-      //   })
-      // }else  if(Number(this.data.applyNumber) > Number(two) || Number(this.data.applyNumber) == Number(two) ){
-      //   this.setData({
-      //     level: 2
-      //   })
-      // }else  {
-      //   this.setData({
-      //     level: 1
-      //   })
-      // }
-
     },
 
 

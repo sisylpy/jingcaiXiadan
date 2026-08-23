@@ -1,0 +1,29 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="back" bindtap="goBack">‹</view>
+      <view>
+        <view class="title">我的</view>
+        <view class="subtitle">销售助手账号与责任范围</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="profile-card" wx:if="{{profile}}">
+    <image class="avatar" src="{{profile.salesInfo.nxDiuWxAvartraUrl || '/images/user.png'}}" mode="aspectFill" />
+    <view class="profile-main">
+      <view class="name">{{profile.salesInfo.nxDiuWxNickName || '业务员'}}</view>
+      <view class="role">销售业务员</view>
+    </view>
+  </view>
+
+  <view class="section" wx:if="{{profile}}">
+    <view class="section-title">当前配送商</view>
+    <view class="row"><text>配送商</text><text>{{profile.disInfo.nxDistributerShowName || profile.disInfo.nxDistributerName}}</text></view>
+    <view class="row"><text>默认录单员</text><text>{{profile.defaultClerk ? profile.defaultClerk.nxDiuWxNickName : (profile.fallbackOwner ? profile.fallbackOwner.nxDiuWxNickName : '未设置')}}</text></view>
+  </view>
+
+  <view class="notice">客户、报价、拜访及线索均按当前配送商和业务员权限读取。</view>
+  <button class="logout" bindtap="logout">退出销售助手</button>
+  <view class="loading" wx:if="{{loading}}">正在加载资料…</view>
+</view>

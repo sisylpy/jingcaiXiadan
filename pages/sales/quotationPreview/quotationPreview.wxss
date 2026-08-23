@@ -1,0 +1,15 @@
+.page { min-height: 100vh; background: #eef1ee; color: #223129; }
+.nav { height: 92rpx; padding: 0 24rpx; display: flex; align-items: center; background: #fff; }
+.back, .nav-space { width: 72rpx; font-size: 58rpx; color: #315f4c; }
+.nav-title { flex: 1; text-align: center; font-size: 32rpx; font-weight: 650; }
+.paper { margin: 30rpx 24rpx; padding: 42rpx 34rpx; border-radius: 10rpx; background: #fff; box-shadow: 0 8rpx 28rpx rgba(30, 55, 43, .10); }
+.paper-title { text-align: center; font-size: 38rpx; font-weight: 700; letter-spacing: 4rpx; }
+.shop { margin-top: 24rpx; text-align: center; font-size: 28rpx; }
+.valid { margin-top: 10rpx; padding-bottom: 28rpx; text-align: center; color: #77847c; font-size: 23rpx; border-bottom: 2rpx solid #24362d; }
+.line { padding: 25rpx 0; border-bottom: 1rpx solid #e5e9e6; }
+.goods-name { font-size: 29rpx; font-weight: 650; }
+.goods-meta { margin-top: 8rpx; color: #78847d; font-size: 23rpx; }
+.price { margin-top: 12rpx; text-align: right; color: #c85226; font-size: 28rpx; font-weight: 650; }
+.privacy { margin-top: 30rpx; text-align: center; color: #939c96; font-size: 20rpx; }
+.loading { padding: 80rpx; text-align: center; color: #77837b; }
+

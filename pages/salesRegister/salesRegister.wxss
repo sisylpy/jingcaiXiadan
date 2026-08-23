@@ -1,0 +1,153 @@
+page {
+  min-height: 100%;
+  background: #f4f7f6;
+}
+
+.page {
+  min-height: 100vh;
+  padding-bottom: 60rpx;
+  box-sizing: border-box;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 92rpx;
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  background: #fff;
+}
+
+.back {
+  width: 64rpx;
+  font-size: 58rpx;
+  color: #333;
+  line-height: 64rpx;
+}
+
+.placeholder {
+  visibility: hidden;
+}
+
+.title {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.card, .form-card, .success-card {
+  margin: 24rpx;
+  padding: 36rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 28rpx rgba(25, 85, 74, 0.06);
+}
+
+.card, .success-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: 24rpx;
+}
+
+.company {
+  margin-top: 20rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #173d36;
+}
+
+.intro, .share-hint {
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  color: #71817e;
+  text-align: center;
+}
+
+.share-button {
+  width: 100%;
+  margin-top: 28rpx;
+  color: #147062;
+  background: #eaf6f3;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+
+.share-button::after, .avatar-button::after, .submit::after {
+  border: none;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  min-height: 106rpx;
+  border-bottom: 1px solid #edf0ef;
+}
+
+.label {
+  width: 140rpx;
+  font-size: 30rpx;
+  color: #394744;
+}
+
+.input {
+  flex: 1;
+  height: 88rpx;
+  font-size: 30rpx;
+}
+
+.avatar-button {
+  width: 92rpx;
+  height: 92rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.avatar {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+}
+
+.submit {
+  margin-top: 42rpx;
+  color: #fff;
+  background: #147062;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+}
+
+.success-card {
+  padding-top: 70rpx;
+  padding-bottom: 70rpx;
+}
+
+.success-mark {
+  width: 92rpx;
+  height: 92rpx;
+  color: #fff;
+  background: #147062;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 92rpx;
+  font-size: 52rpx;
+}
+
+.success-title {
+  margin-top: 26rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.success-text {
+  margin-top: 12rpx;
+  color: #71817e;
+  font-size: 28rpx;
+}

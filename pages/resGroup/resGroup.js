@@ -247,9 +247,8 @@ Page({
   },  
 
   toPurchaseAnalysis(){
-    wx.showToast({
-      title: '采购分析开发中',
-      icon: 'none'
+    wx.navigateTo({
+      url: '../mangement/purGoodsFenxi/purGoodsFenxi?depFatherId=' + this.data.depFatherId,
     })
   },
 

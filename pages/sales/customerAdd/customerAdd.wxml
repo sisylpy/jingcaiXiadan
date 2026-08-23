@@ -1,0 +1,61 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">添加客户</view>
+    <view class="nav-space"></view>
+  </view>
+
+  <view class="content">
+    <view class="section">
+      <view class="section-title">客户主信息</view>
+      <view class="name-field">
+        <text class="name-label">客户名称</text>
+        <input class="name-input" focus placeholder="请输入真实店铺名称" value="{{customerName}}" bindinput="onCustomerNameInput" />
+        <text class="name-hint">用于创建客户主档和配送单打印。</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">付款与负责人</view>
+      <view class="row">
+        <text>付款方式</text>
+        <picker range="{{settleOptions}}" range-key="name" value="{{settleIndex}}" bindchange="onSettleChange">
+          <view class="picker-value">{{settleOptions[settleIndex].name}} ›</view>
+        </picker>
+      </view>
+      <view class="staff" wx:if="{{profile}}">
+        <view><text class="staff-label">负责业务员</text><text>{{profile.salesInfo.nxDiuWxNickName || '当前业务员'}}</text></view>
+        <view wx:if="{{profile.defaultClerk}}"><text class="staff-label">负责录单员</text><text>{{profile.defaultClerk.nxDiuWxNickName}}</text></view>
+        <view wx:elif="{{profile.fallbackOwner}}"><text class="staff-label">负责录单员</text><text>{{profile.fallbackOwner.nxDiuWxNickName}}（老板代管）</text></view>
+        <picker wx:else range="{{clerks}}" range-key="nxDiuWxNickName" value="{{clerkIndex}}" bindchange="onClerkChange">
+          <view class="staff-picker">负责录单员　{{clerks[clerkIndex].nxDiuWxNickName || '请选择'}} ›</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">订货部门</view>
+      <radio-group class="department-mode" bindchange="onDepartmentModeChange">
+        <label data-value="0" bindtap="selectDepartmentMode"><radio value="0" checked="{{!hasDepartments}}" color="#187e6e" />不分部门</label>
+        <label data-value="1" bindtap="selectDepartmentMode"><radio value="1" checked="{{hasDepartments}}" color="#187e6e" />分部门</label>
+      </radio-group>
+      <view class="department-editor" wx:if="{{hasDepartments && subDepartments.length}}">
+        <view class="department-count">
+          <text>一共有</text>
+          <picker range="{{departmentCounts}}" value="{{departmentCountIndex}}" bindchange="onDepartmentCountChange">
+            <view class="count-picker">{{departmentCounts[departmentCountIndex]}} 个部门 ›</view>
+          </picker>
+        </view>
+        <view class="department-hint">填写部门名称，例如“前厅、后厨”或不同档口名称。</view>
+        <view class="department-input" wx:for="{{subDepartments}}" wx:key="index">
+          <text>{{index + 1}}.</text>
+          <input placeholder="请输入部门名称" value="{{item.nxDepartmentName}}" data-index="{{index}}" bindinput="onDepartmentNameInput" />
+        </view>
+      </view>
+      <view class="department-hint" wx:else>客户不分部门时，根客户可以直接订货。</view>
+    </view>
+
+    <view class="next-note">保存主信息后，将直接进入客户详情，继续设置地址、配送时间、业态和客户照片。</view>
+    <button class="submit" loading="{{submitting}}" disabled="{{submitting || loading}}" bindtap="submit">保存并完善客户详情</button>
+  </view>
+</view>

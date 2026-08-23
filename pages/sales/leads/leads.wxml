@@ -1,0 +1,61 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="back" bindtap="goBack">‹</view>
+      <view>
+        <view class="title">跟进</view>
+        <view class="subtitle">线索跟进与最近拜访</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="scope-note">当前只展示已有 Lead 与 Visit；售后、报价、首单和久未下单尚未形成统一跟进任务。</view>
+    <view class="tabs">
+      <view class="tab {{activeTab === 'leads' ? 'active' : ''}}" data-tab="leads" bindtap="switchTab">线索跟进 {{allLeads.length}}</view>
+      <view class="tab {{activeTab === 'visits' ? 'active' : ''}}" data-tab="visits" bindtap="switchTab">最近拜访 {{allVisits.length}}</view>
+    </view>
+    <input class="search" placeholder="搜索门店、地址、联系人或电话" value="{{keyword}}" bindinput="onKeywordInput" />
+
+    <block wx:if="{{activeTab === 'leads'}}">
+      <view class="section-note">进行中的销售线索；“下次跟进”直接展示已有字段，不等同于统一今日任务。</view>
+      <view class="empty" wx:if="{{!loading && leads.length === 0}}">{{keyword ? '没有找到匹配线索' : '还没有需要继续跟进的陌生门店'}}</view>
+
+      <view class="lead-card" wx:for="{{leads}}" wx:key="leadId">
+        <view class="lead-head">
+          <view class="lead-main">
+            <view class="lead-name">{{item.shopName}}</view>
+            <view class="lead-type">{{item.businessTypeName || '未分类'}} · {{item.address || '地址未填写'}}</view>
+          </view>
+          <view class="intent {{item.intentCode === 'HOT' ? 'hot' : item.intentCode === 'COLD' ? 'cold' : ''}}">{{item.intentCode === 'HOT' ? '热' : item.intentCode === 'COLD' ? '冷' : '温'}}</view>
+        </view>
+        <view class="info-row"><text>下次跟进</text><text class="important">{{item.nextFollowLabel}}</text></view>
+        <view class="info-row"><text>最近拜访</text><text>{{item.latestVisitLabel}}</text></view>
+        <view class="info-row" wx:if="{{item.contactName || item.contactPhone}}"><text>联系人</text><text>{{item.contactName || '-'}} {{item.contactPhone || ''}}</text></view>
+        <view class="card-actions">
+          <view class="quote" data-id="{{item.leadId}}" bindtap="quoteLead">新建报价</view>
+          <view class="again" data-id="{{item.leadId}}" bindtap="recordAgain">记录再次拜访</view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:if="{{activeTab === 'visits'}}">
+      <view class="empty" wx:if="{{!loading && visits.length === 0}}">{{keyword ? '没有找到匹配拜访' : '还没有拜访记录'}}</view>
+      <view class="visit-card" wx:for="{{visits}}" wx:key="visitId">
+        <view class="visit-head"><view><view class="lead-name">{{item.shopName || '未命名门店'}}</view><view class="lead-type">{{item.targetLabel}} · {{item.businessTypeName || '未分类'}}</view></view><view class="visit-time">{{item.visitTimeLabel}}</view></view>
+        <view class="visit-result">{{item.resultLabel}}</view>
+        <view class="visit-note" wx:if="{{item.note}}">{{item.note}}</view>
+        <view class="info-row" wx:if="{{item.nextFollowLabel}}"><text>已记录下次跟进</text><text class="important">{{item.nextFollowLabel}}</text></view>
+        <view class="card-actions">
+          <view class="quote" data-id="{{item.visitId}}" bindtap="quoteVisit">从本次拜访报价</view>
+          <view class="again" wx:if="{{item.customerId || item.leadId}}" data-id="{{item.visitId}}" bindtap="recordVisitAgain">再次记录</view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">正在加载…</view>
+
+  <sales-visit-sheet visible="{{showVisitSheet}}" business-types="{{businessTypes}}"
+    target="{{visitTarget}}" bind:close="closeVisitSheet" bind:saved="onVisitSaved" />
+</view>

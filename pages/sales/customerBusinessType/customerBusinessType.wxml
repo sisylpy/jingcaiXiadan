@@ -1,0 +1,54 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">客户业态</view>
+    <view class="nav-space"></view>
+  </view>
+
+  <view class="content">
+    <view class="customer-card">
+      <view class="customer-label">当前客户</view>
+      <view class="customer-name">{{customerName || '客户'}}</view>
+      <view class="current-row">
+        <text class="current-label">已选业态</text>
+        <text class="{{selectedBusinessTypeName ? 'current-value' : 'current-empty'}}">{{selectedBusinessTypeName || '未设置'}}</text>
+        <text class="inherited-tag" wx:if="{{inherited}}">继承</text>
+      </view>
+      <view class="help">用于商品推荐和销售服务，不影响“固定/市场变动”定价类型。</view>
+    </view>
+
+    <view class="section" wx:if="{{!loading && categories.length}}">
+      <view class="section-title">选择大类</view>
+      <view class="category-tags">
+        <view wx:for="{{categories}}" wx:key="category" wx:for-item="categoryItem"
+          class="category-tag {{activeCategory === categoryItem.category ? 'active' : ''}}"
+          data-category="{{categoryItem.category}}" bindtap="selectCategory">{{categoryItem.name}}</view>
+      </view>
+    </view>
+
+    <view class="section type-section" wx:if="{{!loading && categories.length}}">
+      <view class="section-title">选择具体业态</view>
+      <view class="type-grid">
+        <view wx:for="{{visibleTypes}}" wx:key="businessTypeId"
+          class="type-option {{selectedBusinessTypeId == item.businessTypeId ? 'selected' : ''}}"
+          data-id="{{item.businessTypeId}}" bindtap="selectBusinessType">
+          <view class="type-copy">
+            <text class="type-name">{{item.typeName}}</text>
+            <text class="type-scope" wx:if="{{item.disId != 0}}">配送商自定义</text>
+          </view>
+          <view class="radio {{selectedBusinessTypeId == item.businessTypeId ? 'checked' : ''}}">
+            <view class="radio-dot" wx:if="{{selectedBusinessTypeId == item.businessTypeId}}"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="state" wx:if="{{loading}}">正在加载客户业态…</view>
+    <view class="state" wx:if="{{!loading && categories.length === 0}}">暂无可选客户业态</view>
+  </view>
+
+  <view class="save-area" wx:if="{{!loading && categories.length}}">
+    <button class="save-button" loading="{{saving}}" disabled="{{saving || selectedBusinessTypeId == null}}"
+      bindtap="save">{{saving ? '保存中…' : '保存选择'}}</button>
+  </view>
+</view>

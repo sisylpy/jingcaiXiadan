@@ -1,0 +1,112 @@
+<wxs src="../../../../utils/fn.wxs" module="tool" />
+
+<view class="flex flex-column">
+  
+  <back-navbar style="height: {{navBarHeight}}rpx;" title="{{goodsName}}" avatar="/images/back-gray.png" button-text="设置" bindnavbuttontap="toBack"></back-navbar>
+
+  <!-- 日期筛选 -->
+  <view class="flex-row-between pl-20 pr-20 border-bottom bg-white">
+    <view class="flex-row">
+      <view class="p-20" bindtap="toDatePage">
+        <image src="../../../../images/calender.png" class="icon"></image>
+      </view>
+      <view class="flex-column pt-10">
+        <view class="font-yuan">{{hanzi}}</view>
+        <view class="flex-row" wx:if="{{startDate == stopDate}}">
+          <view class="small" wx:if="{{startDate}}">{{tool.transferDateString(startDate)}}</view>
+        </view>
+        <view class="flex-row" wx:else>
+          <view wx:if="{{startDate}}">{{tool.transferDateString(startDate)}}</view>
+          <text class="plr-10">-</text>
+          <view wx:if="{{stopDate}}">{{tool.transferDateString(stopDate)}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 有数据 -->
+  <view class="flex-column" wx:if="{{arr.length > 0}}">
+ 
+    <!-- 每日金额图表 -->
+    <view class="bg-white p-20" style="height: 400rpx;">
+      <view wx:if="{{itemList.length > 0}}" style="height: 360rpx;">
+        <ec-canvas id="dailyChart" canvas-id="dailyChart" style="width: 100%; height: 100%;"></ec-canvas>
+      </view>
+      <view wx:else class="flex-center" style="height: 360rpx;">
+        <text>暂无图表数据</text>
+      </view>
+    </view>
+
+    <!-- 订单明细列表 -->
+    <view class="flex-column p-20">
+      <view class="font-sm mb-20 p-20 bg-white radius-10">订单明细</view>
+
+      <view class="flex-column" wx:for="{{arr}}" wx:for-item="order" wx:for-index="idx" wx:key="orderId" 
+            class="{{selectedPurIndex == idx ? 'order-selected' : ''}}"
+            bind:tap="showDetail" data-pur-index="{{idx}}">
+
+        <view class="flex-row-between p-20 bg-white mb-10 radius-10 {{order.expanded ? 'order-active' : ''}}">
+          <!-- 左侧日期和数量 -->
+          <view class="flex-column">
+            <text class="font-md">{{tool.transferDateString(order.orderDate)}}</text>
+            <text class="font-xs text-gray mt-5">{{order.orderWeight}}{{order.orderStandard}}</text>
+          </view>
+          <!-- 中间单价 -->
+          <view class="flex-column-center">
+            <text class="font-md font-bold">{{order.orderPrice}}元</text>
+            <text class="font-xs text-gray">单价</text>
+          </view>
+          <!-- 右侧金额 -->
+          <view class="flex-row">
+            <view class="flex-column-center mr-20">
+              <text class="font-md text-primary font-bold">{{order.orderSubtotal}}元</text>
+              <text class="font-xs text-gray">小计</text>
+            </view>
+            <image src="/images/arrow-right-3.png" mode="aspectFill" class="arrow-sm {{order.expanded ? 'expanded' : 'collapsed'}}" />
+          </view>
+        </view>
+
+        <!-- 展开详情 -->
+        <view wx:if="{{order.expanded}}" class="expand-card bg-white p-20 mb-10 radius-10">
+          <view class="flex-row-between p-10 border-bottom">
+            <text class="text-gray">商品名称</text>
+            <text>{{order.orderGoodsName || '-'}}</text>
+          </view>
+          <view class="flex-row-between p-10 border-bottom">
+            <text class="text-gray">订货日期</text>
+            <text>{{tool.transferDateString(order.applyDate) || '-'}}</text>
+          </view>
+          <view class="flex-row-between p-10 border-bottom">
+            <text class="text-gray">数量/规格</text>
+            <text>{{order.orderWeight}}{{order.orderStandard}}</text>
+          </view>
+          <view class="flex-row-between p-10 border-bottom">
+            <text class="text-gray">单价</text>
+            <text class="font-bold">{{order.orderPrice}}元/{{order.orderStandard}}</text>
+          </view>
+          <view class="flex-row-between p-10 border-bottom">
+            <text class="text-gray">金额</text>
+            <text class="font-bold text-primary">{{order.orderSubtotal}}元</text>
+          </view>
+          <view class="flex-row-between p-10" wx:if="{{order.remark}}">
+            <text class="text-gray">备注</text>
+            <text>{{order.remark}}</text>
+          </view>
+        </view>
+
+      </view>
+
+      <view style="height: 100rpx;"></view>
+    </view>
+
+  </view>
+
+  <!-- 无数据 -->
+  <view wx:else style="height: {{windowHeight - 360}}rpx;">
+    <view class="flex-column-center" style="padding-top: 200rpx;">
+      <image class="empty_image" src="/images/cart-Empty.png"></image>
+      <text class="big">无数据</text>
+    </view>
+  </view>
+
+</view>

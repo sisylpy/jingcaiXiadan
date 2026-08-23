@@ -1,0 +1,55 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view><view class="nav-title">客户商品要求</view><view class="history-link" bindtap="toggleHistory">历史</view>
+  </view>
+  <view class="goods-head"><view class="customer-name">{{customerName}}</view><view class="goods-name">{{goodsName}}</view></view>
+
+  <view class="section">
+    <view class="section-title">当前文字要求</view>
+    <view class="empty" wx:if="{{current.items.length === 0}}">拜访客户后，可以从下面新增大小、颜色、新鲜度等要求。</view>
+    <view class="requirement" wx:for="{{current.items}}" wx:key="nxDdgsiId">
+      <view class="requirement-main">
+        <view class="requirement-label">{{item.nxDdgsiDimensionName || item.nxDdgsiDimensionCode}} · 重要度 {{item.nxDdgsiImportanceLevel}}</view>
+        <view class="requirement-text">{{item.nxDdgsiRequirementText}}</view>
+      </view>
+      <view class="deactivate" data-id="{{item.nxDdgsiId}}" bindtap="deactivateItem">失效</view>
+    </view>
+  </view>
+
+  <view class="section form-section">
+    <view class="section-title">记录本次客户要求</view>
+    <view class="select-row">
+      <picker range="{{dimensions}}" range-key="name" value="{{dimensionIndex}}" bindchange="onDimensionChange"><view class="select">维度：{{dimensions[dimensionIndex].name}} ›</view></picker>
+      <picker range="{{importanceLevels}}" value="{{importanceIndex}}" bindchange="onImportanceChange"><view class="select">重要度：{{importanceLevels[importanceIndex]}} ›</view></picker>
+    </view>
+    <textarea class="textarea" maxlength="4000" placeholder="例如：叶片要小、不要黄叶，每斤大约 8—10 棵" value="{{requirementText}}" bindinput="onTextInput"></textarea>
+    <input class="reason" placeholder="本次记录说明" value="{{changeReason}}" bindinput="onReasonInput" />
+    <button class="save" loading="{{saving}}" bindtap="addRequirement">保存文字要求</button>
+  </view>
+
+  <view class="section">
+    <view class="section-title">图片要求</view>
+    <view class="image-grid">
+      <view class="image-card" wx:for="{{current.images}}" wx:key="nxDdgimgId">
+        <image mode="aspectFill" src="{{item.previewUrl}}" data-url="{{item.previewUrl}}" bindtap="previewImage" />
+        <view class="image-caption">{{item.nxDdgimgDescription || item.nxDdgimgImageRole}}</view>
+        <view class="image-remove" data-id="{{item.nxDdgimgId}}" bindtap="deactivateImage">失效</view>
+      </view>
+    </view>
+    <view class="select-row image-options">
+      <picker range="{{dimensions}}" range-key="name" value="{{imageDimensionIndex}}" bindchange="onImageDimensionChange"><view class="select">{{dimensions[imageDimensionIndex].name}} ›</view></picker>
+      <picker range="{{imageRoles}}" range-key="name" value="{{imageRoleIndex}}" bindchange="onImageRoleChange"><view class="select">{{imageRoles[imageRoleIndex].name}} ›</view></picker>
+    </view>
+    <input class="reason" placeholder="图片说明，例如：这种大小合格" value="{{imageDescription}}" bindinput="onImageDescriptionInput" />
+    <button class="image-button" loading="{{saving}}" bindtap="chooseImage">拍照或选择图片</button>
+  </view>
+
+  <view class="section" wx:if="{{showHistory}}">
+    <view class="section-title">变更历史</view>
+    <view class="history-row" wx:for="{{history}}" wx:key="versionNo">
+      <view>第 {{item.versionNo}} 版 · {{item.changeReason}}</view>
+      <view class="history-time">{{item.changedAt}}</view>
+    </view>
+    <view class="empty" wx:if="{{history.length === 0}}">暂无变更历史</view>
+  </view>
+</view>

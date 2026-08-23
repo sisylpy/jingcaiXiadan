@@ -1,6 +1,51 @@
 // app.js
+import {
+  shopRequest,
+  shopUploadFile,
+  shopDownloadFile,
+  clearShopLoginState,
+  hasUsableShopToken,
+  describeShopRequestError
+} from './lib/shopRequest.js'
+import {
+  salesRequest,
+  salesUploadFile,
+  salesDownloadFile,
+  clearSalesLoginState,
+  hasUsableSalesToken,
+  describeSalesRequestError
+} from './lib/salesRequest.js'
+
 App({
+  shopRequest: shopRequest,
+  shopUploadFile: shopUploadFile,
+  shopDownloadFile: shopDownloadFile,
+  clearShopLoginState: clearShopLoginState,
+  hasUsableShopToken: hasUsableShopToken,
+  describeShopRequestError: describeShopRequestError,
+  salesRequest: salesRequest,
+  salesUploadFile: salesUploadFile,
+  salesDownloadFile: salesDownloadFile,
+  clearSalesLoginState: clearSalesLoginState,
+  hasUsableSalesToken: hasUsableSalesToken,
+  describeSalesRequestError: describeSalesRequestError,
+  onShow() {
+    const userInfo = wx.getStorageSync('userInfo')
+    if ((userInfo && !hasUsableShopToken()) || (!userInfo && hasUsableShopToken())) {
+      clearShopLoginState()
+    }
+    const salesUserInfo = wx.getStorageSync('salesUserInfo')
+    if ((salesUserInfo && !hasUsableSalesToken())
+        || (!salesUserInfo && hasUsableSalesToken())) {
+      clearSalesLoginState()
+    }
+  },
   onLaunch(options) {
+
+    const cachedUser = wx.getStorageSync('userInfo')
+    if ((cachedUser && !hasUsableShopToken()) || (!cachedUser && hasUsableShopToken())) {
+      clearShopLoginState()
+    }
 
     const windowInfo = wx.getWindowInfo();
 

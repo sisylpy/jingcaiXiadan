@@ -1,0 +1,92 @@
+<view class="mask" wx:if="{{visible}}" bindtap="close"></view>
+<view class="sheet" wx:if="{{visible}}" catchtouchmove="noop">
+  <view class="sheet-head">
+    <view class="sheet-title">记录一次拜访</view>
+    <view class="sheet-close" bindtap="close">×</view>
+  </view>
+
+  <scroll-view scroll-y class="sheet-scroll">
+    <view class="field">
+      <text class="field-label">门店名称</text>
+      <input value="{{shopName}}" placeholder="例如：王记火锅" data-field="shopName" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">门店业态</text>
+      <picker range="{{businessTypes}}" range-key="typeName" value="{{businessTypeIndex}}" bindchange="onBusinessTypeChange">
+        <view class="picker-value">{{businessTypeIndex >= 0 ? businessTypes[businessTypeIndex].typeName : '请选择'}} ›</view>
+      </picker>
+    </view>
+    <view class="field address-field">
+      <text class="field-label">地址</text>
+      <view class="address-controls">
+        <input value="{{address}}" placeholder="可手填或地图定位" data-field="address" bindinput="onInput" />
+        <view class="map-button" bindtap="chooseVisitLocation">地图定位</view>
+      </view>
+    </view>
+    <view class="location-summary" wx:if="{{latitude && longitude}}" bindtap="openVisitLocation">
+      <text>已记录拜访位置</text><text>打开地图 ›</text>
+    </view>
+
+    <view class="visit-photo-block">
+      <view class="visit-photo-title">门店现场照片</view>
+      <image class="visit-photo" wx:if="{{visitPhotoLocalPath}}" src="{{visitPhotoLocalPath}}" mode="aspectFill" bindtap="previewVisitPhoto" />
+      <view class="visit-photo-empty" wx:else bindtap="chooseVisitPhoto">＋ 拍摄门店现场</view>
+      <view class="visit-photo-actions">
+        <view bindtap="chooseVisitPhoto">{{visitPhotoLocalPath ? '重新拍摄' : '拍照或选择图片'}}</view>
+        <view class="photo-remove" wx:if="{{visitPhotoLocalPath}}" bindtap="removeVisitPhoto">删除</view>
+      </view>
+      <view class="photo-gap-note" wx:if="{{visitPhotoLocalPath}}">当前照片仅为前端采集预览；Visit 附件接口完成前不会伪装成已上传。</view>
+    </view>
+
+    <view class="block-title">这次拜访结果</view>
+    <view class="option-grid result-grid">
+      <view class="option {{resultCode === item.code ? 'selected' : ''}}"
+        wx:for="{{resultOptions}}" wx:key="code" data-code="{{item.code}}" bindtap="selectResult">
+        {{item.name}}
+      </view>
+    </view>
+
+    <view class="block-title">意向</view>
+    <view class="option-grid intent-grid">
+      <view class="option {{intentCode === item.code ? 'selected' : ''}}"
+        wx:for="{{intentOptions}}" wx:key="code" data-code="{{item.code}}" bindtap="selectIntent">
+        {{item.name}}
+      </view>
+    </view>
+
+    <view class="switch-row">
+      <text>需要再跟进？</text>
+      <switch checked="{{followUpRequired}}" color="#20704e" bindchange="onFollowChange" />
+    </view>
+    <view class="field" wx:if="{{followUpRequired}}">
+      <text class="field-label">下次跟进</text>
+      <picker mode="date" value="{{nextFollowDate}}" bindchange="onDateChange">
+        <view class="picker-value">{{nextFollowDate}} ›</view>
+      </picker>
+    </view>
+
+    <view class="contact-toggle" bindtap="toggleContact">
+      {{contactExpanded ? '收起联系人' : '＋ 留下了联系人'}}
+    </view>
+    <view wx:if="{{contactExpanded}}">
+      <view class="field">
+        <text class="field-label">联系人</text>
+        <input value="{{contactName}}" placeholder="可不填" data-field="contactName" bindinput="onInput" />
+      </view>
+      <view class="field">
+        <text class="field-label">电话</text>
+        <input type="number" value="{{contactPhone}}" placeholder="可不填" data-field="contactPhone" bindinput="onInput" />
+      </view>
+    </view>
+
+    <view class="note-field">
+      <text class="field-label">备注（可选）</text>
+      <textarea maxlength="500" value="{{note}}" placeholder="只记一句关键情况即可" data-field="note" bindinput="onInput" />
+    </view>
+  </scroll-view>
+
+  <view class="sheet-actions">
+    <button class="cancel" bindtap="close" disabled="{{submitting}}">取消</button>
+    <button class="save" bindtap="submit" loading="{{submitting}}" disabled="{{submitting}}">保存拜访</button>
+  </view>
+</view>

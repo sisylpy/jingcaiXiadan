@@ -27,4 +27,6 @@ project.private.config.json
 *.swp
 *.swo
 *~
-config.js
+
+# config.js 只允许保存服务地址和非敏感选项，必须纳入版本控制接受密钥扫描。
+# 永久 Secret/API Key 禁止写入小程序，云能力统一走后台临时凭证或代理。

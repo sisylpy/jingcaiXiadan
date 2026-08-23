@@ -1,0 +1,20 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">报价预览</view>
+    <view class="nav-space"></view>
+  </view>
+
+  <view class="paper">
+    <view class="paper-title">原材料报价</view>
+    <view class="shop" wx:if="{{shopName}}">{{shopName}}</view>
+    <view class="valid">有效期至 {{validUntil}}</view>
+    <view class="line" wx:for="{{items}}" wx:key="index">
+      <view class="goods-name">{{item.goodsName}}</view>
+      <view class="goods-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
+      <view class="price">{{item.priceLabel}} / {{item.unit || '单位待确认'}}</view>
+    </view>
+    <view class="privacy">本预览不展示客户当前采购价。</view>
+  </view>
+  <view class="loading" wx:if="{{loading}}">正在生成预览…</view>
+</view>

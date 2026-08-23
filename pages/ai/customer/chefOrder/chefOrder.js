@@ -25,10 +25,10 @@ import {
   getDepInfo,
 } from '../../../../lib/apiRestraunt'
 
-
 Page({
   data: {
     isSubDep: false,
+    isSalesAgent: false,
     bill: -1,
     showPage: false,
     popupAnimation: {},
@@ -119,12 +119,14 @@ Page({
     // 1. 优先用分享参数
     let depFatherId = options.depFatherId || null;
     let disId = options.disId || null;
+    const isSalesAgent = String(options.isAgent || '') === '1'
+      && Number(wx.getStorageSync('salesActingCustomerId')) === Number(depFatherId);
 
     // 2. 没有参数则用缓存
     if (!depFatherId) depFatherId = wx.getStorageSync('depFatherId') || null;
     if (!disId) disId = wx.getStorageSync('disId') || null;
 
-    if (options.depFatherId) {
+    if (options.depFatherId && !isSalesAgent) {
       // 使用 firstVisitTimestamp 存储精确时间戳
       if (!wx.getStorageSync('firstVisitTimestamp')) {
         const timestamp = Date.now();
@@ -137,16 +139,28 @@ Page({
       imgUrl: 'userImage/say.png',
       depFatherId,
       disId,
+      isSalesAgent,
       url: apiUrl.server,
     });
 
     var cachedUserInfo = wx.getStorageSync('userInfo');
+    if (isSalesAgent) {
+      cachedUserInfo = {
+        nxDepartmentUserId: -1,
+        nxDuDepartmentId: Number(depFatherId),
+        nxDuDepartmentFatherId: Number(depFatherId),
+        nxDuDistributerId: Number(disId),
+        nxDuAdmin: 0,
+        nxDuWxNickName: wx.getStorageSync('salesActingCustomerName') || '客户订货',
+        nxDuWxAvartraUrl: 'userImage/say.png'
+      };
+      wx.setStorageSync('userInfo', cachedUserInfo);
+    }
     if (!cachedUserInfo) {
       this.setData({
         userInfo: null,
         showPage: true,
       });
-      this._aaa();
     } else {
       this.setData({
         userInfo: cachedUserInfo,
@@ -166,7 +180,11 @@ Page({
       }
     }
     this._getDisInfo();
-    this.attemptLogin();
+    if (isSalesAgent) {
+      this._getDepInfo();
+    } else {
+      this.attemptLogin();
+    }
 
   },
 
@@ -249,6 +267,16 @@ Page({
     }
   },
 
+  backFromSalesAgent() {
+    if (!this.data.isSalesAgent) return;
+    getApp().clearShopLoginState();
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack({ delta: 1 });
+    } else {
+      wx.reLaunch({ url: '/pages/sales/home/home' });
+    }
+  },
+
 
 
   attemptLogin() {
@@ -258,6 +286,31 @@ Page({
         console.log("loginloginlogin", res)
         depUserLoginDaoDu(res.code)
           .then((response) => {
+            const loginData = response.result && response.result.data;
+            if (response.result.code === 0 && loginData
+                && loginData.loginMode === 'SALES') {
+              wx.reLaunch({ url: '/pages/sales/home/home' });
+              return;
+            }
+            if (response.result.code === 0 && loginData
+                && loginData.loginMode === 'BOTH') {
+              const skipPrompt = wx.getStorageSync('skipIdentityPromptOnce');
+              if (skipPrompt) {
+                wx.removeStorageSync('skipIdentityPromptOnce');
+              } else {
+                wx.showModal({
+                  title: '选择登录身份',
+                  content: '这个微信同时是客户订货账号和业务员账号。',
+                  confirmText: '业务员',
+                  cancelText: '客户订货',
+                  success: result => {
+                    if (result.confirm) {
+                      wx.reLaunch({ url: '/pages/sales/home/home' });
+                    }
+                  }
+                });
+              }
+            }
             // 登录成功的判断：code===0 且 userInfo 存在
             if (response.result.code === 0 && response.result.data && response.result.data.userInfo) {
               var depInfo = response.result.data.depInfo;
@@ -305,9 +358,11 @@ Page({
               }
             } else {
               // 业务逻辑失败，用户不存在，执行_getDepInfo和_checkIfShowPage
+              getApp().clearShopLoginState();
               if (this.data.disId && this.data.depFatherId) {
                 console.log("用户不存在，执行_getDepInfo和_checkIfShowPage");
                 wx.removeStorageSync('userInfo');
+                this._aaa();
                 this._getDepInfo().then(() => {
                   this._checkIfShowPage();
                 });
@@ -318,6 +373,19 @@ Page({
               }
 
             }
+          })
+          .catch((error) => {
+            load.hideLoading();
+            console.error('订货端自动登录失败:', error);
+            if (!getApp().hasUsableShopToken()) {
+              this.setData({ userInfo: null, showPage: true });
+            }
+            this._aaa();
+            wx.showToast({
+              title: getApp().describeShopRequestError(error, '自动登录失败，请重试'),
+              icon: 'none',
+              duration: 3500
+            });
           })
 
       },
@@ -477,6 +545,15 @@ Page({
 
             }
           })
+          .catch((error) => {
+            load.hideLoading();
+            console.error('订货端登录失败:', error);
+            wx.showToast({
+              title: getApp().describeShopRequestError(error, '登录失败，请重试'),
+              icon: 'none',
+              duration: 3500
+            });
+          })
       },
       fail: (res => {
         load.hideLoading();
@@ -512,11 +589,16 @@ Page({
    * @param {*} options 
    */
   onShareAppMessage: function (options) {
-    return {
-      title: '"' + this.data.disInfo.nxDistributerName  + '下单小程序', 
-      path: '/pages/ai/customer/chefOrder/chefOrder?depFatherId=' + this.data.depFatherId + '&disId=' + this.data.disId,
-      imageUrl: this.data.url + this.data.disInfo.nxDistributerImg,
+    const disInfo = this.data.disInfo || {};
+    const share = {
+      title: '"' + (disInfo.nxDistributerName || '') + '下单小程序',
+      path: '/pages/ai/customer/chefOrder/chefOrder?depFatherId=' + this.data.depFatherId
+        + '&disId=' + this.data.disId
+    };
+    if (disInfo.nxDistributerImg) {
+      share.imageUrl = this.data.url + disInfo.nxDistributerImg;
     }
+    return share;
   },
 
   _getDepInfo() {
@@ -526,6 +608,7 @@ Page({
         if (res.result.code == 0) {
           var depInfo = res.result.data;
           console.log("getDepInfogetDepInfo", res.result.data);
+          console.log('[chefOrder][_getDepInfo] nxDepartmentSettleType =', depInfo.nxDepartmentSettleType);
           wx.setStorageSync('depInfo', res.result.data)
           this.setData({
             depInfo: res.result.data,
@@ -725,8 +808,10 @@ Page({
   },
 
   _isCashSettle() {
-    var depInfo = this.data.depInfo;
-    return depInfo && Number(depInfo.nxDepartmentSettleType) === 0;
+    // 优惠券是否可领、是否展示，改由后台 claimableList 接口判断，
+    // 前端不再根据门店结算类型（现金/配送）做前置拦截。恒返回 true。
+    console.log('[chefOrder][_isCashSettle] 已放开结算类型限制，恒返回 true（实际判定交由后台）');
+    return true;
   },
 
   _collectAllOrders() {
@@ -1136,20 +1221,10 @@ Page({
   },
 
   _afterOrderDataLoaded() {
+    // 不再根据结算类型拦截：优惠券展示与领取交由后台 claimableList 判定。
     var showCashSettle = this._isCashSettle();
+    console.log('[chefOrder][_afterOrderDataLoaded] showCashSettle =', showCashSettle, 'disId =', this.data.disId, 'depSettleType =', this.data.depSettleType);
     this.setData({ showCashSettle: showCashSettle });
-
-    if (!showCashSettle) {
-      this.setData({
-        billSummary: null,
-        orderPreview: null,
-        orderPreviewLoading: false,
-        claimableCoupons: [],
-        claimableLoading: false,
-        homeBenefitSummary: null,
-      });
-      return;
-    }
 
     var bill = this.data.bill;
     if (bill && bill !== -1) {
@@ -1165,7 +1240,9 @@ Page({
   },
 
   _loadClaimableCoupons() {
-    if (!this._isCashSettle() || !this.data.disId) {
+    console.log('[chefOrder][_loadClaimableCoupons] 进入, isCashSettle =', this._isCashSettle(), 'disId =', this.data.disId, 'canClaim =', this._canClaimCouponAtStore(), 'groupDepartmentId =', this._resolveGroupDepartmentId());
+    if (!this.data.disId) {
+      console.log('[chefOrder][_loadClaimableCoupons] 拦截: 无 disId，不发起请求');
       this.setData({
         claimableCoupons: [],
         claimableCouponViews: [],
@@ -1246,11 +1323,6 @@ Page({
     if (!couponId || this.data.claimingCouponId || this.data.claimingAllCoupons) {
       return;
     }
-    if (!this.data.userInfo) {
-      wx.showToast({ title: '请先登录后再领取', icon: 'none' });
-      this.setData({ showPage: true });
-      return;
-    }
     if (!this._canClaimCouponAtStore()) {
       wx.showToast({ title: '仅门店总部门可领取', icon: 'none' });
       return;
@@ -1286,11 +1358,6 @@ Page({
   claimAllCoupons() {
     var coupons = this.data.claimableCouponViews || [];
     if (!coupons.length || this.data.claimingAllCoupons || this.data.claimingCouponId) {
-      return;
-    }
-    if (!this.data.userInfo) {
-      wx.showToast({ title: '请先登录后再领取', icon: 'none' });
-      this.setData({ showPage: true });
       return;
     }
     if (!this._canClaimCouponAtStore()) {
@@ -1515,6 +1582,7 @@ Page({
       depFatherId: depFatherId,
       depId: depId,
       e,
+      showChoice: false,
     })
     if (this.data.openType == 'paste') {
       wx.navigateTo({
@@ -1556,7 +1624,6 @@ Page({
 
 
   toAddOrder(e) {
-
     console.log(e.currentTarget.dataset.type)
     var type = e.currentTarget.dataset.type;
     if (this.data.depInfo.nxDepartmentEntities.length > 0) {
@@ -1598,7 +1665,6 @@ Page({
       }
     }
   },
-
 
   toRecord() {
     this.hideOperation();
@@ -1760,7 +1826,6 @@ Page({
    * 修改配送商品申请
    */
   toEditApply(e) {
-
     var goodsId = e.currentTarget.dataset.id;
     var name = e.currentTarget.dataset.name;
     this.setData({
@@ -2095,13 +2160,13 @@ Page({
 
   hidePopup() {
    console.log("hidePopuphidePopup")
-    if(!this.data.userInfo){
-      wx.showToast({
-        title: '请先登录或注册',
-        icon: 'none'
-      })
-      return;
-    }
+    // if(!this.data.userInfo){
+    //   wx.showToast({
+    //     title: '请先登录或注册',
+    //     icon: 'none'
+    //   })
+    //   return;
+    // }
     if(this.data.bill !== -1){
       wx.showToast({
         title: '支付需要用户openId，请注册',
@@ -2291,7 +2356,7 @@ Page({
     this.setData({
       searchValue: value
     });
-    
+
     if (!value) {
       console.log('[chefOrder] 搜索值为空，清空搜索结果');
       this.setData({

@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-left">
+      <view class="back" bindtap="goBack">‹</view>
+      <view>
+        <view class="title">客户</view>
+        <view class="subtitle">我负责的正式客户</view>
+      </view>
+    </view>
+    <view class="add" bindtap="addCustomer">＋ 新增</view>
+  </view>
+
+  <view class="search-wrap">
+    <image src="/images/search.png" mode="aspectFit" />
+    <input placeholder="搜索客户、门店名称或地址" value="{{keyword}}" bindinput="onKeywordInput" />
+    <view class="clear" wx:if="{{keyword}}" bindtap="clearSearch">×</view>
+  </view>
+
+  <view class="summary">共 {{allCustomers.length}} 个已分配客户</view>
+
+  <view class="list">
+    <view class="customer-card" wx:for="{{customers}}" wx:key="nxDepartmentId"
+      data-id="{{item.nxDepartmentId}}" bindtap="openCustomer">
+      <view class="avatar">{{item.avatarText}}</view>
+      <view class="customer-main">
+        <view class="customer-name">{{item.nxDepartmentName}}</view>
+        <view class="customer-address">{{item.nxDepartmentAddress || '未填写地址'}}</view>
+        <view class="customer-meta">{{item.departmentCount ? item.departmentCount + ' 个下单部门' : '总部门直接下单'}} · 可维护商品标准</view>
+      </view>
+      <view class="arrow">›</view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && customers.length === 0}}">
+    {{keyword ? '没有找到匹配客户' : '还没有分配给你的正式客户'}}
+  </view>
+  <view class="loading" wx:if="{{loading}}">正在加载客户…</view>
+</view>

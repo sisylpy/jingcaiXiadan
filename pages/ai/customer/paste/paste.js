@@ -17,6 +17,7 @@ import {
   disDeleteStandard,
  
 } from '../../../../lib/apiRestraunt';
+import { getAsrCredentials } from '../../../../lib/miniProgramCloud';
 const config = require('../../../../config.js');
 
 const globalData = getApp().globalData;
@@ -25,9 +26,6 @@ const speechRecognizerManager = plugin.speechRecognizerManager();
 //
 
 // 腾讯云配置
-const TENCENT_CLOUD_SECRET_ID = config.tencentCloud?.secretId || '';
-const TENCENT_CLOUD_SECRET_KEY = config.tencentCloud?.secretKey || '';
-const TENCENT_CLOUD_APP_ID = config.tencentCloud?.appId || '1308821743';
 const TENCENT_CLOUD_ENGINE_MODEL_TYPE = config.tencentCloud?.engineModelType || '16k_zh';
 const TENCENT_CLOUD_VOICE_FORMAT = config.tencentCloud?.voiceFormat || 1;
 
@@ -126,10 +124,10 @@ Page({
       })
     } else {
       this.setData({
-        userId:  -1,
+        userId: -1,
       })
     }
- 
+
     // getBooks().then(res =>{
     //   if(res.result.code == 0){ 
     //    books = res.result.data;
@@ -137,13 +135,13 @@ Page({
     // })
 
 
-    depGetTodayRecordSeconds(this.data.depFatherId).then(res =>{
-      if(res.result.code == 0){
-        this.setData({
-          restSeconds: res.result.data
-        })
-      }
-    })
+      depGetTodayRecordSeconds(this.data.depFatherId).then(res =>{
+        if(res.result.code == 0){
+          this.setData({
+            restSeconds: res.result.data
+          })
+        }
+      })
    
 
     // 检查隐私设置并处理隐私弹窗逻辑
@@ -183,19 +181,15 @@ Page({
     });
 
     // 初始化语音识别回调
-    speechRecognizerManager.OnRecognitionStart = (res) => {
-      console.log('开始识别', res)
+    speechRecognizerManager.OnRecognitionStart = () => {
       this.setData({
         recognitionStatus: '识别中...'
       })
     }
 
-    speechRecognizerManager.OnSentenceBegin = (res) => {
-      console.log('一句话开始', res)
-    }
+    speechRecognizerManager.OnSentenceBegin = () => {}
 
     speechRecognizerManager.OnRecognitionResultChange = (res) => {
-      console.log('识别变化时', res)
       if (res.result) {
         // 检测到语音，重置静音计时器
         this.setData({
@@ -225,13 +219,9 @@ Page({
       }
     }
 
-    speechRecognizerManager.OnSentenceEnd = (res) => {
-      console.log('一句话结束', res)
-    }
+    speechRecognizerManager.OnSentenceEnd = () => {}
 
-    speechRecognizerManager.OnRecognitionComplete = async (res) => {
-      console.log('========== 语音识别完成 ==========');
-      console.log('识别结束', res);
+    speechRecognizerManager.OnRecognitionComplete = async () => {
       // 停止后清理静音定时器
       if (this.data.silenceTimer) clearTimeout(this.data.silenceTimer);
       
@@ -243,9 +233,7 @@ Page({
       try {
         // 获取识别到的文本
         const recognizedText = this.data.sentence;
-        console.log('【语音识别原始文本】:', recognizedText);
         if (!recognizedText || recognizedText.trim() === '') {
-          console.log('识别文本为空，跳过');
           return;
         }
 
@@ -257,9 +245,7 @@ Page({
           hasAiRecognized: false // 还没解析，保持 false
         });
       } catch (error) {
-        console.error('========== 处理语音识别结果时出错 ==========');
-        console.error('错误信息:', error);
-        console.error('错误堆栈:', error.stack);
+        console.error('处理语音识别结果时出错:', error && error.message);
         wx.showToast({
           title: '文本优化失败，使用原始文本',
           icon: 'none',
@@ -268,16 +254,14 @@ Page({
       }
     }
 
-    speechRecognizerManager.OnError = (res) => {
-      console.log('识别失败', res)
+    speechRecognizerManager.OnError = () => {
       this.setData({
         recognitionStatus: '识别失败',
         isRecording: false
       })
     }
 
-    speechRecognizerManager.OnRecorderStop = (res) => {
-      console.log('录音结束', res);
+    speechRecognizerManager.OnRecorderStop = () => {
       this.setData({
         inputContent: this.data.sentence,
       })
@@ -286,7 +270,7 @@ Page({
     // //。
   },
 
-  startRecord() {
+  async startRecord() {
     // 检查录音时间是否已用完
     if (this.data.restSeconds <= 0) {
       wx.showModal({
@@ -305,20 +289,26 @@ Page({
 
     wx.vibrateShort && wx.vibrateShort();
     const that = this;
-    console.log('[startRecord] called');
     this.setData({
       duration: 0,
       isRecording: true,
-    }, () => {
-      console.log('[startRecord] setData done, duration:', that.data.duration, 'isRecording:', that.data.isRecording);
     });
   
+    let credentials;
+    try {
+      credentials = await getAsrCredentials();
+    } catch (error) {
+      this.setData({ isRecording: false });
+      wx.showToast({ title: error.message || '语音服务初始化失败', icon: 'none' });
+      return;
+    }
     const params = {
-      secretkey: TENCENT_CLOUD_SECRET_KEY,
-        secretid: TENCENT_CLOUD_SECRET_ID,
-        appid: TENCENT_CLOUD_APP_ID,
-        engine_model_type: TENCENT_CLOUD_ENGINE_MODEL_TYPE,
-        voice_format: TENCENT_CLOUD_VOICE_FORMAT
+      secretkey: credentials.secretKey,
+      secretid: credentials.secretId,
+      token: credentials.token,
+      appid: credentials.appId,
+      engine_model_type: TENCENT_CLOUD_ENGINE_MODEL_TYPE,
+      voice_format: TENCENT_CLOUD_VOICE_FORMAT
     };
   
     if (this.restSecondsTimer) clearInterval(this.restSecondsTimer);
@@ -452,8 +442,6 @@ Page({
 
   formatContent: function () {
     var content = this.data.inputContent;
-    console.log('[formatContent] 开始处理内容:', content);
-    
     if (!content || content.trim() === '') {
       console.log('[formatContent] 内容为空，跳过处理');
       this.setData({ highlightedContent: '' });
@@ -628,14 +616,12 @@ Page({
 
 
   _formatOrderContent: function (content) {
-    console.log('[formatOrderContent] 入参 content:', content);
     // 改为 let，后面要对 orders 重新赋值
     let orders = [];
     // 1. 按行拆分
     let lines = content.split(/\r?\n/);
   
     // 过滤无效行
-    console.log("linessss", lines);
     lines = lines.filter(line => {
       line = line.trim();
       if (!line) return false; // 跳过空行
@@ -1277,7 +1263,6 @@ Page({
     // ============ F2. 异常重解析 ============
     function reparseSingleOrder(raw) {
       raw = raw.replace(/\s+/g, '');
-      console.log('[重解析] 原始文本:', raw);
       let m = raw.match(/^(.+?)([\d一二两三四五六七八九十百千万半\.]+)(斤|把|包|件|个|捆|棵|条|盒|袋|跟|根|块|瓶|罐|桶|箱)?(.*)?$/);
       console.log('[重解析] 正则匹配结果:', m);
       if (!m) return null;
@@ -1387,7 +1372,6 @@ Page({
       load.showLoading("识别商品中");
       depPasteSearchGoods(this.data.orderArr).then(res => {
         if (res.result.code == 0) {
-          console.log(res.result.data);
           wx.setStorageSync('needRefreshOrderData', true);
 
           var tempArr = res.result.data;
@@ -1424,7 +1408,6 @@ Page({
       })
     }
   },
-
 
   _checkOrderContent() {
     var arr = this.data.orderArr;
@@ -1621,7 +1604,6 @@ Page({
           wx.setStorageSync('needRefreshOrderData', true);
           
           load.hideLoading();
-          console.log(res.result.data);
           var data = "orderArr[" + index + "]";
           this.setData({
             [data]: res.result.data,
@@ -1742,7 +1724,6 @@ Page({
       })
       load.showLoading("搜索商品中")
       queryDepDisGoodsByQuickSearch(data).then(res => {
-        console.log(res.result.data);
         load.hideLoading();
         if (res.result.data.dis.length > 0) {
           this.setData({
@@ -2145,9 +2126,7 @@ Page({
    * 保留 originSentence（原始语音/粘贴内容），恢复到 inputContent 供用户修改
    */
   againPaste() {
-    console.log('[againPaste] 触发——orderArr:', this.data.orderArr.length, 'hasAiRecognized:', this.data.hasAiRecognized, 'originSentence:', this.data.originSentence);
     const originalText = this.data.originSentence || this.data.inputContent || this.data.sentence || '';
-    console.log('[againPaste] 还原文本:', originalText);
     this.setData({
       orderArr: [],
       orderArrFixed: [],

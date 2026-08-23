@@ -6,7 +6,10 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run check:secrets && npm run check:auth && npm run check:sales-ocr",
+    "check:secrets": "./scripts/check-client-secrets.sh",
+    "check:auth": "node scripts/verify-shop-auth.js",
+    "check:sales-ocr": "node scripts/verify-sales-quote-ocr.js"
   },
   "keywords": [],
   "author": "",

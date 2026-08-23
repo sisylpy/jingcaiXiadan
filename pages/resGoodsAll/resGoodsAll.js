@@ -130,6 +130,15 @@ Page({
 
             }
           })
+          .catch((error) => {
+            load.hideLoading();
+            console.error('订货端登录失败:', error);
+            wx.showToast({
+              title: getApp().describeShopRequestError(error, '登录失败，请重试'),
+              icon: 'none',
+              duration: 3500
+            });
+          })
       },
       fail: (res => {
         load.hideLoading();

@@ -1,0 +1,149 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">订货商品</view>
+    <view class="nav-add" bindtap="openAdd">＋ 添加</view>
+  </view>
+
+  <view class="customer-bar">
+    <text>{{customerName}}</text>
+    <text>共 {{goods.length}} 个订货商品</text>
+  </view>
+
+  <view class="top-actions">
+    <view class="search-box">
+      <image src="/images/search.png" mode="aspectFit" class="search-icon" />
+      <input
+        class="search-input"
+        placeholder="搜索商品名称、客户商品名或大类"
+        value="{{listSearchKeyword}}"
+        bindinput="onListSearchInput"
+        bindconfirm="onListSearchConfirm"
+        confirm-type="search"
+      />
+      <view class="search-clear" wx:if="{{listSearchKeyword}}" bindtap="clearListSearch">
+        <image src="/images/close.png" mode="aspectFit" class="clear-icon" />
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{goods.length === 0}}">
+    <image src="/images/cart-Empty.png" mode="aspectFit" class="empty-image" />
+    <text class="empty-title">暂时无订货商品</text>
+    <text class="empty-desc">点击右上角添加客户订货商品</text>
+  </view>
+
+  <view class="empty" wx:elif="{{listSearchKeyword && filteredCategories.length === 0}}">
+    <image src="/images/cart-Empty.png" mode="aspectFit" class="empty-image" />
+    <text class="empty-title">未找到相关商品</text>
+    <text class="empty-desc">请尝试其他关键词</text>
+  </view>
+
+  <view class="tree-layout" wx:else>
+    <view class="category-sidebar">
+      <scroll-view class="sidebar-scroll" scroll-y>
+        <view
+          class="category-sidebar-item {{selectedCategoryKey === item.categoryKey ? 'active' : ''}}"
+          wx:for="{{filteredCategories}}"
+          wx:key="categoryKey"
+          data-key="{{item.categoryKey}}"
+          bindtap="selectCategory"
+        >
+          <text class="category-sidebar-name">{{item.categoryName}}</text>
+          <text class="category-sidebar-count">({{item.visibleGoods.length}})</text>
+        </view>
+        <view class="sidebar-bottom-spacer"></view>
+      </scroll-view>
+    </view>
+
+    <view class="goods-content">
+      <scroll-view
+        class="content-scroll"
+        scroll-y
+        scroll-into-view="{{scrollIntoView}}"
+        scroll-with-animation="{{true}}"
+      >
+        <view
+          class="category-goods-section"
+          wx:for="{{filteredCategories}}"
+          wx:for-item="category"
+          wx:key="categoryKey"
+          id="{{category.categoryDomId}}"
+        >
+          <view class="category-section-header">
+            <text class="category-section-name">{{category.categoryName}}</text>
+            <text class="category-section-count">({{category.visibleGoods.length}})</text>
+            <view class="category-dash-line"></view>
+          </view>
+
+          <view
+            class="goods-item"
+            wx:for="{{category.visibleGoods}}"
+            wx:for-item="depGoods"
+            wx:key="nxDepartmentDisGoodsId"
+          >
+            <view class="goods-header">
+              <view class="goods-title-row">
+                <text class="goods-name">{{depGoods.sourceGoodsName || depGoods.displayName}}</text>
+              </view>
+              <view class="customer-goods-name" wx:if="{{depGoods.displayName !== depGoods.sourceGoodsName}}">
+                <text class="customer-name-label">客名:</text>
+                <text>{{depGoods.displayName}}</text>
+              </view>
+              <view class="goods-detail" wx:if="{{depGoods.goodsDetail}}">{{depGoods.goodsDetail}}</view>
+              <view class="goods-meta">
+                <text class="goods-standard">{{depGoods.goodsStandard}}</text>
+                <text class="department-name">{{depGoods.departmentName}}</text>
+              </view>
+            </view>
+
+            <view class="standard-entry" data-item="{{depGoods}}" bindtap="openStandard">
+              <view class="standard-entry-main">
+                <text class="standard-entry-title">客户商品标准</text>
+                <text class="standard-entry-desc">查看和记录客户的文字、图片要求</text>
+              </view>
+              <text class="standard-entry-arrow">›</text>
+            </view>
+
+            <view class="goods-actions">
+              <view class="action-item standard-btn" data-item="{{depGoods}}" bindtap="openStandard">
+                <text class="action-text">进入客户标准</text>
+              </view>
+              <view class="action-item delete-btn" data-id="{{depGoods.nxDepartmentDisGoodsId}}" catchtap="removeGoods">
+                <image src="/images/ashbin.png" mode="aspectFit" class="action-icon" />
+                <text class="action-text">删除</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="bottom-spacer"></view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view class="mask" wx:if="{{showAdd}}" bindtap="closeAdd"></view>
+  <view class="add-panel" wx:if="{{showAdd}}">
+    <view class="panel-title">添加客户订货商品</view>
+    <view class="panel-row">
+      <text>使用部门</text>
+      <picker range="{{departments}}" range-key="nxDepartmentName" value="{{departmentIndex}}" bindchange="onDepartmentChange">
+        <view>{{departments[departmentIndex].nxDepartmentName}} ›</view>
+      </picker>
+    </view>
+    <view class="add-search-row">
+      <input placeholder="输入配送商商品名称" value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" bindconfirm="search" />
+      <button loading="{{searching}}" bindtap="search">搜索</button>
+    </view>
+    <scroll-view scroll-y class="result-list">
+      <view class="result" wx:for="{{searchResults}}" wx:key="nxDistributerGoodsId" data-id="{{item.nxDistributerGoodsId}}" bindtap="addGoods">
+        <view>
+          <view class="result-name">{{item.nxDgGoodsName}}</view>
+          <view class="result-sub">{{item.nxDgGoodsStandardname || '未填写规格'}}</view>
+        </view>
+        <view class="plus">＋</view>
+      </view>
+      <view class="result-empty" wx:if="{{searchKeyword && !searching && searchResults.length === 0}}">没有找到配送商商品</view>
+    </scroll-view>
+    <view class="close" bindtap="closeAdd">关闭</view>
+  </view>
+</view>

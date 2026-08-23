@@ -1,0 +1,72 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">{{title}}</view>
+    <view class="nav-space"></view>
+  </view>
+
+  <view class="source {{businessTypeStatisticalClaim ? 'verified' : 'fallback'}}">
+    <view class="source-title">{{businessTypeStatisticalClaim ? '真实业态统计' : '数据不足，已切换来源'}}</view>
+    <view class="source-note">{{sourceLabel}}</view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && items.length === 0}}">
+    当前没有足够的完成订单数据，也没有可展示的近期热销商品。
+  </view>
+
+  <view class="catalog-shell" wx:if="{{!loading && items.length > 0}}">
+    <scroll-view class="great-category-list" scroll-y="true" enhanced="true" show-scrollbar="false">
+      <view wx:for="{{categories}}" wx:key="key" wx:for-item="category"
+        class="great-category {{activeGreatCategoryKey === category.key ? 'active' : ''}}"
+        data-key="{{category.key}}" bindtap="selectGreatCategory">
+        <text class="great-category-name">{{category.name}}</text>
+        <text class="great-category-count">({{category.count}})</text>
+      </view>
+      <view class="left-tail"></view>
+    </scroll-view>
+
+    <view class="catalog-main">
+      <scroll-view class="sub-category-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
+        <view class="sub-category-row">
+          <view wx:for="{{subCategories}}" wx:key="key" wx:for-item="subCategory"
+            class="sub-category {{activeSubCategoryKey === subCategory.key ? 'active' : ''}}"
+            data-key="{{subCategory.key}}" bindtap="selectSubCategory">
+            {{subCategory.name}}({{subCategory.count}})
+          </view>
+        </view>
+      </scroll-view>
+
+      <scroll-view class="goods-scroll" scroll-y="true" enhanced="true" show-scrollbar="false"
+        scroll-top="{{goodsScrollTop}}">
+        <view class="goods-list">
+          <view class="goods-card" wx:for="{{visibleItems}}" wx:key="goodsId">
+            <image class="goods-image" src="{{item.imageUrl}}" mode="aspectFill" />
+            <view class="goods-main">
+              <view class="goods-name">{{item.goodsName}}</view>
+              <view class="goods-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
+              <view class="goods-meta">产地：{{item.origin || '未填写'}}</view>
+              <view class="goods-detail" wx:if="{{item.detail}}">{{item.detail}}</view>
+              <view class="signal-row">
+                <text>热度 #{{item.rank}}</text>
+                <text>{{item.trendLabel}}</text>
+                <text wx:if="{{item.businessTypeStatisticalClaim}}">{{item.customerCoverageCount}}家客户覆盖</text>
+              </view>
+              <view class="card-bottom">
+                <view class="price {{item.priceStatus === 'PRICE_AVAILABLE' ? '' : 'pending'}}">
+                  {{item.priceLabel}}<text wx:if="{{item.unit}}"> / {{item.unit}}</text>
+                </view>
+                <view class="add" data-id="{{item.goodsId}}" bindtap="addToQuotation">加入报价</view>
+              </view>
+            </view>
+          </view>
+          <view class="goods-tail"></view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">正在计算近期推荐…</view>
+  <view class="basket-bar" bindtap="goQuotation">
+    <text>报价商品 {{basketCount}} 项</text><text>{{returnToWorkspace ? '返回报价工作区' : '进入报价工作区'}} ›</text>
+  </view>
+</view>

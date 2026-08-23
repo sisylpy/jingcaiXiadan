@@ -47,7 +47,7 @@ page {
 }
 
 .left {
-  width: 140rpx;
+  width: 200rpx;
 }
 
 .itemPic {
@@ -58,12 +58,13 @@ page {
 
 .left-item {
   padding: 30rpx 20rpx;
-  background-color: rgb(236, 236, 236);
+  background-color: rgb(255, 255, 255);
+  border-bottom: 1px solid rgb(216, 216, 216, 0.7);
 }
 
 .left-active {
   background-color: #fff;
-  box-shadow: 6px 6px 6px rgba(116, 116, 116, 0.5);
+  /* box-shadow: 6px 6px 6px rgba(116, 116, 116, 0.5); */
   margin-bottom: 2rpx;
 }
 

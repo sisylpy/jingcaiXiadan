@@ -1,0 +1,75 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">采购明细确认</view>
+    <view class="retake" bindtap="chooseSource">重拍</view>
+  </view>
+
+  <view class="source-card" wx:if="{{imagePath}}">
+    <image src="{{imagePath}}" mode="aspectFill" />
+    <view><view class="source-title">原采购单</view><view class="source-mode">{{recognitionModeLabel}}</view><view class="source-note">图片仅进入私有临时区，保存报价后才成为正式附件。</view></view>
+  </view>
+
+  <view class="scan-start" wx:if="{{!imagePath && !loading && lines.length === 0}}">
+    <view class="scan-icon">拍</view>
+    <view class="scan-title">拍摄或选择采购单</view>
+    <view class="scan-note">与 Boss 智能下单一致：单列快速识别，多列由 DeepSeek 大模型辅助解析；也可拖动选区。</view>
+    <button bindtap="chooseSource">选择采购单图片</button>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">正在识别并整理采购明细…</view>
+  <view class="error" wx:if="{{errorMessage}}">{{errorMessage}}</view>
+
+  <view class="summary" wx:if="{{!loading && imagePath}}">识别到 {{lines.length}} 项，请逐项人工确认</view>
+
+  <view class="line-card" wx:for="{{lines}}" wx:key="lineId">
+    <view class="line-head">
+      <view><text class="line-index">{{index + 1}}</text><text class="raw-label">原单</text></view>
+      <view class="delete" data-line="{{index}}" bindtap="deleteLine">删除误识别行</view>
+    </view>
+    <view class="raw-text">{{item.rawText || '手工补录商品'}}</view>
+    <view class="confidence" wx:if="{{item.ocrConfidence}}">OCR 置信度 {{item.ocrConfidence}}；商品匹配置信度独立计算</view>
+
+    <view class="edit-grid">
+      <view><text>数量</text><input type="digit" value="{{item.quantity}}" placeholder="待确认" data-line="{{index}}" data-field="quantity" bindinput="onLineInput" /></view>
+      <view><text>单位</text><input value="{{item.unit}}" placeholder="待确认" data-line="{{index}}" data-field="unit" bindinput="onLineInput" /></view>
+    </view>
+    <view class="private-price"><text>客户当前采购价（仅本报价）</text><input type="digit" value="{{item.customerCurrentPurchasePrice}}" placeholder="可不填" data-line="{{index}}" data-field="customerCurrentPurchasePrice" bindinput="onLineInput" /></view>
+
+    <view class="match-title">平台匹配 <text class="match-state {{item.matchStatus === 'MATCHED' ? 'ok' : ''}}">{{item.matchStatus === 'MATCHED' ? '已人工确认' : (item.matchStatus === 'NO_CANDIDATE' ? '暂无候选' : '需要确认')}}</text></view>
+    <block wx:for="{{item.candidates}}" wx:for-item="candidate" wx:for-index="candidateIndex" wx:key="goodsId">
+      <view class="candidate {{item.selectedGoodsId === candidate.goodsId ? 'selected' : ''}}" wx:if="{{item.showAll || candidateIndex < 3}}" data-line="{{index}}" data-goods="{{candidate.goodsId}}" bindtap="chooseCandidate">
+        <view class="radio">{{item.selectedGoodsId === candidate.goodsId ? '●' : '○'}}</view>
+        <image src="{{candidate.imageUrl}}" mode="aspectFill" />
+        <view class="candidate-main"><view class="candidate-name">{{candidate.goodsName}}</view><view class="candidate-meta">{{candidate.specification || '规格待补充'}} · {{candidate.priceLabel}}</view><view class="candidate-reason">{{candidate.matchReason}} · {{candidate.matchScore}}</view></view>
+      </view>
+    </block>
+    <view class="line-actions">
+      <view wx:if="{{item.candidates.length > 3}}" data-line="{{index}}" bindtap="toggleMore">{{item.showAll ? '收起候选' : '更多候选'}}</view>
+      <view data-line="{{index}}" bindtap="searchOther">手动搜索其它商品</view>
+    </view>
+  </view>
+
+  <view class="add-missing" bindtap="addMissing">＋ 添加漏掉的商品</view>
+
+  <view class="search-panel" wx:if="{{searchLineIndex >= 0}}">
+    <view class="search-head"><text>手动搜索平台商品</text><text bindtap="closeSearch">关闭</text></view>
+    <view class="search-row"><input value="{{searchKeyword}}" placeholder="例如：薄皮椒" bindinput="onSearchInput" bindconfirm="runSearch" /><view bindtap="runSearch">搜索</view></view>
+    <view class="searching" wx:if="{{searching}}">正在查找宽松候选…</view>
+    <view class="search-candidate" wx:for="{{searchCandidates}}" wx:key="goodsId" data-goods="{{item.goodsId}}" bindtap="chooseSearchCandidate">
+      <view><view>{{item.goodsName}}</view><text>{{item.matchReason}} · {{item.matchScore}}</text></view><view>{{item.priceLabel}} ›</view>
+    </view>
+  </view>
+
+  <view class="bottom-space"></view>
+  <view class="bottom" wx:if="{{imagePath}}"><button disabled="{{selectedCount === 0}}" bindtap="confirm">确认 {{selectedCount}} 项，加入报价</button></view>
+  <sales-quote-image-cropper
+    id="salesQuoteImageCropper"
+    hide-upload="{{true}}"
+    reset-key="{{ocrResetKey}}"
+    image-list="{{ocrImageList}}"
+    bind:imageChange="onOcrImageChange"
+    bind:startOCR="onStartOCR"
+    bind:startOCRFast="onStartOCRFast"
+  />
+</view>

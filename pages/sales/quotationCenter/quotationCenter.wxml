@@ -1,0 +1,78 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="back" bindtap="goBack">‹</view>
+      <view class="header-titles">
+        <view class="title">报价中心</view>
+        <view class="subtitle">统一创建、管理和继续报价</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="quote-bar">
+      <view class="section-title">我的报价</view>
+      <view class="plus-btn" bindtap="showCreateMenu">＋</view>
+    </view>
+    <view class="tabs">
+      <view class="tab {{quoteSwiperIndex === 0 ? 'active' : ''}}" data-tab="draft" bindtap="switchQuoteTab">草稿 {{drafts.length}}</view>
+      <view class="tab {{quoteSwiperIndex === 1 ? 'active' : ''}}" data-tab="history" bindtap="switchQuoteTab">已定稿/历史 {{history.length}}</view>
+    </view>
+
+    <swiper class="quote-swiper" style="height: {{swiperHeight}}px"
+      current="{{quoteSwiperIndex}}" bindchange="onSwiperChange" duration="200">
+      <swiper-item>
+        <scroll-view scroll-y class="quote-scroll" style="height: {{swiperHeight}}px">
+          <view class="quote-card" wx:for="{{drafts}}" wx:key="quotationId"
+            data-id="{{item.quotationId}}" bindtap="openQuotation">
+            <view class="quote-index">{{index + 1}}</view>
+            <view class="quote-main">
+              <view class="target-line"><text class="target-type">{{item.targetTypeLabel}}</text><text class="quote-name">{{item.targetName}}</text></view>
+              <view class="quote-meta">{{item.quotationNo || '保存后生成编号'}}</view>
+              <view class="quote-time">创建 {{item.createdTimeLabel}}<text wx:if="{{item.updatedTimeLabel !== item.createdTimeLabel}}"> · 更新 {{item.updatedTimeLabel}}</text></view>
+            </view>
+            <view class="quote-side"><view class="quote-status">{{item.statusLabel}}</view><view class="quote-amount">{{item.amountLabel}}</view><view class="quote-delete" data-id="{{item.quotationId}}" catchtap="requestDeleteQuotation">删除</view></view>
+            <view class="arrow">›</view>
+          </view>
+          <view class="empty" wx:if="{{!loading && drafts.length === 0}}">暂无报价草稿</view>
+        </scroll-view>
+      </swiper-item>
+      <swiper-item>
+        <scroll-view scroll-y class="quote-scroll" style="height: {{swiperHeight}}px">
+          <view class="quote-card" wx:for="{{history}}" wx:key="quotationId"
+            data-id="{{item.quotationId}}" bindtap="openQuotation">
+            <view class="quote-index">{{index + 1}}</view>
+            <view class="quote-main">
+              <view class="target-line"><text class="target-type">{{item.targetTypeLabel}}</text><text class="quote-name">{{item.targetName}}</text></view>
+              <view class="quote-meta">{{item.quotationNo || '保存后生成编号'}}</view>
+              <view class="quote-time">创建 {{item.createdTimeLabel}}<text wx:if="{{item.updatedTimeLabel !== item.createdTimeLabel}}"> · 更新 {{item.updatedTimeLabel}}</text></view>
+            </view>
+            <view class="quote-side"><view class="quote-status">{{item.statusLabel}}</view><view class="quote-amount">{{item.amountLabel}}</view><view class="quote-delete" data-id="{{item.quotationId}}" catchtap="requestDeleteQuotation">删除</view></view>
+            <view class="arrow">›</view>
+          </view>
+          <view class="empty" wx:if="{{!loading && history.length === 0}}">暂无已定稿或历史报价</view>
+        </scroll-view>
+      </swiper-item>
+    </swiper>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">正在加载报价中心…</view>
+
+  <view class="menu-mask" wx:if="{{createMenuVisible}}" bindtap="hideCreateMenu"></view>
+  <view class="create-menu" wx:if="{{createMenuVisible}}">
+    <view class="menu-title">选择一种商品录入方式</view>
+    <view class="menu-item" data-mode="ocr" bindtap="chooseCreateMode">
+      <view class="menu-icon ocr">拍</view>
+      <view class="menu-text"><view class="menu-name">拍采购单</view><view class="menu-note">识别采购明细后人工确认</view></view>
+    </view>
+    <view class="menu-item" data-mode="industry" bindtap="chooseCreateMode">
+      <view class="menu-icon industry">荐</view>
+      <view class="menu-text"><view class="menu-name">按行业推荐</view><view class="menu-note">从业态常购商品中选择</view></view>
+    </view>
+    <view class="menu-item" data-mode="manual" bindtap="chooseCreateMode">
+      <view class="menu-icon manual">加</view>
+      <view class="menu-text"><view class="menu-name">手工添加</view><view class="menu-note">按系统商品名称查找</view></view>
+    </view>
+    <view class="menu-cancel" bindtap="hideCreateMenu">取消</view>
+  </view>
+</view>

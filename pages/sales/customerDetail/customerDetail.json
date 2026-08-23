@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "客户管理",
+  "usingComponents": {
+    "sales-visit-sheet": "/components/sales-visit-sheet/sales-visit-sheet"
+  }
+}

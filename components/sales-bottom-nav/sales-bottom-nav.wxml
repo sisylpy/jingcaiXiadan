@@ -1,0 +1,9 @@
+<view class="nav-safe-space"></view>
+<view class="sales-nav">
+  <view wx:for="{{items}}" wx:key="key"
+    class="sales-nav-item {{current === item.key ? 'active' : ''}}"
+    data-key="{{item.key}}" bindtap="switchPage">
+    <view class="sales-nav-icon">{{item.icon}}</view>
+    <text>{{item.label}}</text>
+  </view>
+</view>

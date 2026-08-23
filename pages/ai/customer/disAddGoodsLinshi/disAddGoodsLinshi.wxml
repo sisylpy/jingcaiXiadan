@@ -67,13 +67,6 @@
 
         <view class="flex-column" wx:if="{{isGrade == 1}}">
           <view class="flex-column  ">
-            <view class="flex-row p-20">
-              <text class="margin-l-right shrink_fix">普通进价(低):</text>
-              <view class="out">
-                <input class="orderInput" type="digit" value="{{goods.nxDgBuyingPriceThree}}" bindinput="getBuyingPrice" data-type="3" />
-              </view>元
-            </view> 
-
             <view class="flex-row  p-20">
               <text class="margin-l-right shrink_fix">优选进价(中):</text>
               <view class="out">

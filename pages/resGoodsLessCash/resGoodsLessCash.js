@@ -692,12 +692,19 @@ Page({
     return depGoods && depGoods.nxDistributerGoodsEntity ? depGoods.nxDistributerGoodsEntity : (depGoods || {});
   },
 
+  // 按计价级别统一解析商品的大小包装单位名（oneStd / twoStd 的唯一来源）
+  _getDisGoodsStandardByLevel(disGoods, priceLevel) {
+    if (Number(priceLevel) === 2) {
+      return String(disGoods.nxDgWillPriceTwoStandard || disGoods.nxDgCartonUnit || '').trim();
+    }
+    return String(disGoods.nxDgWillPriceOneStandard || disGoods.nxDgGoodsStandardname || '').trim();
+  },
+
   _getDepGoodsBasePriceInfo(depGoods) {
     var disGoods = this._getDepGoodsDisGoods(depGoods);
     var depStandard = String((depGoods && (depGoods.nxDdgOrderStandard || depGoods.nxDdgDepGoodsStandardname)) || '').trim();
-    var oneStd = String(disGoods.nxDgWillPriceOneStandard || disGoods.nxDgGoodsStandardname || '').trim();
-    var twoStd = String(disGoods.nxDgWillPriceTwoStandard || disGoods.nxDgCartonUnit || '').trim();
-    var threeStd = String(disGoods.nxDgWillPriceThreeStandard || '').trim();
+    var oneStd = this._getDisGoodsStandardByLevel(disGoods, 1);
+    var twoStd = this._getDisGoodsStandardByLevel(disGoods, 2);
     var price = null;
     var standard = depStandard || oneStd;
 
@@ -707,9 +714,6 @@ Page({
     } else if (depStandard && twoStd && depStandard === twoStd) {
       price = this._toValidPrice(disGoods.nxDgWillPriceTwo);
       standard = twoStd;
-    } else if (depStandard && threeStd && depStandard === threeStd) {
-      price = this._toValidPrice(disGoods.nxDgWillPriceThree);
-      standard = threeStd;
     } else {
       price = this._toValidPrice(disGoods.nxDgWillPriceOne);
       standard = oneStd || depStandard;
@@ -721,13 +725,12 @@ Page({
     };
   },
 
-  _getDepGoodsBasePrice(depGoods) {
-    return this._getDepGoodsBasePriceInfo(depGoods).price;
-  },
-
-  _getDepGoodsFinalPrice(depGoods) {
+  _getDepGoodsFinalPrice(depGoods, goodsPrice) {
     var depPrice = this._toValidPrice(depGoods && depGoods.nxDdgOrderPrice);
-    var goodsPrice = this._getDepGoodsBasePrice(depGoods);
+    // 允许传入已算好的 basePrice，避免对同一商品重复计算 _getDepGoodsBasePriceInfo
+    if (goodsPrice === undefined) {
+      goodsPrice = this._getDepGoodsBasePriceInfo(depGoods).price;
+    }
     if (depPrice !== null && goodsPrice !== null) {
       return Math.min(depPrice, goodsPrice);
     }
@@ -738,7 +741,7 @@ Page({
     var depPrice = this._toValidPrice(item.nxDdgOrderPrice);
     var goodsPriceInfo = this._getDepGoodsBasePriceInfo(item);
     var goodsPrice = goodsPriceInfo.price;
-    var finalPrice = this._getDepGoodsFinalPrice(item);
+    var finalPrice = this._getDepGoodsFinalPrice(item, goodsPrice);
     return Object.assign({}, item, {
       _depPriceText: this._formatDisplayPrice(depPrice),
       _goodsPriceText: this._formatDisplayPrice(goodsPrice),
@@ -2300,16 +2303,7 @@ Page({
 
   _getLargeUnitName() {
     var item = this._getModalDisGoods();
-    if (!item) {
-      return '';
-    }
-    if (item.nxDgWillPriceTwoStandard) {
-      return String(item.nxDgWillPriceTwoStandard).trim();
-    }
-    if (item.nxDgCartonUnit) {
-      return String(item.nxDgCartonUnit).trim();
-    }
-    return '';
+    return item ? this._getDisGoodsStandardByLevel(item, 2) : '';
   },
 
   _isLargeUnitName(name) {
@@ -2652,10 +2646,7 @@ Page({
     if (!this.data.itemDis) {
       return '';
     }
-    if (Number(this.data.priceLevel) === 2) {
-      return this.data.itemDis.nxDgWillPriceTwoStandard || '';
-    }
-    return this.data.itemDis.nxDgGoodsStandardname || '';
+    return this._getDisGoodsStandardByLevel(this.data.itemDis, this.data.priceLevel);
   },
 
   _canCalculateApplySubtotal() {

@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "采购明细确认",
+  "usingComponents": {
+    "sales-quote-image-cropper": "/components/sales-quote-image-cropper/sales-quote-image-cropper"
+  }
+}

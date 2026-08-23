@@ -46,7 +46,6 @@ Page({
         nxDgGoodsId: "-1",
         nxDgPullOff: 0,
         nxDgGoodsStatus: 0,
-        nxDgBuyingPriceIsGrade: 0,
         nxDgBuyingPrice: "1",
         nxDgBuyingPriceUpdate: dateUtils.getArriveDate(0),
         nxDgDistributerId: this.data.disId,
@@ -88,43 +87,34 @@ Page({
 
   radioChange(e) {
     console.log(e.detail.value);
-    var gradeData = "goods.nxDgBuyingPriceIsGrade"
     this.setData({
-      [gradeData]: e.detail.value,
       isGrade: e.detail.value
     })
     this._ifCanSave();
   },
 
   getBuyingPrice(e) {
-    var gradeData = "goods.nxDgBuyingPriceIsGrade";
     var priceData = "goods.nxDgBuyingPrice";
     var priceUpdateData = "goods.nxDgBuyingPriceUpdate";
     var priceOneData = "goods.nxDgBuyingPriceOne";
     var priceOneUpdateData = "goods.nxDgBuyingPriceOneUpdate";
     var priceTwoData = "goods.nxDgBuyingPriceTwo";
     var priceTwoUpdateData = "goods.nxDgBuyingPriceTwoUpdate";
-    var priceThreeData = "goods.nxDgBuyingPriceThree";
-    var priceThreeUpdateData = "goods.nxDgBuyingPriceThreeUpdate";
 
     var type = e.currentTarget.dataset.type;
     if (type == 0) {
       this.setData({
-        [gradeData]: 0,
         [priceData]: e.detail.value,
         [priceUpdateData]: this.data.upTime,
         [priceOneData]: null,
         [priceTwoData]: null,
-        [priceThreeData]: null,
         [priceOneUpdateData]: null,
         [priceTwoUpdateData]: null,
-        [priceThreeUpdateData]: null,
 
       })
     }
     if (type == 1) {
       this.setData({
-        [gradeData]: 1,
         [priceData]: null,
         [priceUpdateData]: null,
         [priceOneData]: e.detail.value,
@@ -133,18 +123,9 @@ Page({
     }
     if (type == 2) {
       this.setData({
-        [gradeData]: 1,
         [priceData]: null,
         [priceTwoData]: e.detail.value,
         [priceTwoUpdateData]: this.data.upTime,
-      })
-    }
-    if (type == 3) {
-      this.setData({
-        [gradeData]: 1,
-        [priceData]: null,
-        [priceThreeData]: e.detail.value,
-        [priceThreeUpdateData]: this.data.upTime,
       })
     }
     this._ifCanSave();
@@ -214,7 +195,7 @@ Page({
     }
     if (this.data.isGrade == 1) {
       if (this.data.name != null && this.data.standard != null && this.data.fatherName != null && this.data.goods.nxDgBuyingPriceOne > 0 &&
-        this.data.goods.nxDgBuyingPriceTwo > 0 && this.data.goods.nxDgBuyingPriceThree > 0) {
+        this.data.goods.nxDgBuyingPriceTwo > 0) {
         this.setData({
           canSave: true
         })

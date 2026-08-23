@@ -1,0 +1,6 @@
+.nav-safe-space { height: 126rpx; padding-bottom: env(safe-area-inset-bottom); }
+.sales-nav { position: fixed; z-index: 50; right: 0; bottom: 0; left: 0; height: 104rpx; padding: 8rpx 10rpx env(safe-area-inset-bottom); display: flex; align-items: center; justify-content: space-around; background: rgba(255,255,255,.98); border-top: 1rpx solid #e7ece9; box-shadow: 0 -6rpx 24rpx rgba(27,64,47,.06); }
+.sales-nav-item { flex: 1; height: 94rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #7d8982; font-size: 21rpx; }
+.sales-nav-icon { width: 42rpx; height: 42rpx; margin-bottom: 4rpx; border-radius: 14rpx; background: #f1f4f2; color: #738078; font-size: 22rpx; font-weight: 650; line-height: 42rpx; text-align: center; }
+.sales-nav-item.active { color: #176846; font-weight: 650; }
+.sales-nav-item.active .sales-nav-icon { color: #fff; background: #1f7654; box-shadow: 0 5rpx 12rpx rgba(31,118,84,.2); }

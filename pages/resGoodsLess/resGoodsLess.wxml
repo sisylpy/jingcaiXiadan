@@ -220,7 +220,7 @@
 
 
             <!-- 收起时横向滚动 -->
-            <view class="flex-row" style="width: {{windowWidth - 140}}rpx;">
+            <view class="flex-row" style="width: {{windowWidth - 160}}rpx; ">
               <scroll-view class="subcat-bar-scroll" scroll-x="true" scroll-into-view="{{subcatScrollIntoView}}" scroll-with-animation show-scrollbar="false" style="width:{{windowWidth - 240}}rpx; margin-right: 20rpx; ">
                 <block wx:for="{{fatherArrDis}}" wx:key="nxDistributerFatherGoodsId">
                   <view class="subcat-tag {{activeSubCatId == item.nxDistributerFatherGoodsId ? 'active' : ''}}" id="subcat-{{item.nxDistributerFatherGoodsId}}" bindtap="onSubCatTapDis" data-id="{{item.nxDistributerFatherGoodsId}}">
@@ -237,7 +237,7 @@
             <!-- 商品列表 scroll-view -->
 
 
-            <scroll-view class="goods-list" scroll-y="true" style="width: {{windowWidth - 180}}rpx; height: {{windowHeight - 200- statusBarHeight}}rpx; " bindscrolltolower="onScrollToLowerDis" scroll-top="{{disGoodsScrollTop}}" show-scrollbar="false">
+            <scroll-view class="goods-list" scroll-y="true" style="width: {{windowWidth - 200}}rpx; height: {{windowHeight - 200- statusBarHeight}}rpx; background-color: green; " bindscrolltolower="onScrollToLowerDis" scroll-top="{{disGoodsScrollTop}}" show-scrollbar="false">
               <block wx:for="{{goodsList}}" wx:for-item="sons" wx:key="nxDistributerGoodsId" wx:for-index="goodsIndex">
                 <view wx:if="{{sons.isFirstInCategory}}" id="cat-{{sons.nxDgDfgGoodsGrandId}}" class="goods-category-title">
                   <!-- {{item.categoryName}} -->

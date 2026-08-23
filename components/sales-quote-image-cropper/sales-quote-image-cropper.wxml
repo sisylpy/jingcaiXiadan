@@ -1,0 +1,161 @@
+<view class="upload-section" wx:if="{{!hideUpload}}">
+  <!-- 图片上传区域 -->
+  <view class="section-title">
+    <text>📷 选择图片</text>
+  </view>
+
+  <view class="image-grid">
+   
+
+    <view class="image-item add-image" wx:if="{{imageList.length === 0 && !excelFile}}" bindtap="chooseImages">
+      <view class="add-icon">+</view>
+      <text class="add-text">选择图片</text>
+    </view>
+  </view>
+
+  <view class="flex-row-between" wx:if="{{imageList.length > 0}}">
+    <button class="btn btn-primary btn-large" bindtap="startOCRRecognitionFast">
+      <text> 单列图片识别</text>
+    </button>
+    <button class="btn btn-primary btn-large" bindtap="startOCRRecognition">
+      <text> 复杂图片识别</text>
+    </button>
+  </view>
+
+  <!-- Excel 上传选项 -->
+  <view class="excel-section">
+    <view class="section-title">
+      <text>📊 上传 Excel</text>
+    </view>
+
+    <view wx:if="{{excelFile}}" class="excel-file-info">
+      <text class="excel-icon">📄</text>
+      <view class="excel-info">
+        <text class="excel-name">{{excelFile.name}}</text>
+        <text class="excel-size">{{excelFile.size}} KB</text>
+      </view>
+      <view class="excel-delete" bindtap="deleteExcelFile">
+        <text class="excel-delete-icon">×</text>
+      </view>
+    </view>
+
+    <button 
+      class="btn btn-secondary btn-large {{imageList.length > 0 ? 'disabled' : ''}}" 
+      bindtap="chooseExcelFile"
+      disabled="{{imageList.length > 0}}">
+      <text>{{excelFile ? '🔄 更换 Excel' : '📊 选择 Excel 文件'}}</text>
+    </button>
+
+    <view wx:if="{{excelFile}}" class="excel-action-bar">
+      <button class="btn btn-primary btn-large" bindtap="startExcelRecognition">
+        <text>🚀 开始识别 Excel</text>
+      </button>
+    </view>
+  </view>
+</view>
+
+<!-- 图片裁剪弹窗：关闭时整块从 DOM 移除，避免返回页面时渲染层残留显示旧图 -->
+<view wx:if="{{showCropper}}" class="cropper-modal show" catchtouchmove="preventDefaultTouchMove">
+  <view class="cropper-page">
+    <view class="cropper-header">
+      <text class="cropper-title">图片转报价</text>
+      <text class="cropper-close" bindtap="cancelCrop">×</text>
+      
+    </view>
+    
+    <view class="image-wrap">
+      <!-- 可缩放、可拖动的图片（与 ocrImagePreview 一致：超大画布 300vw*300vh，避免放大后拖动晃动） -->
+      <movable-area
+        class="cropper-movable-area"
+        scale-area="{{true}}"
+      >
+        <movable-view
+          class="cropper-movable-view"
+          direction="all"
+          inertia="{{false}}"
+          out-of-bounds="{{false}}"
+          animation="{{false}}"
+          scale
+          scale-min="0.5"
+          scale-max="3"
+          scale-value="{{imageTransform.scale || 1}}"
+          x="{{imageTransform.x !== undefined ? imageTransform.x : imgX}}"
+          y="{{imageTransform.y !== undefined ? imageTransform.y : imgY}}"
+          bindchange="onCropperImageMove"
+          bindscale="onCropperImageScale"
+          bindscaleend="onCropperImageScaleEnd"
+          style="width: {{imageTransform.width || imgW}}px; height: {{imageTransform.height || imgH}}px; box-sizing: border-box;"
+        >
+          <image
+            wx:if="{{cropImageSrc}}"
+            class="cropper-base-image"
+            src="{{cropImageSrc}}"
+            mode="aspectFit"
+            style="width:100%; height:100%; display:block; transform: rotate({{rotation}}deg); transform-origin: center center;"
+          />
+        </movable-view>
+      </movable-area>
+
+      <!-- 裁剪框（可移动和调整大小） -->
+      <view
+        wx:if="{{showCropBox}}"
+        class="crop-box"
+        style="left: {{cropX}}px; top: {{cropY}}px; width: {{cropW}}px; height: {{cropH}}px;"
+        bindtouchstart="onMoveStart"
+        bindtouchmove="onMove"
+      >
+        <view class="border"></view>
+
+        <!-- 右下角拖拽调整大小 -->
+        <view class="handle corner" bindtouchstart="onResizeStart" bindtouchmove="onResizeMove" data-dir="rb"></view>
+      </view>
+    </view>
+
+    <view class="cropper-footer">
+      <view class="flex-row">
+        <button 
+          class="cropper-btn rotate-btn" 
+          bindtouchstart="onRotateLeftStart"
+          bindtouchend="onRotateEnd"
+          bindtouchcancel="onRotateEnd">
+          <text>↺</text>
+        </button>
+        <button 
+          class="cropper-btn rotate-btn" 
+          bindtouchstart="onRotateRightStart"
+          bindtouchend="onRotateEnd"
+          bindtouchcancel="onRotateEnd">
+          <text>↻</text>
+        </button>
+        <button class="cropper-btn {{showCropBox ? 'crop-box-btn' : 'confirm-btn'}}" bindtap="toggleCropBox">
+          <text>{{showCropBox ? '取消裁剪框' : '裁剪框'}}</text>
+        </button>
+      </view>
+      <!-- 识别模式选择 -->
+      <view class="ocr-mode-selector">
+        <view 
+          class="mode-item {{ocrMode === 'fast' ? 'active' : ''}}" 
+          bindtap="selectOCRMode" 
+          data-mode="fast">
+          <text>单列</text>
+        </view>
+        <view 
+          class="mode-item {{ocrMode === 'complex' ? 'active' : ''}}" 
+          bindtap="selectOCRMode" 
+          data-mode="complex">
+          <text>多列</text>
+        </view>
+      </view>
+      <button class="btn btn-primary btn-large cropper-recognize-btn" bindtap="startRecognizeByMode">
+        <text>开始识别</text>
+      </button>
+    </view>
+  </view>
+  
+  <!-- Canvas 用于裁剪 -->
+  <canvas 
+    type="2d" 
+    id="cropCanvas" 
+    style="position: fixed; left: -9999px; top: -9999px;"
+  ></canvas>
+</view>

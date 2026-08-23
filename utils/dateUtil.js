@@ -96,14 +96,51 @@ function getArriveWhatDay(which) {
 }
 
 
+function getFirstDateInMonth(){
+  var dateFull = new Date();
+  var a = dateFull.getFullYear();
+  var b = dateFull.getMonth() + 1;
+  if(b < 10){
+    b = "0" + b;
+  }
+  return a + "-" + b + "-" + "01";
+}
+
+function getDateRange(rangeType, customStartDate, customEndDate) {
+  if (!rangeType) { return { startDate: '', stopDate: '' }; }
+  var today = new Date();
+  var year = today.getFullYear();
+  var month = today.getMonth() + 1;
+  function fmt(d) {
+    var y = d.getFullYear();
+    var m = d.getMonth() + 1;
+    var day = d.getDate();
+    return y + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
+  }
+  var startDate = '', stopDate = '';
+  switch (rangeType) {
+    case 'today': startDate = stopDate = fmt(today); break;
+    case 'yesterday': var yest = new Date(today); yest.setDate(today.getDate() - 1); startDate = stopDate = fmt(yest); break;
+    case 'thisWeek': var dow = today.getDay(), mon = new Date(today); mon.setDate(today.getDate() + (dow === 0 ? -6 : 1 - dow)); startDate = fmt(mon); var sun = new Date(today); sun.setDate(today.getDate() + (dow === 0 ? 0 : 7 - dow)); stopDate = fmt(sun); break;
+    case 'lastWeek': var dow2 = today.getDay(), lm = new Date(today); lm.setDate(today.getDate() + (dow2 === 0 ? -13 : -6 - dow2)); startDate = fmt(lm); var ls = new Date(lm); ls.setDate(lm.getDate() + 6); stopDate = fmt(ls); break;
+    case 'lastSevenDays': var s = new Date(today); s.setDate(today.getDate() - 7); startDate = fmt(s); var e = new Date(today); e.setDate(today.getDate() - 1); stopDate = fmt(e); break;
+    case 'thisMonth': startDate = fmt(new Date(year, month - 1, 1)); stopDate = fmt(today); break;
+    case 'lastMonth': startDate = fmt(new Date(year, month - 2, 1)); stopDate = fmt(new Date(year, month - 1, 0)); break;
+    case 'lastThirtyDays': var lm2 = new Date(today); lm2.setMonth(lm2.getMonth() - 1); startDate = fmt(lm2); stopDate = fmt(today); break;
+    case 'custom': case 'customer': if (customStartDate && customEndDate) { startDate = customStartDate; stopDate = customEndDate; } break;
+    default: break;
+  }
+  var names = { today: '今天', yesterday: '昨天', thisWeek: '本周', lastWeek: '上周', lastSevenDays: '过去7天', thisMonth: '本月', lastMonth: '上月', lastThirtyDays: '过去30天', custom: '自定义', customer: '自定义' };
+  return { startDate: startDate, stopDate: stopDate, name: names[rangeType] || rangeType };
+}
+
 module.exports = {
   formatTime: formatTime,
   formatDate: formatDate,
   getArriveDate: getArriveDate,
   getArriveOnlyDate: getArriveOnlyDate,
   getArriveWeeksYear: getArriveWeeksYear,
-  getArriveWhatDay: getArriveWhatDay
-
-
-
+  getArriveWhatDay: getArriveWhatDay,
+  getFirstDateInMonth: getFirstDateInMonth,
+  getDateRange: getDateRange
 }

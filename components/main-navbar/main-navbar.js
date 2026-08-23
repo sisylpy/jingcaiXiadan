@@ -15,6 +15,10 @@ Component({
     searchValue: {
       type: String,
       value: ''
+    },
+    showBack: {
+      type: Boolean,
+      value: false
     }
   },
   data: {
@@ -61,6 +65,9 @@ Component({
   methods: {
     navbuttontap() {
       this.triggerEvent('navbuttontap');
+    },
+    backtap() {
+      this.triggerEvent('backtap');
     },
     onSwitchBtnTap() {
       console.log('[main-navbar] 点击了切换按钮');
@@ -131,4 +138,3 @@ Component({
     }
   },
 });
-

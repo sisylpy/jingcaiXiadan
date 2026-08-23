@@ -1,0 +1,187 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">{{navTitle}}</view>
+    <view class="nav-space"></view>
+  </view>
+
+  <view class="loading" wx:if="{{loading && !customer}}">正在加载…</view>
+
+  <view class="page-content" wx:if="{{customer}}">
+    <view class="customer-header-card" bindtap="openEdit">
+      <view class="header-main">
+        <image class="header-avatar" src="{{customerAvatar}}" mode="aspectFill" />
+        <view class="header-info">
+          <view class="header-name">{{customer.nxDepartmentName}}</view>
+          <view class="header-code">对外订货：{{customer.nxDepartmentOrderCode || customer.nxDepartmentName}}</view>
+          <view class="label-list-inline">
+            <text class="label-prefix">分组标签：</text>
+            <text class="label-pill" wx:for="{{selectedLabels}}" wx:key="nxDistributerLabelId">{{item.nxDlName}}</text>
+            <text class="muted" wx:if="{{selectedLabels.length === 0}}">暂无</text>
+          </view>
+        </view>
+      </view>
+      <image class="arrow" src="/images/arrow-right-3.png" mode="aspectFit" />
+    </view>
+
+    <view class="action-grid">
+      <view class="action primary" bindtap="openGoods">
+        <view class="action-title">订货商品与要求</view>
+        <view class="action-desc">维护每个商品的客户标准</view>
+      </view>
+      <view class="action" bindtap="startOrder">
+        <view class="action-title">代客户下单</view>
+        <view class="action-desc">进入客户原订货流程</view>
+      </view>
+      <view class="action visit" bindtap="recordCustomerVisit">
+        <view class="action-title">记录回访 / 拜访</view>
+        <view class="action-desc">复用销售拜访记录</view>
+      </view>
+      <view class="action quote" bindtap="openCustomerQuotation">
+        <view class="action-title">给客户报价</view>
+        <view class="action-desc">新建关联此客户的报价</view>
+      </view>
+    </view>
+
+    <view class="section-card photo-section">
+      <view class="section-header"><view class="section-icon icon-photo">照</view><text class="section-title">客户门店照片</text></view>
+      <view class="photo-content">
+        <image class="customer-photo" wx:if="{{pendingCustomerPhoto || customerPhoto}}"
+          src="{{pendingCustomerPhoto || customerPhoto}}" mode="aspectFill" bindtap="previewCustomerPhoto" />
+        <view class="photo-empty" wx:else bindtap="chooseCustomerPhoto"><text>＋</text><text>拍摄门店照片</text></view>
+        <view class="photo-actions">
+          <view class="photo-button" bindtap="chooseCustomerPhoto">{{customerPhoto || pendingCustomerPhoto ? '重新拍照' : '拍照或选择图片'}}</view>
+          <view class="photo-remove" wx:if="{{pendingCustomerPhoto}}" bindtap="discardPendingCustomerPhoto">取消本次照片</view>
+        </view>
+        <view class="photo-pending" wx:if="{{pendingCustomerPhoto}}">当前照片仅为本地预览；客户照片上传接口完成后才能保存到 nxDepartmentFilePath。</view>
+        <view class="photo-hint" wx:elif="{{customerPhoto}}">当前展示的是客户主档 nxDepartmentFilePath 照片。</view>
+        <view class="photo-hint" wx:else>客户主档照片与拜访现场照片分开保存，不会互相覆盖。</view>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-basic">基</view><text class="section-title">打印信息</text></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">客户名称（配送单打印）</text><view class="row-value"><text>{{customer.nxDepartmentName}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">简称名称（标签打印）</text><view class="row-value"><text>{{customer.nxDepartmentAttrName || '-'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">对外订货代号</text><view class="row-value"><text>{{customer.nxDepartmentOrderCode || '-'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">送货单尺寸格式</text><view class="row-value"><text>{{printDisplayName}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-trade">交</view><text class="section-title">交易信息</text></view>
+      <view class="section-row" bindtap="openBusinessType"><text class="row-label">经营业态</text><view class="row-value"><text>{{customerBusinessTypeName || '未设置'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">是否送货</text><view class="row-value"><text>{{customer.nxDepartmentDeliveryMode === 'SELF_PICKUP' ? '自提' : '送货'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">支付方式</text><view class="row-value"><text>{{customer.nxDepartmentSettleType == 0 ? '现金' : '记账'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">定价类型</text><view class="row-value"><text>{{customer.nxDepartmentType === 'fixed' ? '固定' : '市场变动'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openEdit"><text class="row-label">每日录音时长</text><view class="row-value"><text>{{customer.nxDepartmentRecordMinutes || 0}}分钟</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-owner">责</view><text class="section-title">负责人员</text></view>
+      <view class="section-row"><text class="row-label">业务员</text><text class="row-value">{{salesName}}</text></view>
+      <view class="section-row"><text class="row-label">录单员</text><text class="row-value">{{clerkName}}</text></view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-label">标</view><text class="section-title">标签与分组</text></view>
+      <view class="section-row" bindtap="openLabels">
+        <text class="row-label">客户标签</text>
+        <view class="row-value label-value">
+          <text class="label-pill" wx:for="{{selectedLabels}}" wx:key="nxDistributerLabelId">{{item.nxDlName}}</text>
+          <text class="muted" wx:if="{{selectedLabels.length === 0}}">暂无标签</text>
+          <image class="arrow" src="/images/arrow-right-3.png" />
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-delivery">配</view><text class="section-title">配送设置</text></view>
+      <view class="section-row" bindtap="openDelivery"><text class="row-label">配送位置</text><view class="row-value"><text class="{{customer.nxDepartmentLat ? 'success' : 'danger'}}">{{customer.nxDepartmentLat ? '已设置位置' : '未设置位置'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openCustomerLocation"><text class="row-label">详细地址</text><view class="row-value"><text class="value-wrap">{{customer.nxDepartmentAddress || '未设置，点击定位'}}</text><text class="map-link">地图</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openDelivery"><text class="row-label">配送时间</text><view class="row-value"><text>{{formattedEarliestTime && formattedLatestTime ? formattedEarliestTime + ' - ' + formattedLatestTime : '未设置'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openDelivery"><text class="row-label">卸货时间</text><view class="row-value"><text>{{customer.nxDepartmentUnloadDuration ? customer.nxDepartmentUnloadDuration + '分钟' : '未设置'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="openDelivery"><text class="row-label">配送备注</text><view class="row-value"><text class="value-wrap">{{customer.nxDepartmentDispatchRemark || '点击添加'}}</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-department">门</view><text class="section-title">门店部门</text><view class="section-add" bindtap="addDepartment">＋ 添加部门</view></view>
+      <view class="section-row"><view><view class="department-title">{{customer.nxDepartmentName}}</view><view class="department-tag">总部门</view></view></view>
+      <view class="section-row" wx:for="{{departments}}" wx:key="nxDepartmentId">
+        <view><view class="department-title">{{item.nxDepartmentName}}</view><view class="department-tag">下单部门</view></view>
+        <view class="section-add" data-id="{{item.nxDepartmentId}}" data-name="{{item.nxDepartmentName}}" bindtap="renameDepartment">修改</view>
+      </view>
+      <view class="section-empty" wx:if="{{departments.length === 0}}">当前没有下级部门，订单直接归到总部门。</view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-goods">订</view><text class="section-title">订货与商品</text></view>
+      <view class="section-row" bindtap="openGoods"><text class="row-label">订货商品</text><view class="row-value"><text>查看和维护</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+      <view class="section-row" bindtap="startOrder"><text class="row-label">客户订货页</text><view class="row-value"><text>代客户下单</text><image class="arrow" src="/images/arrow-right-3.png" /></view></view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-users">人</view><text class="section-title">小程序用户</text><text class="section-count">{{customerUsers.length}}人</text></view>
+      <view class="user-row" wx:for="{{customerUsers}}" wx:key="nxDepartmentUserId">
+        <image class="user-avatar" src="{{item.previewAvatar}}" mode="aspectFill" />
+        <view class="user-info"><view class="user-name">{{item.nxDuWxNickName || '未命名用户'}}</view><view class="user-phone">{{item.nxDuWxPhone || '未填写手机号'}}</view></view>
+      </view>
+      <view class="section-empty" wx:if="{{customerUsers.length === 0}}">暂时无注册成功的小程序用户。</view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-header"><view class="section-icon icon-other">其</view><text class="section-title">其他信息</text></view>
+      <view class="section-row"><text class="row-label">创建时间</text><text class="row-value">{{customer.nxDepartmentJoinDate || '-'}}</text></view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showEdit}}" bindtap="closeEdit"></view>
+  <view class="bottom-sheet" wx:if="{{showEdit}}">
+    <view class="sheet-title">编辑客户资料</view>
+    <scroll-view scroll-y class="sheet-scroll">
+      <view class="form-item"><text>客户名称</text><input value="{{editForm.nxDepartmentName}}" data-field="nxDepartmentName" bindinput="onEditInput" /></view>
+      <view class="form-item"><text>简称（标签打印）</text><input value="{{editForm.nxDepartmentAttrName}}" data-field="nxDepartmentAttrName" bindinput="onEditInput" /></view>
+      <view class="form-item"><text>对外订货代号</text><input value="{{editForm.nxDepartmentOrderCode}}" data-field="nxDepartmentOrderCode" bindinput="onEditInput" /></view>
+      <view class="form-item"><text>拣货名称</text><input value="{{editForm.nxDepartmentPickName}}" data-field="nxDepartmentPickName" bindinput="onEditInput" /></view>
+      <view class="form-item"><text>每日录音时长（分钟）</text><input type="number" value="{{editForm.nxDepartmentRecordMinutes}}" data-field="nxDepartmentRecordMinutes" bindinput="onEditInput" /></view>
+      <view class="form-item"><text>送货单格式</text><picker range="{{printOptions}}" range-key="name" value="{{printIndex}}" bindchange="onPrintChange"><view class="picker-value">{{printOptions[printIndex].name}} ›</view></picker></view>
+      <view class="form-group"><text class="form-label">支付方式</text><radio-group bindchange="onSettleChange"><label><radio value="0" checked="{{editForm.nxDepartmentSettleType == 0}}" />现金</label><label><radio value="1" checked="{{editForm.nxDepartmentSettleType == 1}}" />记账</label></radio-group></view>
+      <view class="form-group"><text class="form-label">定价方式</text><radio-group bindchange="onPricingChange"><label><radio value="unFixed" checked="{{editForm.nxDepartmentType === 'unFixed'}}" />市场变动</label><label><radio value="fixed" checked="{{editForm.nxDepartmentType === 'fixed'}}" />固定</label></radio-group></view>
+      <view class="form-group"><text class="form-label">交付方式</text><radio-group bindchange="onDeliveryModeChange"><label><radio value="DELIVERY" checked="{{editForm.nxDepartmentDeliveryMode !== 'SELF_PICKUP'}}" />送货</label><label><radio value="SELF_PICKUP" checked="{{editForm.nxDepartmentDeliveryMode === 'SELF_PICKUP'}}" />自提</label></radio-group></view>
+    </scroll-view>
+    <view class="sheet-actions"><view class="sheet-cancel" bindtap="closeEdit">取消</view><view class="sheet-save" bindtap="saveCustomer">{{saving ? '保存中…' : '保存'}}</view></view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showDelivery}}" bindtap="closeDelivery"></view>
+  <view class="bottom-sheet" wx:if="{{showDelivery}}">
+    <view class="sheet-title">配送设置</view>
+    <scroll-view scroll-y class="sheet-scroll">
+      <view class="location-summary"><text>纬度：{{selectedLatitude || '未设置'}}</text><text>经度：{{selectedLongitude || '未设置'}}</text></view>
+      <button class="location-button" bindtap="chooseLocation">选择配送位置</button>
+      <view class="form-item"><text>详细地址</text><textarea value="{{deliveryAddress}}" data-field="deliveryAddress" bindinput="onDeliveryInput" /></view>
+      <view class="form-item"><text>最早配送时间</text><picker mode="time" value="{{earliestDeliveryTime}}" bindchange="onEarliestTimeChange"><view class="picker-value">{{earliestDeliveryTime || '请选择'}} ›</view></picker></view>
+      <view class="form-item"><text>最晚配送时间</text><picker mode="time" value="{{latestDeliveryTime}}" bindchange="onLatestTimeChange"><view class="picker-value">{{latestDeliveryTime || '请选择'}} ›</view></picker></view>
+      <view class="form-item"><text>卸货时间（分钟）</text><input type="number" value="{{unloadDuration}}" data-field="unloadDuration" bindinput="onDeliveryInput" /></view>
+      <view class="form-item"><text>配送备注</text><textarea maxlength="256" value="{{deliveryNotes}}" data-field="deliveryNotes" bindinput="onDeliveryInput" /></view>
+      <view class="form-item"><text>配送优先级</text><picker range="{{priorityOptions}}" value="{{priorityIndex}}" bindchange="onPriorityChange"><view class="picker-value">{{priorityOptions[priorityIndex]}} ›</view></picker></view>
+      <view class="switch-row"><text>允许提前配送</text><switch checked="{{allowEarlyDelivery}}" bindchange="onEarlyDeliveryChange" color="#07c160" /></view>
+    </scroll-view>
+    <view class="sheet-actions"><view class="sheet-cancel" bindtap="closeDelivery">取消</view><view class="sheet-save" bindtap="saveDelivery">{{saving ? '保存中…' : '保存设置'}}</view></view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showLabels}}" bindtap="closeLabels"></view>
+  <view class="bottom-sheet label-sheet" wx:if="{{showLabels}}">
+    <view class="sheet-title">客户标签管理</view>
+    <view class="new-label-row"><input placeholder="新标签名称" value="{{newLabelName}}" bindinput="onNewLabelInput" /><view bindtap="addLabel">＋ 添加</view></view>
+    <scroll-view scroll-y class="label-scroll">
+      <view class="label-row" wx:for="{{labelList}}" wx:key="nxDistributerLabelId">
+        <view class="label-select" data-id="{{item.nxDistributerLabelId}}" bindtap="toggleLabel"><view class="checkbox {{item.selected ? 'checked' : ''}}">{{item.selected ? '✓' : ''}}</view><text>{{item.nxDlName}}</text></view>
+        <view class="label-delete" data-id="{{item.nxDistributerLabelId}}" data-name="{{item.nxDlName}}" bindtap="deleteLabel">删除</view>
+      </view>
+      <view class="section-empty" wx:if="{{labelList.length === 0}}">暂无标签，请先添加。</view>
+    </scroll-view>
+    <view class="sheet-actions"><view class="sheet-cancel" bindtap="closeLabels">取消</view><view class="sheet-save" bindtap="saveLabels">{{saving ? '保存中…' : '保存标签'}}</view></view>
+  </view>
+
+  <sales-visit-sheet visible="{{showVisitSheet}}" business-types="{{businessTypes}}"
+    target="{{visitTarget}}" bind:close="closeVisitSheet" bind:saved="onVisitSaved" />
+</view>
