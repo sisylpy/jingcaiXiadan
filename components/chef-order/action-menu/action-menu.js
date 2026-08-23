@@ -8,14 +8,6 @@ Component({
       type: Boolean,
       value: false
     },
-    popupWidth: {
-      type: Number,
-      value: 0
-    },
-    popupHeight: {
-      type: Number,
-      value: 0
-    },
     animation: {
       type: null,
       value: null

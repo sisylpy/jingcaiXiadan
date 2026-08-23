@@ -133,4 +133,11 @@ const pageJs = read(pageJsPath)
 assert(pageJs.indexOf('isSalesAgent') >= 0, '业务员代下单模式入口丢失')
 assert(pageJs.indexOf('backFromSalesAgent') >= 0, '业务员代下单返回逻辑丢失')
 
+const actionMenuWxml = read(path.join(componentRoot, 'action-menu/action-menu.wxml'))
+;['open-type="share"', 'data-type="paste"', 'data-type="ai"', 'data-type="books"'].forEach(marker => {
+  assert(actionMenuWxml.indexOf(marker) >= 0, '加号菜单缺少入口 ' + marker)
+})
+assert(actionMenuWxml.indexOf('popupWidth') < 0 && actionMenuWxml.indexOf('popupHeight') < 0,
+  '加号菜单不能使用未初始化的宽高，否则内容会被裁成 0x0')
+
 console.log('Chef order component checks passed')

@@ -71,8 +71,6 @@
 
   <chef-order-action-menu
     visible="{{showPopup}}"
-    popup-width="{{popupWidth}}"
-    popup-height="{{popupHeight}}"
     animation="{{popupAnim}}"
     dep-record="{{depRecord}}"
     search-arr="{{searchArr}}"

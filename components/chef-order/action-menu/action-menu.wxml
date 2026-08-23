@@ -1,7 +1,7 @@
 <view class="fab-mask" wx:if="{{visible}}" bindtap="maskTap"></view>
 
 <view wx:if="{{visible}}" class="popup-mask" catchtap="maskTap">
-  <view class="popup-box" style="width: {{popupWidth}}rpx; height: {{popupHeight}}rpx;" animation="{{animation}}" catchtap="popupTap">
+  <view class="popup-box" animation="{{animation}}" catchtap="popupTap">
     <view class="popup-content">
       <view class="item p-10">
         <button open-type="share" class="flex-row">
