@@ -890,17 +890,6 @@ Page({
   toAddOrder(e) {
     var type = (e.detail && e.detail.type) || e.currentTarget.dataset.type;
     console.log(type)
-    if (!this.data.userInfo && type !== 'books') {
-      this.setData({
-        showPopup: false,
-        showPage: true,
-      });
-      wx.showToast({
-        title: '注册后可以下单',
-        icon: 'none'
-      });
-      return;
-    }
     if (this.data.depInfo.nxDepartmentEntities.length > 0) {
       this.setData({
         showChoice: true,
@@ -937,19 +926,13 @@ Page({
     // 游客同样使用公开接口已经查到的当前部门资料，不能固定进入某一种结算页面。
     const currentDepartment = wx.getStorageSync('orderDepInfo') || this.data.depInfo || {};
     const settleType = Number(currentDepartment.nxDepartmentSettleType);
-    const guestQuery = !this.data.userInfo
-      ? '?guest=1&disId=' + this.data.disId
-        + '&depId=' + this.data.depId
-        + '&depFatherId=' + this.data.depFatherId
-        + '&depSettleType=' + settleType
-      : '';
     if (settleType === 0) {
       wx.navigateTo({
-        url: '../../../resGoodsLessCash/resGoodsLessCash' + guestQuery,
+        url: '../../../resGoodsLessCash/resGoodsLessCash',
       });
     } else if (settleType === 1) {
       wx.navigateTo({
-        url: '../../../resGoodsLess/resGoodsLess' + guestQuery,
+        url: '../../../resGoodsLess/resGoodsLess',
       });
     } else {
       wx.showToast({

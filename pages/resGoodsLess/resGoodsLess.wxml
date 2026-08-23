@@ -12,24 +12,17 @@
   <view class="flex-column">
    
     <view class='navbar ' style="margin-top:{{navBarHeight}}rpx;">
-      <block wx:if="{{guestMode}}">
-        <view class="navbar-item bar-item-on">
-          <view class='navbar-title'>配送手册</view>
-        </view>
-      </block>
-      <block wx:else>
-        <block wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
-          <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click' hover-class="hover">
-            <view class='navbar-title'>{{tabs.words}}
-            </view>
+      <block wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
+        <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click' hover-class="hover">
+          <view class='navbar-title'>{{tabs.words}}
           </view>
-        </block>
+        </view>
       </block>
       <!-- <view class="navbar-slider" style="left: {{sliderLeft}}px; width:{{windowWidth / 4}}rpx; transform: translateX({{sliderOffset}}px); -webkit-transform: translateX({{sliderOffset}}px);">
       </view> -->
     </view>
 
-    <swiper style="height: {{windowHeight - 100 - navBarHeight}}rpx; " bindchange='swiperChange' current="{{itemIndex}}" data-index='{{itemIndex}}' disable-touch="{{guestMode}}">
+    <swiper style="height: {{windowHeight - 100 - navBarHeight}}rpx; " bindchange='swiperChange' current="{{itemIndex}}" data-index='{{itemIndex}}'>
 
       <!-- 常购配送 -->
       <swiper-item>
@@ -210,9 +203,6 @@
 
 
       <swiper-item>
-        <view wx:if="{{guestMode}}" class="flex-row-center gray" style="height: 56rpx; background: #f6fffb; font-size: 24rpx;">
-          游客可浏览配送商品，注册后可以下单
-        </view>
         <!-- 全部配送 -->
         <view class="flex-row-default ">
           <!-- 左侧菜单 -->
