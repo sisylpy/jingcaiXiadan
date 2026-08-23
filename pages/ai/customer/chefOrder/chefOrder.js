@@ -934,23 +934,27 @@ Page({
   },
 
   _openGoodsCatalog() {
-    if (!this.data.userInfo) {
-      const disInfo = this.data.disInfo || {};
-      const disName = encodeURIComponent(disInfo.nxDistributerName || '配送商品');
+    // 游客同样使用公开接口已经查到的当前部门资料，不能固定进入某一种结算页面。
+    const currentDepartment = wx.getStorageSync('orderDepInfo') || this.data.depInfo || {};
+    const settleType = Number(currentDepartment.nxDepartmentSettleType);
+    const guestQuery = !this.data.userInfo
+      ? '?guest=1&disId=' + this.data.disId
+        + '&depId=' + this.data.depId
+        + '&depFatherId=' + this.data.depFatherId
+        + '&depSettleType=' + settleType
+      : '';
+    if (settleType === 0) {
       wx.navigateTo({
-        url: '../../../resGoodsAll/resGoodsAll?guest=1&disId=' + this.data.disId
-          + '&depFatherId=' + this.data.depFatherId
-          + '&disName=' + disName,
+        url: '../../../resGoodsLessCash/resGoodsLessCash' + guestQuery,
       });
-      return;
-    }
-    if (this.data.depInfo.nxDepartmentSettleType == 0) {
+    } else if (settleType === 1) {
       wx.navigateTo({
-        url: '../../../resGoodsLessCash/resGoodsLessCash',
+        url: '../../../resGoodsLess/resGoodsLess' + guestQuery,
       });
-    } else if (this.data.depInfo.nxDepartmentSettleType == 1) {
-      wx.navigateTo({
-        url: '../../../resGoodsLess/resGoodsLess',
+    } else {
+      wx.showToast({
+        title: '未获取到部门结算方式',
+        icon: 'none'
       });
     }
   },

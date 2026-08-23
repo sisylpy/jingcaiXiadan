@@ -1,10 +1,6 @@
 <view class="flex-column">
  
-  <main-navbar style="height: {{navBarHeight}}rpx;" title="{{disName}}" avatar="/images/logo.png" button-text="设置" bindnavbuttontap="onNavButtonTap"></main-navbar>
-
-  <view wx:if="{{guestMode}}" class="flex-row-center" style="padding: 16rpx; color: #666; background: #f6fffb;">
-    可浏览商品和价格，注册后即可下单
-  </view>
+  <main-navbar style="height: {{navBarHeight}}rpx;" title="老杜南方菜" avatar="/images/logo.png" button-text="设置" bindnavbuttontap="onNavButtonTap"></main-navbar>
 
 
      <!-- 全部配送 -->
@@ -87,15 +83,6 @@
                           </view>
                         </view>
 
-                        <view class="flex-row small" wx:if="{{sons.nxDgWillPriceOne !== null && sons.nxDgWillPriceOne !== ''}}">
-                          <text style="color: #e64340; font-weight: 600;">¥{{sons.nxDgWillPriceOne}}</text>
-                          <text class="gray">/{{sons.nxDgGoodsStandardname}}</text>
-                        </view>
-                        <view class="flex-row small" wx:if="{{sons.nxDgWillPriceTwo !== null && sons.nxDgWillPriceTwo !== '' && sons.nxDgWillPriceTwo !== '0.1'}}">
-                          <text style="color: #e64340; font-weight: 600;">¥{{sons.nxDgWillPriceTwo}}</text>
-                          <text class="gray">/{{sons.nxDgCartonUnit || sons.nxDgWillPriceTwoStandard}}</text>
-                        </view>
-
                       </view>
 
                       <view class="flex-row">
@@ -110,7 +97,7 @@
 
                           <view class="" wx:else="">
                             <view class="save_btn">
-                              <text>{{guestMode ? '注册后订货' : '订货'}}</text>
+                              <text>订货</text>
                             </view>
                           </view>
                         </block>

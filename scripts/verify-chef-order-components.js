@@ -143,21 +143,26 @@ assert(pageJs.indexOf("'&disId=' + this.data.disId") >= 0, '客户分享链接�
 assert(pageJs.indexOf("'customerInvite'") >= 0, '客户邀请链接未强制进入客户注册流程')
 assert(pageJs.indexOf('_getDepInfo({ loadOrders: false })') >= 0,
   '未注册客户读取门店资料时不能提前请求受保护的订单数据')
-assert(pageJs.indexOf("resGoodsAll/resGoodsAll?guest=1&disId=") >= 0,
-  '未注册客户的商品目录必须进入公开浏览页面')
+assert(pageJs.indexOf("resGoodsLessCash/resGoodsLessCash' + guestQuery") >= 0,
+  '现金客户商品目录入口丢失')
+assert(pageJs.indexOf("resGoodsLess/resGoodsLess' + guestQuery") >= 0,
+  '记账客户商品目录入口丢失')
+assert(pageJs.indexOf('Number(currentDepartment.nxDepartmentSettleType)') >= 0,
+  '游客商品目录必须按照当前部门结算类型分流')
 
-const guestCatalogSource = read(path.join(projectRoot, 'pages/resGoodsAll/resGoodsAll.js'))
-const guestCatalogWxmlPath = path.join(projectRoot, 'pages/resGoodsAll/resGoodsAll.wxml')
-const guestCatalogWxml = read(guestCatalogWxmlPath)
-verifyTagBalance(guestCatalogWxmlPath)
-assert(guestCatalogSource.indexOf('if (guestMode)') >= 0
-  && guestCatalogSource.indexOf('this.initDisData()') >= 0,
-  '公开商品目录不能先执行登录或受保护的订单请求')
-assert(guestCatalogSource.indexOf("depId: guestMode ? '-1'") >= 0,
-  '游客商品目录不能携带部门订单数据')
-assert(guestCatalogWxml.indexOf('sons.nxDgWillPriceOne') >= 0
-  && guestCatalogWxml.indexOf('注册后订货') >= 0,
-  '游客商品目录必须展示价格，并将下单动作引导到注册')
+;['resGoodsLessCash', 'resGoodsLess'].forEach(pageName => {
+  const guestPageDir = path.join(projectRoot, 'pages', pageName)
+  const guestPageJs = read(path.join(guestPageDir, pageName + '.js'))
+  const guestPageWxml = path.join(guestPageDir, pageName + '.wxml')
+  verifyTagBalance(guestPageWxml)
+  assert(guestPageJs.indexOf("String(options.guest || '') === '1'") >= 0,
+    pageName + ' 缺少游客模式入口')
+  assert(guestPageJs.indexOf("depId: '-1'") >= 0
+    && guestPageJs.indexOf('this.initDisData()') >= 0,
+    pageName + ' 游客模式不能读取部门订单数据')
+  assert(read(guestPageWxml).indexOf('disable-touch="{{guestMode}}"') >= 0,
+    pageName + ' 游客模式不能滑入受保护的部门订单页')
+})
 
 const onLoadSource = pageJs.slice(pageJs.indexOf('onLoad(options)'), pageJs.indexOf('_getDisInfo()'))
 assert(onLoadSource.indexOf('showPage: true') < 0,

@@ -231,6 +231,7 @@ Page({
 
 
   data: {
+    guestMode: false,
     priceLevel: "",
     item: "",
     url: "",
@@ -324,6 +325,8 @@ Page({
 
   onLoad: function (options) {
 
+    const guestMode = String(options.guest || '') === '1';
+
     var value = wx.getStorageSync('userInfo');
     if (value) {
       this.setData({
@@ -364,6 +367,28 @@ Page({
         })
       }
 
+    }
+
+    if (guestMode) {
+      const guestDepartment = depValue || {
+        nxDepartmentId: Number(options.depId || options.depFatherId),
+        nxDepartmentFatherId: Number(options.depFatherId || 0),
+        nxDepartmentDisId: Number(options.disId),
+        nxDepartmentSettleType: Number(options.depSettleType),
+        nxDepartmentWorkingStatus: 0
+      };
+      this.setData({
+        guestMode: true,
+        userInfo: null,
+        depInfo: guestDepartment,
+        // 游客读取配送手册时不携带部门 id，避免带出部门订单数据。
+        depId: '-1',
+        disId: options.disId || guestDepartment.nxDepartmentDisId,
+        depFatherId: options.depFatherId || guestDepartment.nxDepartmentId,
+        tab1Index: 1,
+        itemIndex: 1,
+      }, () => this.initDisData());
+      return;
     }
 
     this._getInitDataDep();
@@ -874,6 +899,7 @@ Page({
    */
 
   onTab1Click(event) {
+    if (this.data.guestMode) return;
     let index = event.currentTarget.dataset.index;
     this.setData({
       sliderOffset: this.data.sliderOffsets[index],
@@ -883,6 +909,12 @@ Page({
   },
 
   swiperChange(event) {
+    if (this.data.guestMode) {
+      if (event.detail.current !== 1) {
+        this.setData({ tab1Index: 1, itemIndex: 1 });
+      }
+      return;
+    }
     this.setData({
       sliderOffset: this.data.sliderOffsets[event.detail.current],
       tab1Index: event.detail.current,
@@ -944,6 +976,7 @@ Page({
 
   // 
   applyGoodsDep(e) {
+    if (this._promptGuestRegistration()) return;
     this._cancelOrderModalCloseTimer();
     var depGoods = e.currentTarget.dataset.depgoods;
     var standard = depGoods.nxDdgDepGoodsStandardname;
@@ -968,6 +1001,7 @@ Page({
 
   // 
   applyGoods(e) {
+    if (this._promptGuestRegistration()) return;
     this._cancelOrderModalCloseTimer();
     var item = e.currentTarget.dataset.item;
     this.setData({
@@ -2128,9 +2162,33 @@ Page({
 
 
   toSearch() {
+    if (this.data.guestMode) {
+      wx.showToast({
+        title: '游客可按分类浏览，注册后可搜索下单',
+        icon: 'none'
+      });
+      return;
+    }
     wx.navigateTo({
       url: '../resGoodsCashSearch/resGoodsCashSearch',
     })
+  },
+
+  _promptGuestRegistration() {
+    if (!this.data.guestMode) return false;
+    const pages = getCurrentPages();
+    const previousPage = pages.length > 1 ? pages[pages.length - 2] : null;
+    if (previousPage && previousPage.route === 'pages/ai/customer/chefOrder/chefOrder') {
+      previousPage.setData({ showPopup: false, showPage: true });
+      wx.navigateBack({ delta: 1 });
+    } else {
+      wx.reLaunch({
+        url: '/pages/ai/customer/chefOrder/chefOrder?depFatherId=' + this.data.depFatherId
+          + '&disId=' + this.data.disId
+          + '&entry=customerInvite'
+      });
+    }
+    return true;
   },
 
 

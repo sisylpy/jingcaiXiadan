@@ -13,14 +13,19 @@
 
   <view class="flex-column whiteBack">
     <view class='navbar whiteBack' style="margin-top: {{navBarHeight}}rpx;">
-      <block wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
+      <block wx:if="{{guestMode}}">
+        <view class="navbar-item bar-item-on">
+          <view class='navbar-title'>配送手册</view>
+        </view>
+      </block>
+      <block wx:else wx:for="{{tabs}}" wx:for-item="tabs" wx:key="id">
         <view id="{{index}}" class="navbar-item {{tab1Index==index ? 'bar-item-on':''}}" data-index='{{index}}' bindtap='onTab1Click'>
           <view class='navbar-title'>{{tabs.words}}</view>
         </view>
       </block>
     </view>
 
-    <swiper style="height: {{windowHeight - 100 - navBarHeight}}rpx;" bindchange='swiperChange' current="{{itemIndex}}" data-index='{{itemIndex}}'>
+    <swiper style="height: {{windowHeight - 100 - navBarHeight}}rpx;" bindchange='swiperChange' current="{{itemIndex}}" data-index='{{itemIndex}}' disable-touch="{{guestMode}}">
 
       <!-- 常购商品 -->
       <swiper-item>
@@ -131,6 +136,9 @@
 
       <!-- 全部商品 -->
       <swiper-item>
+        <view wx:if="{{guestMode}}" class="flex-row-center extremeSmall gray" style="height: 56rpx; background: #f6fffb;">
+          游客可浏览商品和价格，注册后可以下单
+        </view>
         <view class="flex-row-default">
           <view class="left" >
             <scroll-view id="leftScroll" scroll-y="true" style="height: {{windowHeight - 200 - statusBarHeight}}rpx;" scroll-top="{{leftScrollTopNx}}" scroll-with-animation show-scrollbar="false">

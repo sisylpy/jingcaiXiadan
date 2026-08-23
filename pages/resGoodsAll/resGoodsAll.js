@@ -98,27 +98,12 @@ Page({
     scrollIntoViewDep: '', // 商品列表滚动位置
     disId: '56',
     depId: '-1',
-    depFatherId: '-1',
-    guestMode: false,
-    disName: '配送商品'
+    depFatherId: '-1'
 
   },
 
 
   onLoad: function (options) {
-    const guestMode = String(options.guest || '') === '1';
-    this.setData({
-      guestMode,
-      disId: options.disId || this.data.disId,
-      depFatherId: options.depFatherId || this.data.depFatherId,
-      // 游客只读取配送商公开目录，不携带部门订单数据。
-      depId: guestMode ? '-1' : this.data.depId,
-      disName: options.disName || '配送商品'
-    });
-    if (guestMode) {
-      this.initDisData();
-      return;
-    }
     this._login();
 
   },
@@ -199,24 +184,6 @@ Page({
 
 
   applyGoodsToLogin(){
-    if (this.data.guestMode) {
-      const pages = getCurrentPages();
-      const previousPage = pages.length > 1 ? pages[pages.length - 2] : null;
-      if (previousPage && previousPage.route === 'pages/ai/customer/chefOrder/chefOrder') {
-        previousPage.setData({
-          showPopup: false,
-          showPage: true,
-        });
-        wx.navigateBack({ delta: 1 });
-      } else {
-        wx.reLaunch({
-          url: '/pages/ai/customer/chefOrder/chefOrder?depFatherId=' + this.data.depFatherId
-            + '&disId=' + this.data.disId
-            + '&entry=customerInvite'
-        });
-      }
-      return;
-    }
     wx.navigateTo({
       url: '../registerCusomer/registerCusomer',
     })
@@ -226,7 +193,6 @@ Page({
   _getFatherGoodsDis() {
     const data = {
       depId: this.data.depId,
-      disId: this.data.disId,
       fatherId: this.data.leftGreatId,
       limit: this.data.limit,
       page: this.data.currentPageDis,
@@ -350,7 +316,6 @@ Page({
         limit: limit,
         page: nextPage, // 使用下一页页码请求数据
         depId: depId,
-        disId: this.data.disId,
         fatherId: leftGreatId,
       };
       console.log('>>> onScrollToLowerDis - depId:', depId, 'data:', data);
@@ -518,7 +483,6 @@ Page({
       limit: limit,
       page: page,
       depId: depId,
-      disId: this.data.disId,
       fatherId: leftGreatId,
     };
     console.log('>>> loadGoodsBySubCatIdDis - depId:', depId, 'data:', data);
