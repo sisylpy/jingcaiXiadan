@@ -8,7 +8,6 @@
     "myDismodalCashSingleDep": "/components/myDismodalCashSingleDep/myDismodalCashSingleDep",
     "addOrder": "/components/addOrder/addOrder",
     "chef-order-benefit-card": "/components/chef-order/benefit-card/benefit-card",
-    "chef-order-action-menu": "/components/chef-order/action-menu/action-menu",
     "chef-order-registration-popup": "/components/chef-order/registration-popup/registration-popup",
     "chef-order-search-results": "/components/chef-order/search-results/search-results",
     "chef-order-category-list": "/components/chef-order/category-list/category-list",

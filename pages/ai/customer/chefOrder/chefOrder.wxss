@@ -79,3 +79,117 @@ page {
   z-index: 1001;
   padding: 0 0 40rpx 0;
 }
+
+/* 加号菜单保留在 Page 层，让微信分享回调可以拼入门店参数。 */
+.fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: 60rpx;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  background: #00c48c;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6rpx 24rpx 0 #59245744;
+  z-index: 99;
+  transition: all 0.25s;
+}
+
+.fab-plus {
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.action-menu-mask {
+  z-index: 100;
+  background: rgba(70, 60, 70, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.popup-box {
+  margin: 0 60rpx 110rpx 0;
+  border-radius: 40rpx;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: 0 8rpx 48rpx 0 #0002;
+  transform-origin: 90% 90%;
+}
+
+.action-menu-content {
+  background: #fff;
+  border-radius: 36rpx;
+  overflow: hidden;
+  padding: 36rpx 36rpx 28rpx;
+  min-width: 540rpx;
+}
+
+.action-menu-content .item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin-bottom: 24rpx;
+}
+
+.action-menu-content .icon_back {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 18rpx;
+  background: #f6f4fa;
+  margin-right: 24rpx;
+}
+
+.action-menu-content button {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  width: auto;
+  height: auto;
+  line-height: normal;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  min-width: 0 !important;
+}
+
+.action-menu-content button::after {
+  border: none !important;
+}
+
+.action-menu-content .title {
+  font-weight: bold;
+  font-size: 36rpx;
+  color: #222;
+  margin-bottom: 4rpx;
+}
+
+.action-menu-content .desc {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.action-menu-content .msg-btn-box {
+  margin-top: 16rpx;
+}
+
+.action-menu-content .msg-btn {
+  width: 100%;
+  height: 86rpx;
+  background: #00c48c;
+  border-radius: 28rpx;
+  color: #fff;
+  font-size: 38rpx;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20rpx 0;
+}
+
+.action-menu-content .msg-text {
+  font-size: 38rpx;
+}

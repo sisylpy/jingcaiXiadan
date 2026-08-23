@@ -118,7 +118,9 @@ Page({
     // 1. 优先用分享参数
     let depFatherId = options.depFatherId || null;
     let disId = options.disId || null;
-    const isSalesAgent = String(options.isAgent || '') === '1'
+    const isCustomerInvite = options.entry === 'customerInvite';
+    const isSalesAgent = !isCustomerInvite
+      && String(options.isAgent || '') === '1'
       && Number(wx.getStorageSync('salesActingCustomerId')) === Number(depFatherId);
 
     // 2. 没有参数则用缓存
@@ -138,6 +140,7 @@ Page({
       imgUrl: 'userImage/say.png',
       depFatherId,
       disId,
+      isCustomerInvite,
       isSalesAgent,
       url: apiUrl.server,
     });
@@ -523,6 +526,7 @@ Page({
       title: '"' + (disInfo.nxDistributerName || '') + '下单小程序',
       path: '/pages/ai/customer/chefOrder/chefOrder?depFatherId=' + this.data.depFatherId
         + '&disId=' + this.data.disId
+        + '&entry=customerInvite'
     };
     if (disInfo.nxDistributerImg) {
       share.imageUrl = this.data.url + disInfo.nxDistributerImg;

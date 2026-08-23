@@ -6,7 +6,6 @@ const pageDir = path.join(projectRoot, 'pages/ai/customer/chefOrder')
 const componentRoot = path.join(projectRoot, 'components/chef-order')
 
 const components = [
-  'action-menu',
   'benefit-card',
   'cart',
   'category-list',
@@ -127,17 +126,20 @@ eventHandlers(read(pageWxmlPath)).forEach(handler => {
 
 assert(read(pageJsPath).split('\n').length < 1600, 'chefOrder.js 再次膨胀到 1600 行以上')
 assert(read(pageWxmlPath).split('\n').length < 300, 'chefOrder.wxml 再次膨胀到 300 行以上')
-assert(read(pageWxssPath).split('\n').length < 200, 'chefOrder.wxss 再次膨胀到 200 行以上')
+assert(read(pageWxssPath).split('\n').length < 240, 'chefOrder.wxss 再次膨胀到 240 行以上')
 
 const pageJs = read(pageJsPath)
 assert(pageJs.indexOf('isSalesAgent') >= 0, '业务员代下单模式入口丢失')
 assert(pageJs.indexOf('backFromSalesAgent') >= 0, '业务员代下单返回逻辑丢失')
 
-const actionMenuWxml = read(path.join(componentRoot, 'action-menu/action-menu.wxml'))
+const actionMenuWxml = read(pageWxmlPath)
 ;['open-type="share"', 'data-type="paste"', 'data-type="ai"', 'data-type="books"'].forEach(marker => {
   assert(actionMenuWxml.indexOf(marker) >= 0, '加号菜单缺少入口 ' + marker)
 })
 assert(actionMenuWxml.indexOf('popupWidth') < 0 && actionMenuWxml.indexOf('popupHeight') < 0,
   '加号菜单不能使用未初始化的宽高，否则内容会被裁成 0x0')
+assert(pageJs.indexOf('&entry=customerInvite') >= 0, '客户分享链接缺少客户邀请标识')
+assert(pageJs.indexOf("'&disId=' + this.data.disId") >= 0, '客户分享链接缺少配送商参数')
+assert(pageJs.indexOf("'customerInvite'") >= 0, '客户邀请链接未强制进入客户注册流程')
 
 console.log('Chef order component checks passed')
