@@ -1,14 +1,19 @@
 {
   "pages": [
+    "pages/entry/entry",
     "pages/ai/customer/chefOrder/chefOrder",
     "pages/salesRegister/salesRegister",
     "pages/sales/home/home",
+    "pages/sales/newCustomerVisits/newCustomerVisits",
+    "pages/sales/newCustomerVisitAdd/newCustomerVisitAdd",
+    "pages/sales/prospectDetail/prospectDetail",
     "pages/sales/customers/customers",
+    "pages/sales/returnVisits/returnVisits",
     "pages/sales/quotationCenter/quotationCenter",
     "pages/sales/leads/leads",
+    "pages/sales/nextActionDetail/nextActionDetail",
     "pages/sales/profile/profile",
     "pages/sales/customerBusinessType/customerBusinessType",
-    "pages/sales/recommendations/recommendations",
     "pages/sales/quotation/quotation",
     "pages/sales/ocrQuotePreview/ocrQuotePreview",
     "pages/sales/quotationPreview/quotationPreview",
@@ -38,11 +43,29 @@
     "pages/mangement/purGoodsFenxi/purGoodsFenxi",
     "pages/sel/searchDate/searchDate"
   ],
+  "lazyCodeLoading": "requiredComponents",
   "subPackages": [
     {
       "root": "subPackage-charts",
       "pages": [
         "pages/mangement/goodsFenxiPurchase/goodsFenxiPurchase"
+      ]
+    },
+    {
+      "root": "subPackage",
+      "pages": [
+        "pages/customer/customerPage/customerPage",
+        "pages/customer/issuePage/issuePage",
+        "pages/customer/afterSalesCreate/afterSalesCreate"
+      ]
+    },
+    {
+      "root": "subPackage-sales",
+      "pages": [
+        "pages/quoteQuery/quoteQuery",
+        "pages/recommendations/recommendations",
+        "pages/quotationGoodsAdd/quotationGoodsAdd",
+        "pages/temporaryGoodsAdd/temporaryGoodsAdd"
       ]
     }
   ],

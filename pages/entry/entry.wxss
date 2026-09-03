@@ -1,0 +1,45 @@
+.entry-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: #f5f8f6;
+}
+
+.entry-content {
+  height: 78vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.entry-logo {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 24rpx;
+}
+
+.entry-name {
+  margin-top: 24rpx;
+  color: #173f31;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.entry-message {
+  margin-top: 18rpx;
+  color: #7b8983;
+  font-size: 26rpx;
+}
+
+.retry-button {
+  margin-top: 36rpx;
+  width: 240rpx;
+  color: #ffffff;
+  background: #187b57;
+  border-radius: 44rpx;
+  font-size: 28rpx;
+}
+
+.retry-button::after {
+  border: 0;
+}

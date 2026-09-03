@@ -1,0 +1,93 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="back" bindtap="goBack">‹</view>
+      <view>
+        <view class="title">记录售后问题</view>
+        <view class="subtitle">问题将关联原账单和客户</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="source-card" wx:if="{{draft}}">
+    <view class="source-customer">{{draft.customerName}}</view>
+    <view class="source-meta">{{draft.routeDate}}<text wx:if="{{draft.departmentName}}"> · {{draft.departmentName}}</text></view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">问题类型</view>
+    <view class="option-grid">
+      <view class="option {{issueType === item.code ? 'selected' : ''}}"
+        wx:for="{{issueTypeOptions}}" wx:key="code" data-code="{{item.code}}"
+        bindtap="selectIssueType">{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title-row">
+      <view class="form-title">影响范围</view>
+      <view class="scope-note" wx:if="{{issueScopeMode !== 'FLEXIBLE'}}">已按问题类型设置</view>
+    </view>
+    <view class="scope-options" wx:if="{{issueScopeMode === 'FLEXIBLE'}}">
+      <view class="scope-option {{issueScope === 'ORDER' ? 'selected' : ''}}"
+        data-scope="ORDER" bindtap="selectIssueScope">整张账单</view>
+      <view class="scope-option {{issueScope === 'ITEM' ? 'selected' : ''}}"
+        data-scope="ITEM" bindtap="selectIssueScope">指定商品</view>
+    </view>
+    <view class="order-scope" wx:if="{{issueScope === 'ORDER'}}">整张账单问题，不需要选择商品</view>
+    <view wx:if="{{issueScope === 'ITEM'}}">
+      <view class="item-hint">请选择实际有问题的商品</view>
+      <view class="order-option {{item.selected ? 'selected' : ''}}"
+        wx:for="{{orders}}" wx:key="historyOrderId" data-index="{{index}}"
+        bindtap="toggleOrder">
+        <view class="check">{{item.selected ? '✓' : ''}}</view>
+        <view class="order-copy">
+          <view class="order-name">{{item.goodsName}}</view>
+          <view class="order-quantity">{{item.quantity}}{{item.standard}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">问题程度</view>
+    <view class="severity-grid">
+      <view class="severity {{severity === item.code ? 'selected severity-' + item.code : ''}}"
+        wx:for="{{severityOptions}}" wx:key="code" data-code="{{item.code}}"
+        bindtap="selectSeverity">{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title">问题说明</view>
+    <textarea class="description" maxlength="500" value="{{description}}"
+      bindinput="onDescriptionInput"
+      placeholder="{{issueScope === 'ORDER' ? '请描述整单配送或服务问题' : '例如：上海青太大，客户不能用'}}"></textarea>
+  </view>
+
+  <view class="form-card">
+    <view class="form-title-row">
+      <view class="form-title">问题照片</view>
+      <view class="photo-count">{{photos.length}}/20</view>
+    </view>
+    <picker wx:if="{{issueScope === 'ITEM' && photoTargetOptions.length > 1}}"
+      range="{{photoTargetOptions}}" range-key="label" value="{{photoTargetIndex}}"
+      bindchange="onPhotoTargetChange">
+      <view class="photo-target">照片属于：{{photoTargetOptions[photoTargetIndex].label}} ›</view>
+    </picker>
+    <view class="photo-grid">
+      <view class="photo-item" wx:for="{{photos}}" wx:key="path">
+        <image src="{{item.path}}" mode="aspectFill" data-url="{{item.path}}" bindtap="previewPhoto"></image>
+        <view class="photo-label">{{item.targetLabel}}</view>
+        <view class="photo-remove" wx:if="{{item.status === 'waiting'}}" data-index="{{index}}" bindtap="removePhoto">×</view>
+        <view class="photo-status" wx:if="{{item.status !== 'waiting' && item.status !== 'success'}}">{{item.statusText}}</view>
+      </view>
+      <view class="photo-add" wx:if="{{photos.length < 20}}" bindtap="choosePhotos">
+        <view class="photo-plus">＋</view>
+        <view>添加照片</view>
+      </view>
+    </view>
+  </view>
+
+  <button class="save" loading="{{saving}}" disabled="{{saving || loading}}" bindtap="save">创建售后工单</button>
+</view>

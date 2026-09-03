@@ -3,7 +3,7 @@
     <view class="header-row">
       <view class="back" bindtap="goBack">‹</view>
       <view class="header-titles">
-        <view class="title">报价中心</view>
+        <view class="title">客户报价</view>
         <view class="subtitle">统一创建、管理和继续报价</view>
       </view>
     </view>

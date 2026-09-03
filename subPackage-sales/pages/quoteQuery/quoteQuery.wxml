@@ -1,0 +1,75 @@
+<view class="page">
+  <view class="hero" style="padding-top: {{statusBarHeight}}px">
+    <view class="hero-nav">
+      <view class="back" bindtap="back">‹</view>
+      <view class="hero-title">行业报价</view>
+      <view class="nav-space"></view>
+    </view>
+    <view class="hero-copy">
+      <view class="hero-slogan">新鲜食材 · 透明报价 · 优质服务</view>
+      <view class="hero-meta">
+        <view class="hero-location">⌖ {{(distributor && (distributor.address || distributor.name)) || '配送商报价目录'}}⌄</view>
+        <button class="share-top" open-type="share" disabled="{{!shareReady}}">⌯ 分享报价</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="industry-panel" wx:if="{{businessTypes.length}}">
+      <view class="section-title">选择客户业态</view>
+      <scroll-view class="industry-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
+        <view class="industry-row">
+          <view class="industry-item {{businessTypeId == item.businessTypeId ? 'active' : ''}}"
+            wx:for="{{businessTypes}}" wx:key="businessTypeId"
+            data-id="{{item.businessTypeId}}" bindtap="selectBusinessType">
+            <view class="industry-icon-box">
+              <image class="industry-icon" src="{{businessTypeId == item.businessTypeId ? item.activeIconUrl : item.iconUrl}}" mode="aspectFit" />
+            </view>
+            <view class="industry-name">{{item.typeName}}</view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="catalog-panel" wx:if="{{!loading && items.length}}">
+      <view class="catalog-head">
+        <view class="catalog-title">{{businessTypeName}}常购商品</view>
+        <view class="catalog-count">共{{items.length}}款</view>
+      </view>
+      <scroll-view class="category-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
+        <view class="category-row">
+          <view class="category-chip {{activeCategoryKey === item.key ? 'active' : ''}}"
+            wx:for="{{categories}}" wx:key="key" data-key="{{item.key}}" bindtap="selectCategory">
+            {{item.name}}({{item.count}})
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="goods-list">
+        <view class="goods-card" wx:for="{{visibleItems}}" wx:key="goodsId">
+          <image class="goods-image" src="{{item.imageUrl}}" mode="aspectFill" />
+          <view class="goods-copy">
+            <view class="rank-index {{item.rank <= 3 ? 'top' : ''}}" wx:if="{{item.rank}}">第{{item.rank}}名</view>
+            <view class="goods-name">{{item.goodsName}}</view>
+            <view class="goods-meta">规格：{{item.specification || item.unit || '待补充'}}</view>
+          </view>
+          <view class="goods-side">
+            <view class="goods-price {{item.priceStatus === 'PRICE_AVAILABLE' ? '' : 'pending'}}">
+              {{item.priceLabel}}<text wx:if="{{item.priceStatus === 'PRICE_AVAILABLE' && item.unit}}">/{{item.unit}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{!loading && !items.length && !errorMessage}}">
+      当前业态暂时没有可展示的报价商品
+    </view>
+    <view class="error" wx:if="{{errorMessage}}" bindtap="retry">
+      <view>{{errorMessage}}</view><view class="retry">点击重新加载</view>
+    </view>
+    <view class="loading" wx:if="{{loading}}">正在加载公开报价…</view>
+    <view class="price-note" wx:if="{{items.length}}">◷ 价格随市场波动，请以实际下单为准</view>
+  </view>
+
+</view>

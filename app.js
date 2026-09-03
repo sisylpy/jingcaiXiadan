@@ -5,6 +5,7 @@ import {
   shopDownloadFile,
   clearShopLoginState,
   hasUsableShopToken,
+  hasUsableCustomerToken,
   describeShopRequestError
 } from './lib/shopRequest.js'
 import {
@@ -22,6 +23,7 @@ App({
   shopDownloadFile: shopDownloadFile,
   clearShopLoginState: clearShopLoginState,
   hasUsableShopToken: hasUsableShopToken,
+  hasUsableCustomerToken: hasUsableCustomerToken,
   describeShopRequestError: describeShopRequestError,
   salesRequest: salesRequest,
   salesUploadFile: salesUploadFile,

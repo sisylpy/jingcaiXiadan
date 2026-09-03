@@ -1,0 +1,33 @@
+.page { min-height: 100vh; color: #17251f; background: #f3f6f4; }
+.header { min-height: 142rpx; padding-right: 28rpx; padding-bottom: 34rpx; padding-left: 24rpx; box-sizing: border-box; color: #fff; background: linear-gradient(145deg, #174c38, #247653); }
+.header-row { display: flex; align-items: flex-end; }
+.back { width: 58rpx; height: 58rpx; margin-right: 4rpx; font-size: 54rpx; font-weight: 300; line-height: 50rpx; text-align: center; }
+.title { font-size: 38rpx; font-weight: 720; }
+.subtitle { margin-top: 8rpx; font-size: 23rpx; opacity: .78; }
+.date-card { min-height: 112rpx; margin: -18rpx 24rpx 0; padding: 22rpx 24rpx; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; border-radius: 20rpx; background: #fff; box-shadow: 0 10rpx 28rpx rgba(24,79,58,.11); }
+.date-label { font-size: 27rpx; font-weight: 680; }
+.date-note { margin-top: 7rpx; color: #86938c; font-size: 21rpx; }
+.date-picker { padding: 14rpx 17rpx; border-radius: 14rpx; color: #176b49; background: #eaf5ef; font-size: 24rpx; font-weight: 620; }
+.summary { padding: 26rpx 28rpx 14rpx; color: #77857d; font-size: 23rpx; }
+.bill-list { padding: 0 24rpx 36rpx; }
+.bill-card { position: relative; min-height: 164rpx; margin-bottom: 16rpx; padding: 24rpx 52rpx 22rpx 24rpx; box-sizing: border-box; border: 1rpx solid #e1e9e4; border-radius: 20rpx; background: #fff; box-shadow: 0 4rpx 17rpx rgba(27,68,49,.04); }
+.bill-top, .bill-bottom { display: flex; align-items: center; justify-content: space-between; }
+.customer-copy { min-width: 0; flex: 1; }
+.customer-name { overflow: hidden; font-size: 30rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.department-name { margin-top: 7rpx; color: #76847c; font-size: 21rpx; }
+.amount { margin-left: 18rpx; color: #17251f; font-size: 36rpx; font-weight: 720; }
+.currency { margin-right: 2rpx; font-size: 22rpx; }
+.bill-bottom { margin-top: 20rpx; padding-top: 16rpx; border-top: 1rpx solid #edf1ef; }
+.bill-meta { min-width: 0; overflow: hidden; color: #77847d; font-size: 21rpx; text-overflow: ellipsis; white-space: nowrap; }
+.dot { padding: 0 8rpx; }
+.status { margin-left: 12rpx; font-size: 22rpx; }
+.status.unsettled { color: #e6593e; }
+.status.settled { color: #2c8160; }
+.settlement { position: absolute; top: 0; left: 0; padding: 6rpx 13rpx; transform: translateY(-1rpx); border-radius: 19rpx 0 14rpx 0; color: #34765c; background: #e6f3ec; font-size: 18rpx; }
+.bill-card .customer-name { padding-top: 7rpx; }
+.arrow { position: absolute; right: 20rpx; top: 61rpx; color: #8ba097; font-size: 42rpx; }
+.empty, .loading { padding: 100rpx 34rpx; color: #88948e; text-align: center; }
+.empty-icon { width: 82rpx; height: 82rpx; margin: 0 auto 20rpx; border-radius: 26rpx; color: #3a7d61; background: #e5f1eb; font-size: 30rpx; font-weight: 700; line-height: 82rpx; }
+.empty-title { color: #4b5c53; font-size: 27rpx; font-weight: 650; }
+.empty-note { margin-top: 10rpx; font-size: 22rpx; }
+.loading { font-size: 24rpx; }

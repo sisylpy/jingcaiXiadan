@@ -113,12 +113,7 @@
             </scroll-view>
           </view>
         </view>
-
-
-
 </view>
-
-
 
 
   <delWarnModal wx:if="{{showPopupWarn}}" type="{{popupType}}" warnContent="{{warnContent}}" bind:closeWarn="closeWarn" bind:confirmWarn="confirmWarn" />

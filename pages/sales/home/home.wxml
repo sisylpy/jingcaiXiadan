@@ -1,66 +1,149 @@
-<view class="page">
-  <view class="top" style="padding-top: {{statusBarHeight}}px">
-    <view class="top-row">
-      <view>
-        <view class="title">销售助手</view>
-        <view class="subtitle" wx:if="{{profile}}">{{profile.salesInfo.nxDiuWxNickName || '业务员'}} · {{profile.disInfo.nxDistributerShowName || profile.disInfo.nxDistributerName}}</view>
+<view class="page" data-layout-version="20260824-2">
+  <view class="hero" style="padding-top: {{statusBarHeight}}px">
+    <image class="hero-background" src="/images/sales-home-hero-v1.jpg" mode="aspectFill" />
+    <view class="hero-shade"></view>
+    <view class="hero-content">
+      <view class="hero-top">
+        <view class="hero-heading">
+          <view class="hero-title">销售助手</view>
+          <view class="hero-tagline">跑市场 · 找客户 · 促成交</view>
+          <view class="tagline-line"></view>
+        </view>
+        <view class="profile-entry" bindtap="openProfile">
+          <view class="profile-icon">我</view>
+          <view class="profile-label">我的</view>
+        </view>
       </view>
-      <view class="top-action" bindtap="openProfile">我的</view>
-    </view>
-  </view>
-
-  <view class="search-wrap">
-    <input class="search" placeholder="搜索客户、门店名称或地址" value="{{keyword}}" bindinput="onKeywordInput" />
-  </view>
-
-  <view class="search-results" wx:if="{{keyword}}">
-    <view class="search-empty" wx:if="{{!loading && customers.length === 0}}">没有找到已分配客户，可先记录一次陌生门店拜访</view>
-    <view class="customer-row" wx:for="{{customers}}" wx:key="nxDepartmentId" data-id="{{item.nxDepartmentId}}" bindtap="openCustomer">
-      <view class="customer-main">
-        <view class="customer-name">{{item.nxDepartmentName}}</view>
-        <view class="customer-address">{{item.nxDepartmentAddress || '未填写地址'}}</view>
+      <view class="hero-meta">
+        <view class="hero-meta-item">
+          <text class="pin">●</text>
+          <text>{{profile ? (profile.disInfo.nxDistributerShowName || profile.disInfo.nxDistributerName) : '销售工作区'}}</text>
+        </view>
+        <view class="hero-meta-divider"></view>
+        <view class="hero-meta-item">{{todayLabel}}</view>
       </view>
-      <view class="arrow">›</view>
     </view>
   </view>
 
   <view class="content">
-    <view class="today-card">
-      <view class="card-title">今日工作</view>
-      <view class="honest-empty">统一今日任务尚未接入，本页不展示推断数量。请从客户、报价或跟进进入当前工作。</view>
+    <view class="overview-card">
+      <view class="overview-head">
+        <view class="overview-title"><text class="overview-mark"></text>今日工作概览</view>
+      </view>
+      <view class="stat-grid">
+        <view class="stat-item">
+          <view class="stat-icon">访</view>
+          <view class="stat-value">{{overview.visitCustomerCount}}</view>
+          <view class="stat-label">拜访客户</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-icon">新</view>
+          <view class="stat-value">{{overview.newCustomerCount}}</view>
+          <view class="stat-label">新增客户</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-icon">报</view>
+          <view class="stat-value">{{overview.quotationCount}}</view>
+          <view class="stat-label">报价单</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-icon">回</view>
+          <view class="stat-value">{{overview.pendingReturnCount}}</view>
+          <view class="stat-label">待回访</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-icon">意</view>
+          <view class="stat-value">{{overview.intentionCustomerCount}}</view>
+          <view class="stat-label">意向客户</view>
+        </view>
+      </view>
     </view>
 
-    <view class="section-head"><view class="section-title">核心工作</view></view>
-    <view class="core-grid">
-      <view class="core-card customer" bindtap="openCustomers">
-        <view class="core-icon">客</view>
-        <view class="core-title">客户</view>
-        <view class="core-note">正式客户、商品标准、代客下单</view>
-        <view class="core-arrow">›</view>
+    <view class="shortcut-grid">
+      <view class="shortcut-card query-card" bindtap="openQuoteQuery">
+        <view class="shortcut-icon">价</view>
+        <view class="shortcut-main">
+          <view class="shortcut-title">商品报价</view>
+          <view class="shortcut-note">查看客户常用商品价格</view>
+        </view>
+        <view class="shortcut-arrow">›</view>
       </view>
-      <view class="core-card quotation" bindtap="openQuotationCenter">
-        <view class="core-icon">价</view>
-        <view class="core-title">报价</view>
-        <view class="core-note">OCR、业态推荐、手工报价</view>
-        <view class="core-arrow">›</view>
+      <view class="shortcut-card photo-card" bindtap="openFollowUp">
+        <view class="shortcut-icon">办</view>
+        <view class="shortcut-main">
+          <view class="shortcut-title">待办事项</view>
+          <view class="shortcut-note">处理客户跟进工作</view>
+        </view>
+        <view class="shortcut-arrow">›</view>
       </view>
-      <view class="core-card follow" bindtap="openFollowUp">
-        <view class="core-icon">跟</view>
-        <view class="core-title">跟进</view>
-        <view class="core-note">线索跟进与最近拜访</view>
-        <view class="core-arrow">›</view>
+      <view class="shortcut-card add-card" bindtap="addTemporaryCustomer">
+        <view class="shortcut-icon">＋</view>
+        <view class="shortcut-main">
+          <view class="shortcut-title">添加新客户</view>
+          <view class="shortcut-note">记录陌生拜访客户</view>
+        </view>
+        <view class="shortcut-arrow">›</view>
+      </view>
+      <view class="shortcut-card return-card" bindtap="openAfterSales">
+        <view class="shortcut-icon">售</view>
+        <view class="shortcut-main">
+          <view class="shortcut-title">售后问题</view>
+          <view class="shortcut-note">查看账单并提交问题</view>
+        </view>
+        <view class="shortcut-arrow">›</view>
       </view>
     </view>
 
-    <view class="section-head"><view class="section-title">快速操作</view></view>
-    <view class="quick-actions">
-      <view class="quick-action" bindtap="addCustomer"><text class="quick-icon">＋</text><text>新增客户</text></view>
-      <view class="quick-action" bindtap="startVisit"><text class="quick-icon">记</text><text>记录陌生门店 / 初次拜访</text></view>
+    <view class="small-action-grid">
+      <view class="small-action" bindtap="startVisit">
+        <view class="small-icon visit-small">新</view>
+        <view class="small-title">新客户</view>
+      </view>
+      <view class="small-action" bindtap="openQuotation">
+        <view class="small-icon quote-small">报</view>
+        <view class="small-title">客户报价</view>
+      </view>
+      <view class="small-action" bindtap="openCustomers">
+        <view class="small-icon customer-small">客</view>
+        <view class="small-title">客户</view>
+      </view>
+      <view class="small-action" bindtap="openDailyVisits">
+        <view class="small-icon follow-small">访</view>
+        <view class="small-title">拜访记录</view>
+      </view>
+    </view>
+
+    <view class="home-bottom">
+      <view class="dark-panel announcement-panel" wx:if="{{announcements.length}}">
+        <view class="panel-head">
+          <view class="panel-title">公司公告</view>
+        </view>
+        <view class="announcement-row" wx:for="{{announcements}}" wx:key="nxDaId">
+          <view class="announcement-mark">告</view>
+          <view class="announcement-main">
+            <view class="announcement-title">{{item.title}}</view>
+          </view>
+          <view class="announcement-time">{{item.timeLabel}}</view>
+        </view>
+      </view>
+
+      <view class="growth-card">
+        <view class="growth-head">
+          <view class="growth-heading">
+            <view class="growth-flag">⚑</view>
+            <view class="growth-title">客户成长路径</view>
+          </view>
+        </view>
+        <view class="growth-path">
+          <view class="growth-line"></view>
+          <view class="growth-step" wx:for="{{growthSteps}}" wx:key="name">
+            <image class="growth-node" src="{{item.icon}}" mode="aspectFit" />
+            <view class="growth-name">{{item.name}}</view>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 
   <view class="loading" wx:if="{{loading}}">正在加载…</view>
-
-  <sales-visit-sheet visible="{{showVisitSheet}}" business-types="{{businessTypes}}"
-    target="{{visitTarget}}" bind:close="closeVisitSheet" bind:saved="onVisitSaved" />
 </view>

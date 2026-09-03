@@ -14,7 +14,7 @@ function timeLabel(value) {
 }
 
 function targetTypeLabel(item) {
-  if (item.customerId) return '正式客户'
+  if (item.departmentId) return '正式客户'
   if (item.leadId) return '销售线索'
   if (item.visitId) return '拜访门店'
   return '匿名客户'
@@ -22,7 +22,7 @@ function targetTypeLabel(item) {
 
 function targetName(item) {
   if (item.shopNameSnapshot) return item.shopNameSnapshot
-  if (item.customerId) return '已关联正式客户'
+  if (item.departmentId) return '已关联正式客户'
   if (item.leadId || item.visitId) return '已关联门店'
   return '匿名报价'
 }

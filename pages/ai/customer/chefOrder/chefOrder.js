@@ -28,6 +28,8 @@ Page({
   data: {
     isSubDep: false,
     isSalesAgent: false,
+    isBossEntry: false,
+    isGuestAccess: false,
     bill: -1,
     showPage: false,
     popupAnimation: {},
@@ -73,6 +75,13 @@ Page({
     showCashSettle: false,
     homeBenefitSummary: null,
     forceRegistration: false,
+    applyArr: [],
+    depArr: [],
+    depHasSubs: 0,
+    windowWidth: 750,
+    windowHeight: 0,
+    navBarHeight: 0,
+    statusBarHeight: 0,
 
   },
 
@@ -127,12 +136,19 @@ Page({
    */
   onLoad(options) {
     // 1. 优先用分享参数
-    let depFatherId = options.depFatherId || null;
+    const requestedDepFatherId = options.depFatherId || null;
+    let depFatherId = requestedDepFatherId;
     let disId = options.disId || null;
     const isCustomerInvite = options.entry === 'customerInvite';
     const isSalesAgent = !isCustomerInvite
       && String(options.isAgent || '') === '1'
-      && Number(wx.getStorageSync('salesActingCustomerId')) === Number(depFatherId);
+      && Number(wx.getStorageSync('salesActingDepartmentId')) === Number(depFatherId);
+    // Boss 小程序会带客户和配送商参数直接打开本页：已注册用户正常登录，
+    // 未注册用户才降级为只读展示；同时兼容旧版未带 entry 的链接。
+    const hasDirectCustomerScope = !!requestedDepFatherId && !!options.disId;
+    const isBossEntry = !isCustomerInvite && !isSalesAgent
+      && hasDirectCustomerScope
+      && (options.entry === 'boss' || !options.entry);
 
     // 2. 没有参数则用缓存
     if (!depFatherId) depFatherId = wx.getStorageSync('depFatherId') || null;
@@ -153,10 +169,13 @@ Page({
       disId,
       isCustomerInvite,
       isSalesAgent,
+      isBossEntry,
+      isGuestAccess: false,
       url: apiUrl.server,
     });
 
     var cachedUserInfo = wx.getStorageSync('userInfo');
+    const cachedDepInfo = wx.getStorageSync('depInfo');
     if (isSalesAgent) {
       cachedUserInfo = {
         nxDepartmentUserId: -1,
@@ -164,12 +183,12 @@ Page({
         nxDuDepartmentFatherId: Number(depFatherId),
         nxDuDistributerId: Number(disId),
         nxDuAdmin: 0,
-        nxDuWxNickName: wx.getStorageSync('salesActingCustomerName') || '客户订货',
+        nxDuWxNickName: wx.getStorageSync('salesActingDepartmentName') || '客户订货',
         nxDuWxAvartraUrl: 'userImage/say.png'
       };
       wx.setStorageSync('userInfo', cachedUserInfo);
     }
-    if (!cachedUserInfo) {
+    if (isBossEntry || !cachedUserInfo) {
       this.setData({
         userInfo: null,
         // 等自动登录确认用户不存在、门店资料加载完成后再显示注册框，避免重复闪现。
@@ -193,11 +212,24 @@ Page({
         })
       }
     }
-    this._getDisInfo();
+    if (this.data.disId) this._getDisInfo();
     if (isSalesAgent) {
       this._getDepInfo();
+    } else if (this._canRestoreCustomerSession(
+      cachedUserInfo,
+      cachedDepInfo,
+      requestedDepFatherId,
+      options.entry === 'identityResolved'
+    )) {
+      this._applyCustomerSession({
+        userInfo: cachedUserInfo,
+        depInfo: cachedDepInfo
+      });
     } else {
-      this.attemptLogin();
+      this.attemptLogin({
+        allowGuestFallback: isBossEntry,
+        preferCustomer: isBossEntry
+      });
     }
 
   },
@@ -291,87 +323,142 @@ Page({
     }
   },
 
+  _canRestoreCustomerSession(userInfo, depInfo, requestedDepFatherId, identityResolved) {
+    if (!userInfo || !depInfo || !getApp().hasUsableCustomerToken()) return false;
+    if (identityResolved || !requestedDepFatherId) return true;
+    const cachedFatherId = Number(depInfo.nxDepartmentFatherId) === 0
+      ? depInfo.nxDepartmentId
+      : depInfo.nxDepartmentFatherId;
+    return Number(cachedFatherId) === Number(requestedDepFatherId);
+  },
+
+  _applyCustomerSession(loginData) {
+    const depInfo = loginData && loginData.depInfo;
+    const userInfo = loginData && loginData.userInfo;
+    if (!depInfo || !userInfo) return false;
+
+    const depFatherId = Number(depInfo.nxDepartmentFatherId) === 0
+      ? depInfo.nxDepartmentId
+      : depInfo.nxDepartmentFatherId;
+    wx.setStorageSync('depInfo', depInfo);
+    wx.setStorageSync('userInfo', userInfo);
+    wx.setStorageSync('depFatherId', depFatherId);
+    wx.setStorageSync('disId', depInfo.nxDepartmentDisId);
+
+    const isSubDep = Number(depInfo.nxDepartmentFatherId) !== 0;
+    this.setData({
+      depInfo,
+      disId: depInfo.nxDepartmentDisId,
+      userInfo,
+      showPage: false,
+      depSettleType: depInfo.nxDepartmentSettleType,
+      depFatherId,
+      depId: depInfo.nxDepartmentId,
+      depHasSubs: Number(depInfo.nxDepartmentSubAmount) || 0,
+      depRecord: Number(depInfo.nxDepartmentRecordMinutes) > 0,
+      isSubDep
+    }, () => {
+      if (isSubDep) {
+        if (this.data.showType === 'time') this._initDataSub();
+        else if (this.data.showType === 'category') this._initSubDepDataByFather();
+      } else if (this.data.showType === 'time') {
+        this._initData();
+      } else if (this.data.showType === 'category') {
+        this._initDataByFather();
+      }
+    });
+    return true;
+  },
+
+  _orderRequestOptions() {
+    return {
+      shopAuth: !this.data.isGuestAccess
+    };
+  },
+
+  _enterGuestAccess() {
+    const depFatherId = this.data.depFatherId;
+    const disId = this.data.disId;
+    getApp().clearShopLoginState();
+    wx.setStorageSync('depFatherId', depFatherId);
+    wx.setStorageSync('disId', disId);
+    return new Promise(resolve => {
+      this.setData({
+        isGuestAccess: true,
+        userInfo: null,
+        showPage: false,
+        bill: -1,
+        applyArr: [],
+        depArr: []
+      }, resolve);
+    }).then(() => this._getDepInfo());
+  },
 
 
-  attemptLogin() {
+
+  attemptLogin(options = {}) {
+
+    const allowGuestFallback = options.allowGuestFallback === true;
+    const preferCustomer = options.preferCustomer === true;
 
     wx.login({
       success: (res) => {
         console.log("loginloginlogin", res)
-        depUserLoginDaoDu(res.code)
+        return depUserLoginDaoDu(res.code)
           .then((response) => {
             const loginData = response.result && response.result.data;
             if (response.result.code === 0 && loginData
                 && loginData.loginMode === 'SALES') {
+              if (allowGuestFallback) {
+                return this._enterGuestAccess();
+              }
+              wx.setStorageSync('shopMiniLastRole', 'SALES');
               wx.reLaunch({ url: '/pages/sales/home/home' });
               return;
             }
             if (response.result.code === 0 && loginData
                 && loginData.loginMode === 'BOTH') {
-              const skipPrompt = wx.getStorageSync('skipIdentityPromptOnce');
-              if (skipPrompt) {
-                wx.removeStorageSync('skipIdentityPromptOnce');
+              if (preferCustomer) {
+                wx.setStorageSync('shopMiniLastRole', 'CUSTOMER');
               } else {
-                wx.showModal({
-                  title: '选择登录身份',
-                  content: '这个微信同时是客户订货账号和业务员账号。',
-                  confirmText: '业务员',
-                  cancelText: '客户订货',
-                  success: result => {
-                    if (result.confirm) {
-                      wx.reLaunch({ url: '/pages/sales/home/home' });
+                const skipPrompt = wx.getStorageSync('skipIdentityPromptOnce');
+                const lastRole = wx.getStorageSync('shopMiniLastRole');
+                if (skipPrompt) {
+                  wx.removeStorageSync('skipIdentityPromptOnce');
+                } else if (lastRole === 'SALES') {
+                  wx.reLaunch({ url: '/pages/sales/home/home' });
+                  return;
+                } else if (lastRole !== 'CUSTOMER') {
+                  wx.showModal({
+                    title: '选择登录身份',
+                    content: '这个微信同时是客户订货账号和业务员账号。',
+                    confirmText: '业务员',
+                    cancelText: '客户订货',
+                    success: result => {
+                      const role = result.confirm ? 'SALES' : 'CUSTOMER';
+                      wx.setStorageSync('shopMiniLastRole', role);
+                      if (role === 'SALES') {
+                        wx.reLaunch({ url: '/pages/sales/home/home' });
+                      } else {
+                        this._applyCustomerSession(loginData);
+                      }
                     }
-                  }
-                });
+                  });
+                  return;
+                } else {
+                  wx.setStorageSync('shopMiniLastRole', 'CUSTOMER');
+                }
               }
             }
             // 登录成功的判断：code===0 且 userInfo 存在
             if (response.result.code === 0 && response.result.data && response.result.data.userInfo) {
-              var depInfo = response.result.data.depInfo;
-              wx.setStorageSync('depInfo', depInfo);
-              wx.setStorageSync('userInfo', response.result.data.userInfo);
-              this.setData({
-                depInfo,
-                disId: depInfo.nxDepartmentDisId,
-                userInfo: response.result.data.userInfo,
-                showPage: false,
-                depSettleType: depInfo.nxDepartmentSettleType,
-                depFatherId: depInfo.nxDepartmentFatherId == 0 ? depInfo.nxDepartmentId : depInfo.nxDepartmentFatherId,
-                depId: depInfo.nxDepartmentId,
-                depHasSubs: depInfo.nxDepartmentSubAmount,
-              });
-
-              if (depInfo.nxDepartmentFatherId !== 0) {
-                this.setData({
-                  isSubDep: true,
-                })
-                if(this.data.showType == 'time'){
-                  this._initDataSub();
-                }else if(this.data.showType =='category'){
-                  this._initSubDepDataByFather();
-                }
-              } else {
-                this.setData({
-                  isSubDep: false,
-                })
-                if (this.data.showType === 'time') {
-                  this._initData();
-                } else if (this.data.showType === 'category') {
-                  this._initDataByFather();
-                }
-
-              }
-              if (depInfo.nxDepartmentRecordMinutes !== null && depInfo.nxDepartmentRecordMinutes > 0) {
-                this.setData({
-                  depRecord: true,
-                })
-              } else {
-                this.setData({
-                  depRecord: false,
-                })
-              }
+              wx.setStorageSync('shopMiniLastRole', 'CUSTOMER');
+              this._applyCustomerSession(response.result.data);
             } else {
               // 业务逻辑失败，用户不存在，执行_getDepInfo和_checkIfShowPage
+              if (allowGuestFallback && this.data.disId && this.data.depFatherId) {
+                return this._enterGuestAccess();
+              }
               getApp().clearShopLoginState();
               if (this.data.disId && this.data.depFatherId) {
                 console.log("用户不存在，执行_getDepInfo和_checkIfShowPage");
@@ -379,7 +466,7 @@ Page({
                 this.setData({ userInfo: null, showPage: false });
                 // 新用户没有订货端凭证，此时只能读取公开的门店资料。
                 // 订单数据要等注册成功并取得凭证后再加载。
-                this._getDepInfo({ loadOrders: false }).then(() => {
+                return this._getDepInfo({ loadOrders: false }).then(() => {
                   this._checkIfShowPage();
                 });
               } else {
@@ -393,6 +480,17 @@ Page({
           .catch((error) => {
             load.hideLoading();
             console.error('订货端自动登录失败:', error);
+            if (allowGuestFallback) {
+              if (!this.data.isGuestAccess) {
+                return this._enterGuestAccess().catch(guestError => {
+                  console.error('Boss 免登录读取客户订单失败:', guestError);
+                  wx.showToast({ title: '客户订单读取失败，请重试', icon: 'none' });
+                });
+              }
+              this.setData({ showPage: false });
+              wx.showToast({ title: '客户订单读取失败，请重试', icon: 'none' });
+              return;
+            }
             if (!getApp().hasUsableShopToken()) {
               this.setData({ userInfo: null, showPage: true });
             }
@@ -405,6 +503,18 @@ Page({
           })
 
       },
+      fail: (error) => {
+        console.error('微信登录失败:', error);
+        if (allowGuestFallback) {
+          this._enterGuestAccess().catch(guestError => {
+            console.error('Boss 免登录读取客户订单失败:', guestError);
+            wx.showToast({ title: '客户订单读取失败，请重试', icon: 'none' });
+          });
+          return;
+        }
+        this.setData({ userInfo: null, showPage: true });
+        this._aaa();
+      },
 
     });
   },
@@ -413,7 +523,7 @@ Page({
   _initData() {
 
     load.showLoading("获取数据中");
-    depGetApplyAiByTime(this.data.depFatherId)
+    return depGetApplyAiByTime(this.data.depFatherId, this._orderRequestOptions())
       .then(res => {
         load.hideLoading();
         console.log("_initData_initData", res.result.data);
@@ -439,7 +549,16 @@ Page({
             icon: "none"
           })
         }
+        return res;
       })
+      .catch((error) => {
+        load.hideLoading();
+        wx.showToast({
+          title: '网络异常，请重试',
+          icon: 'none'
+        });
+        throw error;
+      });
 
   },
 
@@ -550,54 +669,57 @@ Page({
 
   _getDepInfo(options = {}) {
     const loadOrders = options.loadOrders !== false;
-    return new Promise((resolve, reject) => {
-      getDepInfo(this.data.depFatherId).then(res => {
-        load.hideLoading();
-        if (res.result.code == 0) {
-          var depInfo = res.result.data;
-          console.log("getDepInfogetDepInfo", res.result.data);
-          console.log('[chefOrder][_getDepInfo] nxDepartmentSettleType =', depInfo.nxDepartmentSettleType);
-          wx.setStorageSync('depInfo', res.result.data)
-          this.setData({
-            depInfo: res.result.data,
-            depSettleType: depInfo.nxDepartmentSettleType,
-            depFatherId: depInfo.nxDepartmentId,
-            depId: depInfo.nxDepartmentId,
-            depHasSubs: depInfo.nxDepartmentSubAmount,
-            depName: depInfo.nxDepartmentName,
-          }, resolve); // setData 完成后 resolve
-          if (depInfo.nxDepartmentRecordMinutes !== null && depInfo.nxDepartmentRecordMinutes > 0) {
-            this.setData({
-              depRecord: true,
-            })
-          } else {
-            this.setData({
-              depRecord: false,
-            })
-          }
+    return getDepInfo(this.data.depFatherId).then(res => {
+      load.hideLoading();
+      if (res.result.code != 0) {
+        wx.showToast({
+          title: res.result.msg,
+          icon: 'none'
+        });
+        throw new Error(res.result.msg || '客户资料读取失败');
+      }
 
-          if (loadOrders) {
-            if (this.data.showType === 'time') {
-              this._initData();
-            } else if (this.data.showType === 'category') {
-              this._initDataByFather();
-            }
-          }
-        } else {
-          wx.showToast({
-            title: res.result.msg,
-            icon: 'none'
-          })
-          reject(res.result.msg);
-        }
-      })
+      const depInfo = res.result.data;
+      const expectedDisId = Number(this.data.disId);
+      const actualDisId = Number(depInfo.nxDepartmentDisId);
+      if (expectedDisId && actualDisId && expectedDisId !== actualDisId) {
+        wx.showToast({
+          title: '客户与配送商不匹配',
+          icon: 'none'
+        });
+        throw new Error('客户与配送商参数不匹配');
+      }
+
+      console.log("getDepInfogetDepInfo", depInfo);
+      console.log('[chefOrder][_getDepInfo] nxDepartmentSettleType =', depInfo.nxDepartmentSettleType);
+      wx.setStorageSync('depInfo', depInfo);
+      return new Promise(resolve => {
+        this.setData({
+          depInfo,
+          depSettleType: depInfo.nxDepartmentSettleType,
+          depFatherId: depInfo.nxDepartmentId,
+          depId: depInfo.nxDepartmentId,
+          depHasSubs: Number(depInfo.nxDepartmentSubAmount) || 0,
+          depName: depInfo.nxDepartmentName,
+          depRecord: Number(depInfo.nxDepartmentRecordMinutes) > 0,
+        }, () => resolve(depInfo));
+      });
+    }).then(depInfo => {
+      if (!loadOrders) return depInfo;
+      const orderRequest = this.data.showType === 'category'
+        ? this._initDataByFather()
+        : this._initData();
+      return Promise.resolve(orderRequest).then(() => depInfo);
+    }).catch(error => {
+      load.hideLoading();
+      throw error;
     });
   },
 
 
   _initDataSub() {
     load.showLoading("获取数据中");
-    return subDepGetApplyAiByTime(this.data.depId)
+    return subDepGetApplyAiByTime(this.data.depId, this._orderRequestOptions())
       .then(res => {
         load.hideLoading();
         console.log("_initData_initData", res.result.data);
@@ -631,7 +753,7 @@ Page({
   _initDataByFather() {
 
     load.showLoading("获取数据中");
-    return depGetApplyAiFather(this.data.depFatherId)
+    return depGetApplyAiFather(this.data.depFatherId, this._orderRequestOptions())
       .then(res => {
         load.hideLoading();
         console.log("_initData_initData", res.result.data);
@@ -678,7 +800,7 @@ Page({
   _initSubDepDataByFather() {
 
     load.showLoading("获取数据中");
-    return subDepGetApplyAiFather(this.data.depId)
+    return subDepGetApplyAiFather(this.data.depId, this._orderRequestOptions())
       .then(res => {
         load.hideLoading();
         console.log("_initData_initData_initSubDepDataByFather", res.result.data);
@@ -852,19 +974,31 @@ Page({
 
 
   selectDepartment(e) {
-    console.log(e.currentTarget.dataset.item);
-    wx.setStorageSync('orderDepInfo', e.currentTarget.dataset.item.depInfo);
-    var dep = e.currentTarget.dataset.item.depInfo;
+    var index = Number(e.currentTarget.dataset.index);
+    var selectedDepartment = this.data.depArr[index];
+    if (!selectedDepartment || !selectedDepartment.depInfo) {
+      wx.showToast({
+        title: '部门信息不完整',
+        icon: 'none'
+      });
+      return;
+    }
+    var dep = selectedDepartment.depInfo;
+    console.log('[chefOrder] 选择订货部门', {
+      depId: dep.nxDepartmentId,
+      depName: dep.nxDepartmentName,
+      orderCount: Array.isArray(selectedDepartment.depOrders)
+        ? selectedDepartment.depOrders.length : 0
+    });
+    wx.setStorageSync('orderDepInfo', dep);
     var depFatherId = dep.nxDepartmentId;
     if (dep.nxDepartmentFatherId > 0) {
       depFatherId = dep.nxDepartmentFatherId;
     }
     var depId = dep.nxDepartmentId;
     this.setData({
-      dep: dep,
       depFatherId: depFatherId,
       depId: depId,
-      e,
       showChoice: false,
     })
     if (this.data.openType == 'paste') {

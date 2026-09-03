@@ -129,7 +129,9 @@ assert(read(pageWxmlPath).split('\n').length < 300, 'chefOrder.wxml 再次膨胀
 assert(read(pageWxssPath).split('\n').length < 240, 'chefOrder.wxss 再次膨胀到 240 行以上')
 
 const pageJs = read(pageJsPath)
+const benefitJs = read(path.join(pageDir, 'chefOrderBenefit.js'))
 const registrationJs = read(path.join(pageDir, 'chefOrderRegistration.js'))
+const apiRestrauntJs = read(path.join(projectRoot, 'lib/apiRestraunt.js'))
 assert(pageJs.indexOf('isSalesAgent') >= 0, '业务员代下单模式入口丢失')
 assert(pageJs.indexOf('backFromSalesAgent') >= 0, '业务员代下单返回逻辑丢失')
 
@@ -139,11 +141,38 @@ const actionMenuWxml = read(pageWxmlPath)
 })
 assert(actionMenuWxml.indexOf('popupWidth') < 0 && actionMenuWxml.indexOf('popupHeight') < 0,
   '加号菜单不能使用未初始化的宽高，否则内容会被裁成 0x0')
+assert(actionMenuWxml.indexOf('data-index="{{index}}"') >= 0
+    && actionMenuWxml.indexOf('data-item="{{dep}}"') < 0,
+  '部门选择不能通过 dataset 传输整个订单对象')
+const selectDepartmentSource = pageJs.slice(
+  pageJs.indexOf('selectDepartment(e)'), pageJs.indexOf('hideOperation()'))
+assert(selectDepartmentSource.indexOf('selectedDepartment = this.data.depArr[index]') >= 0
+    && selectDepartmentSource.indexOf('\n      e,') < 0,
+  '部门选择不能把完整点击事件写入 setData')
 assert(pageJs.indexOf('&entry=customerInvite') >= 0, '客户分享链接缺少客户邀请标识')
 assert(pageJs.indexOf("'&disId=' + this.data.disId") >= 0, '客户分享链接缺少配送商参数')
 assert(pageJs.indexOf("'customerInvite'") >= 0, '客户邀请链接未强制进入客户注册流程')
 assert(pageJs.indexOf('_getDepInfo({ loadOrders: false })') >= 0,
   '未注册客户读取门店资料时不能提前请求受保护的订单数据')
+assert(pageJs.indexOf("options.entry === 'boss'") >= 0,
+  'Boss 小程序入口必须支持免登录只读模式')
+assert(pageJs.indexOf('&& hasDirectCustomerScope') >= 0
+    && pageJs.indexOf("options.entry === 'boss' || !options.entry") >= 0,
+  '旧版 Boss 链接缺少免登录兼容处理')
+assert(pageJs.indexOf('shopAuth: !this.data.isGuestAccess') >= 0,
+  'Boss 只读订单请求未关闭客户身份校验')
+assert(pageJs.indexOf('allowGuestFallback: isBossEntry') >= 0
+    && pageJs.indexOf('preferCustomer: isBossEntry') >= 0,
+  'Boss 入口必须先尝试客户登录，再降级为免登录查看')
+assert(pageJs.indexOf('if (preferCustomer)') >= 0
+    && pageJs.indexOf("wx.setStorageSync('shopMiniLastRole', 'CUSTOMER')") >= 0,
+  'Boss 入口遇到业务员和客户双身份时必须优先客户身份')
+assert(pageJs.indexOf('_enterGuestAccess()') >= 0,
+  'Boss 入口缺少未注册用户的只读降级处理')
+assert(benefitJs.indexOf('if (this.data.isGuestAccess)') >= 0,
+  'Boss 只读模式不能继续请求客户优惠券和结算预览')
+assert(apiRestrauntJs.indexOf('shopAuth: requestOptions.shopAuth !== false') >= 0,
+  '订单查询接口缺少按场景切换身份校验的能力')
 assert(pageJs.indexOf("url: '../../../resGoodsLessCash/resGoodsLessCash'") >= 0,
   '现金客户商品目录入口丢失')
 assert(pageJs.indexOf("url: '../../../resGoodsLess/resGoodsLess'") >= 0,

@@ -5,48 +5,6 @@
     <view class="nav-space"></view>
   </view>
 
-  <view class="section add-section" wx:if="{{!locked}}">
-    <view class="section-head">
-      <view class="section-title">添加商品</view>
-    </view>
-
-    <view class="quote-entry-row">
-      <view class="search-row">
-        <input value="{{keyword}}" placeholder="输入商品名称，如：青椒" data-field="keyword" bindinput="onInput" confirm-type="search" bindconfirm="search" />
-        <view class="search-button" bindtap="search">搜索</view>
-      </view>
-      <view class="quote-entry-shortcut industry-shortcut {{showBusinessTypes ? 'active' : ''}}" data-mode="industry" bindtap="openAddMode">按行业报价</view>
-      <view class="quote-entry-shortcut image-shortcut" data-mode="ocr" bindtap="openAddMode">拍图片报价</view>
-    </view>
-
-    <view class="business-panel" wx:if="{{showBusinessTypes}}">
-      <view class="panel-title">选择客户业态</view>
-      <view class="type-group" wx:for="{{businessTypeGroups}}" wx:key="category" wx:for-item="group">
-        <view class="group-name">{{group.name}}</view>
-        <view class="type-tags">
-          <view class="type-tag" wx:for="{{group.types}}" wx:key="businessTypeId" wx:for-item="type"
-            data-id="{{type.businessTypeId}}" data-name="{{type.typeName}}" bindtap="chooseBusinessType">{{type.typeName}}</view>
-        </view>
-      </view>
-      <view class="panel-empty" wx:if="{{businessTypesLoading}}">正在加载业态…</view>
-      <view class="panel-empty" wx:elif="{{businessTypeGroups.length === 0}}">暂无可选业态</view>
-    </view>
-
-    <view class="manual-results">
-      <view class="candidate" wx:for="{{candidates}}" wx:key="goodsId">
-        <image src="{{item.imageUrl}}" mode="aspectFill" />
-        <view class="candidate-main">
-          <view class="candidate-name">{{item.goodsName}}</view>
-          <view class="candidate-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
-          <view class="reason">{{item.matchReason || '商品名称匹配'}}</view>
-          <view class="candidate-price">{{item.priceLabel}}</view>
-        </view>
-        <view class="choose" data-id="{{item.goodsId}}" bindtap="chooseCandidate">选择</view>
-      </view>
-      <view class="searching" wx:if="{{searching}}">正在查找商品…</view>
-    </view>
-  </view>
-
   <view class="target-card">
     <view class="card-kicker">报价对象</view>
     <view class="target-head">
@@ -91,40 +49,74 @@
   <view class="section products-section">
     <view class="section-head">
       <view class="section-title">报价商品（{{items.length}}项）</view>
-      <view class="section-amount" wx:if="{{items.length}}">合计 ¥{{quoteTotalLabel}}</view>
+      <view class="products-head-actions">
+        <view class="section-amount" wx:if="{{items.length}}">合计 ¥{{quoteTotalLabel}}</view>
+        <view class="add-products-button" wx:if="{{!locked}}" bindtap="openGoodsAdder">{{items.length ? '继续添加' : '添加商品'}} ›</view>
+      </view>
     </view>
 
     <view class="products-empty" wx:if="{{items.length === 0}}">
       <view class="empty-title">还没有报价商品</view>
+      <view class="empty-note" wx:if="{{!locked}}">支持语音、粘贴清单、图片识别和按行业添加</view>
+      <view class="empty-add-button" wx:if="{{!locked}}" bindtap="openGoodsAdder">AI 智能添加商品</view>
     </view>
 
-    <view class="quote-item" wx:for="{{items}}" wx:key="goodsId">
-      <view class="item-summary">
-        <image class="item-image" src="{{item.imageUrl}}" mode="aspectFill" />
-        <view class="item-main">
-          <view class="item-name">{{item.goodsName}}</view>
-          <view class="item-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
-          <view class="item-quote-line">
-            <text>数量 {{item.quantity || '待填'}} {{item.unit}}</text>
-            <text>我方报价 {{item.unitPriceLabel}}</text>
+    <view class="quote-catalog" wx:if="{{items.length}}">
+      <scroll-view class="quote-great-category-list" scroll-y="true" enhanced="true" show-scrollbar="false">
+        <view wx:for="{{quoteCategories}}" wx:key="key" wx:for-item="category"
+          class="quote-great-category {{activeQuoteGreatCategoryKey === category.key ? 'active' : ''}}"
+          data-key="{{category.key}}" bindtap="selectQuoteGreatCategory">
+          <text class="quote-great-category-name">{{category.name}}</text>
+          <text class="quote-great-category-count">({{category.count}})</text>
+        </view>
+      </scroll-view>
+
+      <view class="quote-catalog-main">
+        <scroll-view class="quote-sub-category-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
+          <view class="quote-sub-category-row">
+            <view wx:for="{{quoteSubCategories}}" wx:key="key" wx:for-item="subCategory"
+              class="quote-sub-category {{activeQuoteSubCategoryKey === subCategory.key ? 'active' : ''}}"
+              data-key="{{subCategory.key}}" bindtap="selectQuoteSubCategory">
+              {{subCategory.name}}({{subCategory.count}})
+            </view>
           </view>
-        </view>
-        <view class="item-subtotal"><text>小计</text><view>{{item.subtotalDisplayLabel}}</view></view>
-      </view>
-      <view class="item-toolbar" wx:if="{{!locked}}">
-        <view data-index="{{index}}" bindtap="toggleItemEdit">{{editingIndex === index ? '收起编辑' : '编辑数量/价格'}}</view>
-        <view class="remove" data-index="{{index}}" bindtap="removeItem">删除</view>
-      </view>
-      <view class="edit-panel" wx:if="{{!locked && editingIndex === index}}">
-        <view class="edit-grid">
-          <view><text>数量</text><input type="digit" value="{{item.quantity}}" data-index="{{index}}" data-field="quantity" bindinput="onItemInput" /></view>
-          <view><text>我方报价</text><input type="digit" value="{{item.ourQuotePrice}}" placeholder="价格待确认" data-index="{{index}}" data-field="ourQuotePrice" bindinput="onItemInput" /></view>
-        </view>
-        <view class="private-price">
-          <text>客户当前采购价（内部参考）</text>
-          <input type="digit" value="{{item.customerCurrentPurchasePrice}}" placeholder="可不填" data-index="{{index}}" data-field="customerCurrentPurchasePrice" bindinput="onItemInput" />
-          <view>仅业务员私域可见，不进入客户报价预览。</view>
-        </view>
+        </scroll-view>
+
+        <scroll-view class="quote-goods-scroll" scroll-y="true" enhanced="true" show-scrollbar="false"
+          scroll-top="{{quoteGoodsScrollTop}}">
+          <view class="quote-goods-list">
+            <view class="quote-item" wx:for="{{quoteVisibleItems}}" wx:key="goodsId">
+              <view class="item-summary">
+                <image class="item-image" src="{{item.imageUrl}}" mode="aspectFill" />
+                <view class="item-main">
+                  <view class="item-name">{{item.goodsName}}</view>
+                  <view class="item-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
+                  <view class="item-quote-line">
+                    <text>数量 {{item.quantity || '待填'}} {{item.unit}}</text>
+                    <text>我方报价 {{item.unitPriceLabel}}</text>
+                  </view>
+                </view>
+                <view class="item-subtotal"><text>小计</text><view>{{item.subtotalDisplayLabel}}</view></view>
+              </view>
+              <view class="item-toolbar" wx:if="{{!locked}}">
+                <view data-index="{{item.sourceIndex}}" bindtap="toggleItemEdit">{{editingIndex === item.sourceIndex ? '收起编辑' : '编辑数量/价格'}}</view>
+                <view class="remove" data-index="{{item.sourceIndex}}" bindtap="removeItem">删除</view>
+              </view>
+              <view class="edit-panel" wx:if="{{!locked && editingIndex === item.sourceIndex}}">
+                <view class="edit-grid">
+                  <view><text>数量</text><input type="digit" value="{{item.quantity}}" data-index="{{item.sourceIndex}}" data-field="quantity" bindinput="onItemInput" /></view>
+                  <view><text>我方报价</text><input type="digit" value="{{item.ourQuotePrice}}" placeholder="价格待确认" data-index="{{item.sourceIndex}}" data-field="ourQuotePrice" bindinput="onItemInput" /></view>
+                </view>
+                <view class="private-price">
+                  <text>客户当前采购价（内部参考）</text>
+                  <input type="digit" value="{{item.customerCurrentPurchasePrice}}" placeholder="可不填" data-index="{{item.sourceIndex}}" data-field="customerCurrentPurchasePrice" bindinput="onItemInput" />
+                  <view>仅业务员私域可见，不进入客户报价预览。</view>
+                </view>
+              </view>
+            </view>
+            <view class="quote-goods-tail"></view>
+          </view>
+        </scroll-view>
       </view>
     </view>
   </view>

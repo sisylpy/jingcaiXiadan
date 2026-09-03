@@ -1,0 +1,14 @@
+.quotation-history { margin-top: 20rpx; overflow: hidden; border: 1rpx solid #e3ebe6; border-radius: 19rpx; background: #fff; }
+.history-head { min-height: 80rpx; padding: 0 23rpx; display: flex; align-items: center; justify-content: space-between; border-bottom: 1rpx solid #edf1ef; }
+.history-title { color: #1d3027; font-size: 28rpx; font-weight: 700; }
+.history-count { color: #24704f; font-size: 23rpx; }
+.history-loading, .history-empty { padding: 38rpx 20rpx; color: #8a958f; text-align: center; font-size: 23rpx; }
+.quote-row { min-height: 102rpx; margin: 0 22rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-bottom: 1rpx solid #edf1ef; }
+.quote-row:last-child { border-bottom: 0; }
+.quote-main { min-width: 0; flex: 1; }
+.quote-number { overflow: hidden; color: #26372f; font-size: 25rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.quote-meta { margin-top: 7rpx; color: #859189; font-size: 20rpx; }
+.quote-side { flex: none; text-align: right; }
+.quote-amount { color: #df6a32; font-size: 25rpx; font-weight: 700; }
+.quote-status { margin-top: 7rpx; color: #24704f; font-size: 20rpx; }
+.quote-status.EXPIRED, .quote-status.CLOSED { color: #87918c; }

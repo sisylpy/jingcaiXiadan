@@ -1,0 +1,144 @@
+<view class="page {{action && action.statusCode != 'COMPLETED' ? 'has-bottom-bar' : ''}}">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="back" bindtap="goBack">‹</view>
+      <view class="header-main">
+        <view class="title">跟进任务详情</view>
+        <view class="subtitle">{{action ? action.displayTitle : '查看任务并填写跟进结果'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="content" wx:if="{{action}}">
+    <view class="task-card">
+      <view class="task-icon">☎</view>
+      <view class="task-main">
+        <view class="task-head">
+          <view class="task-title">{{action.displayTitle}}</view>
+          <view class="status {{action.statusCode === 'COMPLETED' ? 'COMPLETED' : 'TODO'}}">{{action.statusLabel}}</view>
+        </view>
+        <view class="task-meta"><text>目标时间</text><text>{{action.targetLabel}}</text></view>
+        <view class="task-meta"><text>创建时间</text><text>{{action.createdAtLabel}}</text></view>
+      </view>
+    </view>
+
+    <view class="section-card" wx:if="{{currentContext}}">
+      <view class="section-title icon-title"><text class="section-icon">客</text>客户当前情况</view>
+      <view class="context-customer">{{currentContext.customerName}}</view>
+      <view class="context-row">
+        <view class="context-label">当前阶段</view>
+        <view class="context-value strong">{{currentContext.stageLabel}}</view>
+      </view>
+      <view class="context-row" wx:if="{{action.actionType === 'QUOTE'}}">
+        <view class="context-label">历史报价</view>
+        <view class="context-value">{{currentContext.quoteLabel}}</view>
+      </view>
+      <view class="feedback-box">
+        <view class="feedback-label">客户反馈</view>
+        <view class="feedback-text">{{currentContext.feedback}}</view>
+      </view>
+
+      <view class="source-divider"></view>
+      <view class="section-title icon-title source-title"><text class="section-icon pale">源</text>{{action.sourceTitle}}</view>
+      <view class="context-row">
+        <view class="context-label">{{action.sourceTimeName}}</view>
+        <view class="context-value">{{action.sourceTimeLabel}}</view>
+      </view>
+      <view class="source-content">{{action.sourceSummary}}</view>
+      <view class="source-feedback" wx:if="{{action.sourceFeedback && action.sourceFeedback !== currentContext.feedback}}">
+        {{action.sourceFeedback}}
+      </view>
+    </view>
+
+    <view class="section-card quote-card" wx:if="{{action.actionType === 'QUOTE'}}">
+      <view class="section-head">
+        <view class="section-title icon-title no-margin"><text class="section-icon">报</text>关联报价单</view>
+        <view class="section-count">共{{quoteCount}}次报价</view>
+      </view>
+      <view class="quote-loading" wx:if="{{quoteLoading}}">正在读取报价记录…</view>
+      <block wx:elif="{{quotationRows.length}}">
+        <view class="quote-row" wx:for="{{quotationRows}}" wx:key="quotationId"
+          data-id="{{item.quotationId}}" data-status="{{item.statusCode}}" bindtap="openQuotation">
+          <view class="quote-main">
+            <view class="quote-line">
+              <text class="quote-sequence">{{item.sequenceLabel}}</text>
+              <text class="quote-no">{{item.quotationNo}}</text>
+            </view>
+            <view class="quote-time">{{item.timeLabel}}</view>
+          </view>
+          <view class="quote-right">
+            <view class="quote-status {{item.statusCode}}">{{item.statusLabel}}</view>
+            <view class="quote-amount">{{item.amountLabel}}</view>
+          </view>
+          <view class="row-arrow">›</view>
+        </view>
+      </block>
+      <view class="quote-empty" wx:else>
+        <text>还没有给该客户报过价</text>
+        <view class="create-quote" bindtap="openQuotation">创建报价单 ›</view>
+      </view>
+    </view>
+
+    <view class="section-card result-card" wx:if="{{action.statusCode != 'COMPLETED'}}">
+      <view class="section-title icon-title"><text class="section-icon">结</text>本次跟进结果（选择）</view>
+      <view class="result-grid">
+        <view class="result-option {{completionResult === item.code ? 'selected' : ''}}"
+          wx:for="{{resultOptions}}" wx:key="code" data-code="{{item.code}}"
+          bindtap="selectResult">{{item.name}}</view>
+      </view>
+      <view class="field-label">补充说明（可选）</view>
+      <textarea class="note-input" maxlength="450" value="{{completionNote}}"
+        placeholder="记录客户的实际反馈，方便下次继续跟进" bindinput="onCompletionNote" />
+      <view wx:if="{{requiresNextContact}}">
+        <view class="field-label">下次联系时间</view>
+        <view class="datetime-row">
+          <picker class="datetime-picker" mode="date" start="{{todayDate}}"
+            value="{{nextTargetDate}}" bindchange="onNextDate">
+            <view class="date-picker">{{nextTargetDate || '选择日期'}} ›</view>
+          </picker>
+          <picker class="time-picker" mode="time" value="{{nextTargetTime}}"
+            bindchange="onNextTime">
+            <view class="date-picker">{{nextTargetTime || '选择时间'}} ›</view>
+          </picker>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card completed-card" wx:if="{{action.statusCode === 'COMPLETED'}}">
+      <view class="section-title icon-title"><text class="section-icon done">✓</text>任务完成记录</view>
+      <view class="context-row"><text class="context-label">完成结果</text><text class="context-value strong">{{action.resultLabel}}</text></view>
+      <view class="context-row"><text class="context-label">完成时间</text><text class="context-value">{{action.completedAtLabel}}</text></view>
+      <view class="source-content" wx:if="{{action.completionNote}}">{{action.completionNote}}</view>
+    </view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">正在加载任务详情…</view>
+
+  <view class="bottom-bar" wx:if="{{action && action.statusCode != 'COMPLETED'}}">
+    <view class="reschedule-button" bindtap="openReschedule">改期跟进</view>
+    <view class="submit-button {{submitting ? 'disabled' : ''}}" bindtap="submitComplete">
+      {{submitting ? '提交中…' : '提交结果'}}
+    </view>
+  </view>
+
+  <view class="sheet-mask" wx:if="{{showReschedule}}" bindtap="closeReschedule">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-title">修改跟进时间</view>
+      <view class="sheet-hint">改期后，任务仍会保留在“待办”列表。</view>
+      <view class="datetime-row sheet-datetime">
+        <picker class="datetime-picker" mode="date" start="{{todayDate}}"
+          value="{{rescheduleDate}}" bindchange="onRescheduleDate">
+          <view class="date-picker">{{rescheduleDate}} ›</view>
+        </picker>
+        <picker class="time-picker" mode="time" value="{{rescheduleTime}}"
+          bindchange="onRescheduleTime">
+          <view class="date-picker">{{rescheduleTime}} ›</view>
+        </picker>
+      </view>
+      <view class="sheet-actions">
+        <view class="sheet-cancel" bindtap="closeReschedule">取消</view>
+        <view class="sheet-confirm" bindtap="submitReschedule">{{rescheduling ? '保存中…' : '确认改期'}}</view>
+      </view>
+    </view>
+  </view>
+</view>

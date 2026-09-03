@@ -1,19 +1,46 @@
 import apiUrl from '../../../config.js'
 import {
-  getSalesCustomer,
-  updateSalesCustomer,
-  updateSalesCustomerDelivery,
-  getSalesCustomerLabels,
-  syncSalesCustomerLabels,
-  createSalesCustomerLabel,
-  deleteSalesCustomerLabel,
-  addSalesCustomerDepartment,
-  renameSalesCustomerDepartment,
+  getSalesDepartment,
+  updateSalesDepartment,
+  updateSalesDepartmentDelivery,
+  getSalesDepartmentLabels,
+  syncSalesDepartmentLabels,
+  createSalesDepartmentLabel,
+  deleteSalesDepartmentLabel,
+  addSalesSubDepartment,
+  renameSalesSubDepartment,
   getSalesBusinessTypes,
-  getSalesCustomerBusinessTypes
+  getSalesDepartmentBusinessTypes,
+  getSalesDepartmentReturnSummary
 } from '../../../lib/apiSales.js'
 
 const app = getApp()
+
+function returnSummaryView(data) {
+  const source = data || {}
+  const since = source.cooperationSince ? String(source.cooperationSince).slice(0, 10) : ''
+  let cooperationLabel = '暂无订单记录'
+  if (since) {
+    const start = new Date(since.replace(/-/g, '/'))
+    const now = new Date()
+    const months = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12
+      + now.getMonth() - start.getMonth())
+    cooperationLabel = months > 0 ? '已合作 ' + months + ' 个月' : '本月开始合作'
+  }
+  const problem = source.recentProblem || null
+  const quotations = source.recentQuotations || []
+  return Object.assign({}, source, {
+    cooperationLabel,
+    recentOrderLabel: source.recentOrderDate
+      ? String(source.recentOrderDate).slice(0, 10) : '暂无订单',
+    recentProblemLabel: problem
+      ? (problem.customerFeedback || problem.activityContent || '已记录问题') : '暂无问题记录',
+    quotationLabel: quotations.length
+      ? '最近 ' + String(quotations[0].updatedAt || '').replace('T', ' ').slice(0, 16)
+      : '暂无历史报价',
+    customerLevelLabel: source.customerLevel || '未设置'
+  })
+}
 
 const PRINT_OPTIONS = [
   { value: 'ApplyPanel', name: '一张一列' },
@@ -50,13 +77,18 @@ Page({
     pendingCustomerPhoto: '',
     saving: false,
     choosingLocation: false,
-    newLabelName: ''
+    newLabelName: '',
+    returnVisitOnLoad: false,
+    returnVisitOpened: false,
+    returnSummary: null,
+    quoteRefreshKey: 0
   },
 
   onLoad(options) {
     this.setData({
       statusBarHeight: app.globalData.statusBarHeight,
-      customerId: Number(options.customerId),
+      departmentId: Number(options.departmentId),
+      returnVisitOnLoad: String(options.returnVisit || '') === '1',
       imageServer: apiUrl.server
     })
   },
@@ -66,18 +98,22 @@ Page({
   },
 
   loadCustomer() {
-    if (!this.data.customerId) return
+    if (!this.data.departmentId) return
     this.setData({ loading: true })
     Promise.all([
-      getSalesCustomer(this.data.customerId),
-      getSalesCustomerLabels(this.data.customerId),
+      getSalesDepartment(this.data.departmentId),
+      getSalesDepartmentLabels(this.data.departmentId),
       getSalesBusinessTypes(),
-      getSalesCustomerBusinessTypes(this.data.customerId)
+      getSalesDepartmentBusinessTypes(this.data.departmentId),
+      this.data.returnVisitOnLoad
+        ? getSalesDepartmentReturnSummary(this.data.departmentId)
+        : Promise.resolve({ result: { code: 0, data: null } })
     ]).then(results => {
       const customerResult = results[0].result || {}
       const labelResult = results[1].result || {}
       const typeResult = results[2].result || {}
       const relationResult = results[3].result || {}
+      const returnSummaryResult = results[4].result || {}
       if (customerResult.code !== 0) {
         wx.showToast({ title: customerResult.msg || '客户资料加载失败', icon: 'none' })
         return
@@ -106,7 +142,7 @@ Page({
         selectedLabels,
         businessTypes: typeResult.code === 0 ? (typeResult.data || []) : [],
         customerBusinessTypeId: primaryType ? primaryType.businessTypeId : null,
-        customerBusinessTypeName: primaryType ? primaryType.typeName : '',
+        customerBusinessTypeName: customerTypes.map(item => item.typeName).filter(Boolean).join('、'),
         customerPhoto: savedCustomerPhoto,
         navTitle: customer.nxDepartmentAttrName
           || customer.nxDepartmentName
@@ -119,7 +155,15 @@ Page({
           ? customer.clerkUserEntity.nxDiuWxNickName : '老板代管',
         printDisplayName: this.printName(customer.nxDepartmentPrintName),
         formattedEarliestTime: this.secondsToTime(customer.nxDepartmentEarliestDeliveryTime),
-        formattedLatestTime: this.secondsToTime(customer.nxDepartmentLatestDeliveryTime)
+        formattedLatestTime: this.secondsToTime(customer.nxDepartmentLatestDeliveryTime),
+        returnSummary: returnSummaryResult.code === 0
+          ? returnSummaryView(returnSummaryResult.data) : null,
+        quoteRefreshKey: Date.now()
+      }, () => {
+        if (this.data.returnVisitOnLoad && !this.data.returnVisitOpened) {
+          this.setData({ returnVisitOpened: true })
+          this.recordCustomerVisit()
+        }
       })
     }).catch(error => wx.showToast({
       title: app.describeSalesRequestError(error, '客户资料加载失败'), icon: 'none'
@@ -192,7 +236,7 @@ Page({
     }
     this.setData({ saving: true })
     wx.showLoading({ title: '正在保存', mask: true })
-    updateSalesCustomer(this.data.customerId, payload).then(res => {
+    updateSalesDepartment(this.data.departmentId, payload).then(res => {
       if (res.result.code !== 0) {
         wx.showToast({ title: res.result.msg || '保存失败', icon: 'none' })
         return
@@ -363,7 +407,7 @@ Page({
     }
     this.setData({ saving: true })
     wx.showLoading({ title: '保存配送设置', mask: true })
-    updateSalesCustomerDelivery(this.data.customerId, payload).then(res => {
+    updateSalesDepartmentDelivery(this.data.departmentId, payload).then(res => {
       if (res.result.code !== 0) {
         wx.showToast({ title: res.result.msg || '配送设置保存失败', icon: 'none' })
         return
@@ -408,7 +452,7 @@ Page({
   addLabel() {
     const name = String(this.data.newLabelName || '').trim()
     if (!name) return
-    createSalesCustomerLabel(this.data.customerId, { nxDlName: name }).then(res => {
+    createSalesDepartmentLabel(this.data.departmentId, { nxDlName: name }).then(res => {
       if (res.result.code !== 0) {
         wx.showToast({ title: res.result.msg || '添加标签失败', icon: 'none' })
         return
@@ -428,7 +472,7 @@ Page({
       content: '删除“' + labelName + '”后，所有客户都不再使用该标签。',
       success: result => {
         if (!result.confirm) return
-        deleteSalesCustomerLabel(this.data.customerId, labelId).then(res => {
+        deleteSalesDepartmentLabel(this.data.departmentId, labelId).then(res => {
           if (res.result.code !== 0) {
             wx.showToast({ title: res.result.msg || '删除失败', icon: 'none' })
             return
@@ -447,7 +491,7 @@ Page({
   saveLabels() {
     if (this.data.saving) return
     this.setData({ saving: true })
-    syncSalesCustomerLabels(this.data.customerId, this.data.editingLabelIds || []).then(res => {
+    syncSalesDepartmentLabels(this.data.departmentId, this.data.editingLabelIds || []).then(res => {
       if (res.result.code !== 0) {
         wx.showToast({ title: res.result.msg || '标签保存失败', icon: 'none' })
         return
@@ -466,7 +510,7 @@ Page({
       success: result => {
         const name = (result.content || '').trim()
         if (!result.confirm || !name) return
-        addSalesCustomerDepartment(this.data.customerId, { nxDepartmentName: name }).then(res => {
+        addSalesSubDepartment(this.data.departmentId, { nxDepartmentName: name }).then(res => {
           if (res.result.code === 0) {
             this.loadCustomer()
             wx.showToast({ title: '部门已添加', icon: 'success' })
@@ -486,7 +530,7 @@ Page({
       success: result => {
         const name = (result.content || '').trim()
         if (!result.confirm || !name || name === currentName) return
-        renameSalesCustomerDepartment(this.data.customerId, id, {
+        renameSalesSubDepartment(this.data.departmentId, id, {
           nxDepartmentName: name
         }).then(res => {
           if (res.result.code === 0) this.loadCustomer()
@@ -500,18 +544,18 @@ Page({
 
   openGoods() {
     wx.navigateTo({
-      url: '/pages/sales/customerGoods/customerGoods?customerId=' + this.data.customerId
+      url: '/pages/sales/customerGoods/customerGoods?departmentId=' + this.data.departmentId
         + '&customerName=' + encodeURIComponent(this.data.customer.nxDepartmentName || '')
     })
   },
 
   startOrder() {
     app.clearShopLoginState()
-    wx.setStorageSync('salesActingCustomerId', this.data.customerId)
+    wx.setStorageSync('salesActingDepartmentId', this.data.departmentId)
     wx.setStorageSync('salesActingDistributerId', this.data.customer.nxDepartmentDisId)
-    wx.setStorageSync('salesActingCustomerName', this.data.customer.nxDepartmentName || '')
+    wx.setStorageSync('salesActingDepartmentName', this.data.customer.nxDepartmentName || '')
     wx.navigateTo({
-      url: '/pages/ai/customer/chefOrder/chefOrder?isAgent=1&depFatherId=' + this.data.customerId
+      url: '/pages/ai/customer/chefOrder/chefOrder?isAgent=1&depFatherId=' + this.data.departmentId
         + '&disId=' + this.data.customer.nxDepartmentDisId
     })
   },
@@ -520,7 +564,7 @@ Page({
     const customer = this.data.customer || {}
     this.setData({
       visitTarget: {
-        customerId: this.data.customerId,
+        departmentId: this.data.departmentId,
         businessTypeId: this.data.customerBusinessTypeId,
         nxDepartmentName: customer.nxDepartmentName,
         nxDepartmentAddress: customer.nxDepartmentAddress,
@@ -542,7 +586,7 @@ Page({
   openCustomerQuotation() {
     const customer = this.data.customer || {}
     wx.navigateTo({
-      url: '/pages/sales/quotation/quotation?customerId=' + this.data.customerId
+      url: '/pages/sales/quotation/quotation?departmentId=' + this.data.departmentId
         + '&shopName=' + encodeURIComponent(customer.nxDepartmentAttrName
           || customer.nxDepartmentName || '')
     })
@@ -551,8 +595,8 @@ Page({
   openBusinessType() {
     const customer = this.data.customer || {}
     wx.navigateTo({
-      url: '/pages/sales/customerBusinessType/customerBusinessType?customerId='
-        + this.data.customerId + '&customerName='
+      url: '/pages/sales/customerBusinessType/customerBusinessType?departmentId='
+        + this.data.departmentId + '&customerName='
         + encodeURIComponent(customer.nxDepartmentName || '')
     })
   },

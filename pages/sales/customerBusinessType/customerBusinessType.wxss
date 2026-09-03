@@ -9,7 +9,7 @@ page, .page { min-height: 100%; background: #f4f6f5; color: #25332d; }
 .customer-name { margin-top: 7rpx; color: #1e3028; font-size: 34rpx; font-weight: 650; }
 .current-row { margin-top: 22rpx; padding-top: 20rpx; display: flex; align-items: center; border-top: 1rpx solid #edf0ee; }
 .current-label { margin-right: 20rpx; color: #748079; font-size: 25rpx; }
-.current-value { color: #137353; font-size: 28rpx; font-weight: 650; }
+.current-value { min-width: 0; flex: 1; color: #137353; font-size: 26rpx; font-weight: 650; line-height: 1.45; }
 .current-empty { color: #a2aaa5; font-size: 27rpx; }
 .inherited-tag { margin-left: 12rpx; padding: 3rpx 10rpx; color: #597ef7; background: #f0f5ff; border-radius: 12rpx; font-size: 20rpx; }
 .help { margin-top: 14rpx; color: #929b96; font-size: 22rpx; line-height: 1.55; }
@@ -19,14 +19,17 @@ page, .page { min-height: 100%; background: #f4f6f5; color: #25332d; }
 .category-tag.active { color: #fff; background: #187e6e; border-color: #187e6e; box-shadow: 0 5rpx 12rpx rgba(24,126,110,.18); }
 .type-section { min-height: 260rpx; }
 .type-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
-.type-option { width: calc(50% - 8rpx); min-height: 96rpx; margin-bottom: 16rpx; padding: 20rpx; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; background: #fafbfa; border: 2rpx solid #e5e9e6; border-radius: 14rpx; }
+.type-option { width: calc(50% - 8rpx); min-height: 118rpx; margin-bottom: 16rpx; padding: 17rpx; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; background: #fafbfa; border: 2rpx solid #e5e9e6; border-radius: 14rpx; }
 .type-option.selected { background: #eff9f5; border-color: #187e6e; }
-.type-copy { min-width: 0; display: flex; flex-direction: column; }
+.type-icon { width: 52rpx; height: 52rpx; margin-right: 12rpx; flex: none; }
+.type-copy { min-width: 0; display: flex; flex: 1; flex-direction: column; }
+.type-name-row { display: flex; align-items: center; }
 .type-name { overflow: hidden; color: #26342e; text-overflow: ellipsis; white-space: nowrap; font-size: 28rpx; font-weight: 550; }
+.primary-tag { margin-left: 7rpx; padding: 2rpx 7rpx; flex: none; color: #fff; background: #187e6e; border-radius: 8rpx; font-size: 17rpx; }
 .type-scope { margin-top: 7rpx; color: #8a9690; font-size: 20rpx; }
-.radio { width: 34rpx; height: 34rpx; margin-left: 10rpx; display: flex; flex: none; align-items: center; justify-content: center; box-sizing: border-box; border: 2rpx solid #a9b2ad; border-radius: 50%; }
-.radio.checked { border-color: #187e6e; }
-.radio-dot { width: 18rpx; height: 18rpx; background: #187e6e; border-radius: 50%; }
+.set-primary { margin-top: 7rpx; color: #187e6e; font-size: 19rpx; text-decoration: underline; }
+.checkbox { width: 34rpx; height: 34rpx; margin-left: 8rpx; display: flex; flex: none; align-items: center; justify-content: center; box-sizing: border-box; color: #fff; border: 2rpx solid #a9b2ad; border-radius: 9rpx; font-size: 22rpx; }
+.checkbox.checked { background: #187e6e; border-color: #187e6e; }
 .state { padding: 100rpx 20rpx; color: #8b9690; text-align: center; font-size: 26rpx; }
 .save-area { position: fixed; z-index: 30; right: 0; bottom: 0; left: 0; padding: 18rpx 26rpx calc(18rpx + env(safe-area-inset-bottom)); background: rgba(255,255,255,.96); border-top: 1rpx solid #e6eae7; }
 .save-button { height: 88rpx; color: #fff; line-height: 88rpx; background: #187e6e; border-radius: 44rpx; font-size: 30rpx; font-weight: 600; }

@@ -1,4 +1,9 @@
-import { getSalesProfile, createSalesCustomer } from '../../../lib/apiSales.js'
+import {
+  getSalesProfile,
+  createSalesDepartment,
+  getSalesLead,
+  convertSalesLead
+} from '../../../lib/apiSales.js'
 
 const app = getApp()
 const DEPARTMENT_COUNTS = [2, 3, 4, 5, 6, 7, 8, 9]
@@ -19,6 +24,9 @@ Page({
   data: {
     loading: true,
     submitting: false,
+    conversionMode: false,
+    leadId: null,
+    lead: null,
     profile: null,
     customerName: '',
     settleOptions: [
@@ -34,15 +42,29 @@ Page({
     clerkIndex: 0
   },
 
-  onLoad() {
-    this.setData({ statusBarHeight: app.globalData.statusBarHeight })
-    getSalesProfile().then(res => {
-      const body = res.result || {}
+  onLoad(options) {
+    const leadId = Number((options || {}).leadId) || null
+    this.setData({
+      statusBarHeight: app.globalData.statusBarHeight,
+      leadId,
+      conversionMode: !!leadId
+    })
+    const leadRequest = leadId
+      ? getSalesLead(leadId)
+      : Promise.resolve({ result: { code: 0, data: null } })
+    Promise.all([getSalesProfile(), leadRequest]).then(results => {
+      const body = results[0].result || {}
       if (body.code !== 0) {
         wx.showToast({ title: body.msg || '负责人资料加载失败', icon: 'none' })
         return
       }
+      const leadBody = results[1].result || {}
+      if (leadBody.code !== 0) {
+        wx.showToast({ title: leadBody.msg || '陌生客户资料加载失败', icon: 'none' })
+        return
+      }
       const profile = body.data || {}
+      const lead = leadBody.data ? (leadBody.data.lead || null) : null
       const clerks = profile.clerks || []
       let clerkIndex = 0
       if (profile.defaultClerk) {
@@ -50,7 +72,13 @@ Page({
           === Number(profile.defaultClerk.nxDistributerUserId))
         if (index >= 0) clerkIndex = index
       }
-      this.setData({ profile, clerks, clerkIndex })
+      this.setData({
+        profile,
+        clerks,
+        clerkIndex,
+        lead,
+        customerName: lead ? (lead.shopName || '') : this.data.customerName
+      })
     }).catch(error => wx.showToast({
       title: app.describeSalesRequestError(error, '负责人资料加载失败'),
       icon: 'none'
@@ -149,21 +177,36 @@ Page({
         nxDepartmentShowWeeks: 1,
         nxDepartmentIsGroupDep: 1,
         nxDepartmentSubAmount: subDepartments.length,
-        nxSubDepartments: subDepartments
+        nxSubDepartments: subDepartments,
+        nxDepartmentAddress: this.data.lead ? (this.data.lead.address || '') : '',
+        nxDepartmentLat: this.data.lead && this.data.lead.latitude !== null
+          && this.data.lead.latitude !== undefined ? String(this.data.lead.latitude) : '',
+        nxDepartmentLng: this.data.lead && this.data.lead.longitude !== null
+          && this.data.lead.longitude !== undefined ? String(this.data.lead.longitude) : ''
       }
     }
     this.setData({ submitting: true })
-    wx.showLoading({ title: '正在保存客户', mask: true })
-    createSalesCustomer(payload).then(res => {
+    wx.showLoading({
+      title: this.data.conversionMode ? '正在转为正式客户' : '正在保存客户',
+      mask: true
+    })
+    const saveRequest = this.data.conversionMode
+      ? convertSalesLead(this.data.leadId, payload)
+      : createSalesDepartment(payload)
+    saveRequest.then(res => {
       const body = res.result || {}
       if (body.code !== 0) {
         wx.showToast({ title: body.msg || '客户保存失败', icon: 'none' })
         return
       }
-      const customer = body.data || {}
-      wx.showToast({ title: '客户已添加', icon: 'success' })
+      const data = body.data || {}
+      const customer = this.data.conversionMode ? (data.department || {}) : data
+      wx.showToast({
+        title: this.data.conversionMode ? '已转为正式客户' : '客户已添加',
+        icon: 'success'
+      })
       setTimeout(() => wx.redirectTo({
-        url: '/pages/sales/customerDetail/customerDetail?customerId='
+        url: '/pages/sales/customerDetail/customerDetail?departmentId='
           + customer.nxDepartmentId
       }), 350)
     }).catch(error => wx.showToast({

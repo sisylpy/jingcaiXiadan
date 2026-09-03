@@ -5,7 +5,16 @@
     <view class="nav-space"></view>
   </view>
 
-  <view class="source {{businessTypeStatisticalClaim ? 'verified' : 'fallback'}}">
+  <view class="industry-hero" wx:if="{{bannerImageUrl}}" style="background-color: {{businessTypeThemeColor}};">
+    <image class="industry-hero-image" src="{{bannerImageUrl}}" mode="aspectFill" />
+    <view class="industry-hero-mask"></view>
+    <view class="industry-hero-copy">
+      <view class="industry-hero-title">{{businessTypeName}}常用食材报价</view>
+      <view class="industry-hero-note">{{sourceLabel}}</view>
+    </view>
+  </view>
+
+  <view class="source {{businessTypeStatisticalClaim ? 'verified' : 'fallback'}}" wx:else>
     <view class="source-title">{{businessTypeStatisticalClaim ? '真实业态统计' : '数据不足，已切换来源'}}</view>
     <view class="source-note">{{sourceLabel}}</view>
   </view>
@@ -26,15 +35,20 @@
     </scroll-view>
 
     <view class="catalog-main">
-      <scroll-view class="sub-category-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
-        <view class="sub-category-row">
-          <view wx:for="{{subCategories}}" wx:key="key" wx:for-item="subCategory"
-            class="sub-category {{activeSubCategoryKey === subCategory.key ? 'active' : ''}}"
-            data-key="{{subCategory.key}}" bindtap="selectSubCategory">
-            {{subCategory.name}}({{subCategory.count}})
+      <view class="sub-category-bar">
+        <scroll-view class="sub-category-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
+          <view class="sub-category-row">
+            <view wx:for="{{subCategories}}" wx:key="key" wx:for-item="subCategory"
+              class="sub-category {{activeSubCategoryKey === subCategory.key ? 'active' : ''}}"
+              data-key="{{subCategory.key}}" bindtap="selectSubCategory">
+              {{subCategory.name}}({{subCategory.count}})
+            </view>
           </view>
+        </scroll-view>
+        <view class="select-all {{allVisibleSelected ? 'selected' : ''}}" bindtap="selectAllVisible">
+          {{allVisibleSelected ? '已全选' : '全选'}}
         </view>
-      </scroll-view>
+      </view>
 
       <scroll-view class="goods-scroll" scroll-y="true" enhanced="true" show-scrollbar="false"
         scroll-top="{{goodsScrollTop}}">
@@ -55,7 +69,9 @@
                 <view class="price {{item.priceStatus === 'PRICE_AVAILABLE' ? '' : 'pending'}}">
                   {{item.priceLabel}}<text wx:if="{{item.unit}}"> / {{item.unit}}</text>
                 </view>
-                <view class="add" data-id="{{item.goodsId}}" bindtap="addToQuotation">加入报价</view>
+                <view class="add {{item.inQuotation ? 'selected' : ''}}" data-id="{{item.goodsId}}" bindtap="addToQuotation">
+                  {{item.inQuotation ? '已加入' : '加入报价'}}
+                </view>
               </view>
             </view>
           </view>

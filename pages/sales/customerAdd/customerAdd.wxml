@@ -1,7 +1,7 @@
 <view class="page">
   <view class="nav" style="padding-top: {{statusBarHeight}}px">
     <view class="back" bindtap="back">‹</view>
-    <view class="nav-title">添加客户</view>
+    <view class="nav-title">{{conversionMode ? '转为正式客户' : '添加客户'}}</view>
     <view class="nav-space"></view>
   </view>
 
@@ -56,6 +56,6 @@
     </view>
 
     <view class="next-note">保存主信息后，将直接进入客户详情，继续设置地址、配送时间、业态和客户照片。</view>
-    <button class="submit" loading="{{submitting}}" disabled="{{submitting || loading}}" bindtap="submit">保存并完善客户详情</button>
+    <button class="submit" loading="{{submitting}}" disabled="{{submitting || loading}}" bindtap="submit">{{conversionMode ? '确认转为正式客户' : '保存并完善客户详情'}}</button>
   </view>
 </view>

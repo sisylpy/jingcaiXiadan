@@ -1,0 +1,16 @@
+<view class="page">
+  <sales-visit-sheet wx:if="{{ready}}" visible="{{true}}"
+    business-types="{{businessTypes}}" mode="{{editMode ? 'edit' : 'new'}}" standalone="{{true}}"
+    target="{{visitTarget}}" standalone-title="{{formTitle}}"
+    existing-photos="{{existingPhotos}}"
+    existing-photo-count="{{existingPhotoCount}}"
+    status-bar-height="{{statusBarHeight}}"
+    bind:close="goBack" bind:saved="onVisitSaved" />
+
+  <view class="loading" wx:if="{{loading}}">正在准备拜访表单…</view>
+  <view class="load-failed" wx:if="{{!loading && !ready}}">
+    <view>拜访表单加载失败</view>
+    <view class="retry" bindtap="loadData">重新加载</view>
+    <view class="back" bindtap="goBack">返回拜访记录</view>
+  </view>
+</view>

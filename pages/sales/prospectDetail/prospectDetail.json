@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "陌生客户开发",
+  "usingComponents": {
+    "sales-visit-sheet": "/components/sales-visit-sheet/sales-visit-sheet"
+  }
+}

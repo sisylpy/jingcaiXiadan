@@ -1,6 +1,5 @@
 {
   "navigationBarTitleText": "业务员工作台",
-  "usingComponents": {
-    "sales-visit-sheet": "/components/sales-visit-sheet/sales-visit-sheet"
-  }
+  "disableScroll": true,
+  "usingComponents": {}
 }

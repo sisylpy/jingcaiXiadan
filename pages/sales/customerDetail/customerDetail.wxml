@@ -43,6 +43,8 @@
       </view>
     </view>
 
+    <sales-quotation-history department-id="{{departmentId}}" refresh-key="{{quoteRefreshKey}}" />
+
     <view class="section-card photo-section">
       <view class="section-header"><view class="section-icon icon-photo">照</view><text class="section-title">客户门店照片</text></view>
       <view class="photo-content">
@@ -183,5 +185,6 @@
   </view>
 
   <sales-visit-sheet visible="{{showVisitSheet}}" business-types="{{businessTypes}}"
-    target="{{visitTarget}}" bind:close="closeVisitSheet" bind:saved="onVisitSaved" />
+    target="{{visitTarget}}" mode="return" return-summary="{{returnSummary}}"
+    bind:close="closeVisitSheet" bind:saved="onVisitSaved" />
 </view>

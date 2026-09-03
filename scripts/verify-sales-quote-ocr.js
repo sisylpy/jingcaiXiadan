@@ -10,7 +10,12 @@ const quotation = read('pages/sales/quotation/quotation.js')
 const quotationCenter = read('pages/sales/quotationCenter/quotationCenter.js')
 const quotationCenterView = read('pages/sales/quotationCenter/quotationCenter.wxml')
 const quotationView = read('pages/sales/quotation/quotation.wxml')
-const recommendation = read('pages/sales/recommendations/recommendations.js')
+const recommendation = read('subPackage-sales/pages/recommendations/recommendations.js')
+const goodsAdder = read('subPackage-sales/pages/quotationGoodsAdd/quotationGoodsAdd.js')
+const goodsAdderView = read('subPackage-sales/pages/quotationGoodsAdd/quotationGoodsAdd.wxml')
+const temporaryGoodsAdd = read('subPackage-sales/pages/temporaryGoodsAdd/temporaryGoodsAdd.js')
+const temporaryGoodsAddView = read('subPackage-sales/pages/temporaryGoodsAdd/temporaryGoodsAdd.wxml')
+const appConfig = read('app.json')
 const api = read('lib/apiSales.js')
 
 function assert(condition, message) {
@@ -44,23 +49,54 @@ assert(api.includes('formData: { mode }'), 'OCR upload must send the selected Bo
 assert(quotationCenterView.includes('bindtap="startQuotation"'), 'quotation center plus button must create a quotation directly')
 assert(quotationCenter.includes("url: '/pages/sales/quotation/quotation'"), 'quotation center must enter the shared workspace directly')
 assert(!quotationCenterView.includes('create-menu'), 'quotation center must not ask users to choose an input mode first')
-assert(quotationView.includes('按行业报价'), 'quotation workspace must expose the industry shortcut beside search')
-assert(quotationView.includes('拍图片报价'), 'quotation workspace must expose the image shortcut beside search')
-assert(!quotationView.includes('手工添加'), 'manual quotation input must not require a separate trigger')
+assert(quotationView.includes('bindtap="openGoodsAdder"'), 'quotation workspace must open the dedicated goods-adder page')
+assert(!quotationView.includes('quote-entry-row'), 'quotation workspace must not keep inline goods-entry controls')
+assert(goodsAdderView.includes('按行业报价'), 'dedicated goods-adder must retain industry recommendations')
+assert(api.includes("request('business-types/used-by-departments')"),
+  'sales API must expose business types already used by formal departments')
+assert(goodsAdder.includes('getSalesBusinessTypesUsedByDepartments()'),
+  'dedicated goods-adder must only load business types used by departments')
+assert(goodsAdderView.includes('图片识别') && goodsAdderView.includes('语音说单')
+  && goodsAdderView.includes('粘贴清单'),
+  'dedicated goods-adder must expose image, voice and pasted-list input')
+assert(goodsAdder.includes('searchSalesQuotationCandidates'),
+  'recognized text must match protected sales quotation candidates')
+assert(goodsAdderView.includes('bindtap="openTemporaryGoodsAdd"'),
+  'unmatched quotation goods must expose a create-goods button')
+assert(goodsAdder.includes('consumeTemporaryGoodsTransfer()'),
+  'new temporary goods must return to and select the originating quotation row')
+assert(temporaryGoodsAdd.includes('createSalesTemporaryGoods'),
+  'temporary goods page must use the protected sales create API')
+assert(temporaryGoodsAdd.includes('wx.chooseMedia') && temporaryGoodsAdd.includes('photos.length'),
+  'temporary goods page must support selecting up to two product images')
+assert(api.includes("salesApi('goods/' + goodsId + '/images')"),
+  'temporary goods images must use the protected sales upload API')
+assert(temporaryGoodsAddView.includes('商品名称') && temporaryGoodsAddView.includes('销售单位'),
+  'temporary goods page must require goods name and sales unit')
+assert(api.includes("request('goods/temporary', 'POST', data)"),
+  'temporary goods creation must stay in the protected sales API namespace')
+assert(goodsAdder.includes('ourQuotePrice'),
+  'recognized goods must carry an editable quotation price')
+assert(goodsAdder.includes("wx.setStorageSync(TRANSFER_KEY"),
+  'confirmed goods must return to the existing quotation workspace')
+assert(appConfig.includes('pages/quotationGoodsAdd/quotationGoodsAdd'),
+  'AI goods-adder must stay in the sales subpackage')
+assert(appConfig.includes('pages/temporaryGoodsAdd/temporaryGoodsAdd'),
+  'temporary goods form must stay in the sales subpackage')
 assert(!quotationCenterView.includes('未命名报价'), 'quotation list must not use 未命名报价 as its business title')
 assert(quotation.includes('persistDraft()'), 'shared workspace must own quotation persistence')
 assert(quotation.includes('? updateSalesQuotation(this.data.quotationId, this.payload())'), 'existing draft must update the same quotation')
 assert(quotation.includes(': createSalesQuotation(this.payload())'), 'new quotation must use the shared create path')
 assert(quotation.includes('this.persistDraft().then(() => finalizeSalesQuotation(this.data.quotationId))'), 'finalization must reuse shared draft persistence')
 assert(quotation.includes("content: '定稿后将锁定本次商品和报价快照，是否继续？'"), 'finalization must confirm immutable snapshot semantics')
-assert(quotation.includes('customerId: this.data.customerId || null'), 'customer context must be preserved in the shared payload')
+assert(quotation.includes('departmentId: this.data.departmentId || null'), 'department context must be preserved in the shared payload')
 assert(quotation.includes('leadId: this.data.leadId || null'), 'lead context must be preserved in the shared payload')
 assert(quotation.includes('visitId: this.data.visitId || null'), 'visit context must be preserved in the shared payload')
 assert(recommendation.includes("returnToWorkspace: String(options.returnToWorkspace || '') === '1'"), 'industry recommendation must support returning to the current workspace')
 assert(recommendation.includes('wx.navigateBack()'), 'industry items must return to the existing workspace instead of creating another quotation')
-assert(quotation.includes('getSalesCustomers()'), 'draft quotation must load assigned formal customers')
+assert(quotation.includes('getSalesDepartments()'), 'draft quotation must load assigned formal departments')
 assert(quotation.includes('getSalesVisits({ limit: 100 })'), 'draft quotation must load stranger visit options')
-assert(quotation.includes('.filter(item => !item.customerId)'), 'customer visits must not be mislabeled as stranger visits')
+assert(quotation.includes('.filter(item => !item.departmentId)'), 'department visits must not be mislabeled as stranger visits')
 assert(quotation.includes('selectQuoteTarget(e)'), 'draft quotation must support selecting a quotation target')
 assert(quotationView.includes('正式客户 {{formalCustomers.length}}'), 'target picker must expose formal customers')
 assert(quotationView.includes('陌生拜访 {{strangerVisits.length}}'), 'target picker must expose stranger visits')

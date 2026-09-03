@@ -1,4 +1,4 @@
-import { getSalesCustomers } from '../../../lib/apiSales.js'
+import { getSalesDepartments } from '../../../lib/apiSales.js'
 
 const app = getApp()
 
@@ -7,11 +7,15 @@ Page({
     loading: true,
     keyword: '',
     allCustomers: [],
-    customers: []
+    customers: [],
+    returnMode: false
   },
 
-  onLoad() {
-    this.setData({ statusBarHeight: app.globalData.statusBarHeight })
+  onLoad(options) {
+    this.setData({
+      statusBarHeight: app.globalData.statusBarHeight,
+      returnMode: String(options.mode || '') === 'return'
+    })
   },
 
   onShow() {
@@ -29,7 +33,7 @@ Page({
 
   loadCustomers() {
     this.setData({ loading: true })
-    getSalesCustomers().then(res => {
+    getSalesDepartments().then(res => {
       const body = res.result || {}
       if (body.code !== 0) {
         wx.showToast({ title: body.msg || '客户加载失败', icon: 'none' })
@@ -75,11 +79,16 @@ Page({
 
   openCustomer(e) {
     wx.navigateTo({
-      url: '/pages/sales/customerDetail/customerDetail?customerId=' + e.currentTarget.dataset.id
+      url: '/pages/sales/customerDetail/customerDetail?departmentId=' + e.currentTarget.dataset.id
+        + (this.data.returnMode ? '&returnVisit=1' : '')
     })
   },
 
   addCustomer() {
     wx.navigateTo({ url: '/pages/sales/customerAdd/customerAdd' })
+  },
+
+  openReturnVisits() {
+    wx.navigateTo({ url: '/pages/sales/returnVisits/returnVisits' })
   }
 })

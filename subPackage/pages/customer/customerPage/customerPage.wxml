@@ -1,0 +1,53 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="back" bindtap="goBack">‹</view>
+      <view class="header-copy">
+        <view class="title">售后问题</view>
+        <view class="subtitle">选择客户当天的送货账单</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="date-card">
+    <view>
+      <view class="date-label">账单日期</view>
+      <view class="date-note">只显示我负责客户的账单</view>
+    </view>
+    <picker mode="date" value="{{selectedDate}}" bindchange="onDateChange">
+      <view class="date-picker">{{selectedDate}} ›</view>
+    </picker>
+  </view>
+
+  <view class="summary">{{selectedDate}} · 共 {{bills.length}} 张账单</view>
+
+  <view class="bill-list">
+    <view class="bill-card" wx:for="{{bills}}" wx:key="billId"
+      data-id="{{item.billId}}" bindtap="openBill">
+      <view class="bill-top">
+        <view class="customer-copy">
+          <view class="customer-name">{{item.departmentName || '未命名客户'}}</view>
+          <view class="department-name" wx:if="{{item.showOrderDepartment}}">下单部门：{{item.orderDepartmentName}}</view>
+        </view>
+        <view class="amount"><text class="currency">¥</text>{{item.displayAmount}}</view>
+      </view>
+      <view class="bill-bottom">
+        <view class="bill-meta">
+          <text>{{item.billDay || item.billDate}}</text>
+          <text class="dot">·</text>
+          <text>{{item.tradeNo || '暂无单号'}}</text>
+        </view>
+        <view class="status {{item.statusClass}}">{{item.statusLabel}}</view>
+      </view>
+      <view class="settlement" wx:if="{{item.settlementLabel}}">{{item.settlementLabel}}客户</view>
+      <view class="arrow">›</view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && bills.length === 0}}">
+    <view class="empty-icon">单</view>
+    <view class="empty-title">当天没有客户账单</view>
+    <view class="empty-note">这里只显示分配给你的正式客户账单</view>
+  </view>
+  <view class="loading" wx:if="{{loading}}">正在加载账单…</view>
+</view>

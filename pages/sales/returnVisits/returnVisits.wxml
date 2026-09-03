@@ -1,0 +1,81 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-left">
+      <view class="back" bindtap="goBack">‹</view>
+      <view>
+        <view class="title">每日拜访记录</view>
+        <view class="subtitle">新客户拜访和老客户回访统一记录</view>
+      </view>
+    </view>
+    <view class="add" bindtap="startVisit">＋ 拜访</view>
+  </view>
+
+  <view class="date-card">
+    <view>
+      <view class="date-label">查看日期</view>
+      <view class="date-summary">{{visits.length}} 次拜访 · {{followUpCount}} 项跟进中</view>
+    </view>
+    <picker mode="date" value="{{visitDate}}" bindchange="onDateChange">
+      <view class="date-value">{{visitDate}} ›</view>
+    </picker>
+  </view>
+
+  <view class="visit-list">
+    <view class="visit-card" wx:for="{{visits}}" wx:key="visitId">
+      <view class="customer-row" data-department-id="{{item.departmentId}}"
+        data-lead-id="{{item.leadId}}" bindtap="openSubject">
+        <view class="customer-photo">
+          <image wx:if="{{item.coverPhoto}}" src="{{item.coverPhoto}}" mode="aspectFill" />
+          <view class="photo-placeholder" wx:else>{{item.customerInitial}}</view>
+        </view>
+        <view class="customer-info">
+          <view class="card-head">
+            <view class="customer-name">{{item.shopName}}</view>
+            <view class="status {{item.statusClass}}">{{item.statusLabel}}</view>
+          </view>
+          <view class="customer-tags">
+            <text class="customer-type {{item.departmentId ? 'formal' : 'prospect'}}">
+              {{item.customerTypeLabel}}
+            </text>
+            <text class="business-type" wx:if="{{item.businessTypeName}}">{{item.businessTypeName}}</text>
+          </view>
+          <view class="customer-address">
+            <text class="address-icon">址</text>
+            <text>{{item.address}}</text>
+          </view>
+        </view>
+        <view class="subject-arrow">›</view>
+      </view>
+
+      <view class="visit-record">
+        <view class="visit-meta">
+          <text class="visit-time">{{item.visitTimeLabel}}</text>
+          <text class="visit-type">{{item.visitTypeLabel}}</text>
+          <text class="feedback">{{item.resultLabel}}</text>
+        </view>
+        <view class="summary" wx:if="{{item.summary}}">{{item.summary}}</view>
+        <view class="summary empty-summary" wx:else>本次没有补充拜访总结</view>
+      </view>
+
+      <view class="follow-row" wx:if="{{item.followUpRequired}}">
+        <text>下一步</text>
+        <text>{{item.nextFollowLabel || '已进入跟进任务'}}</text>
+      </view>
+      <view class="announcement" wx:if="{{item.announcementLabel}}">{{item.announcementLabel}}</view>
+
+      <view class="card-actions">
+        <view wx:if="{{item.canOpenSubject}}"
+          data-department-id="{{item.departmentId}}" data-lead-id="{{item.leadId}}"
+          bindtap="openSubject">查看客户档案</view>
+        <view class="primary-action" wx:if="{{item.canOpenAction}}"
+          data-id="{{item.nextActionId}}" bindtap="openAction">查看跟进</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && visits.length === 0}}">
+    <view>当天还没有拜访记录</view>
+    <view class="empty-note">点击右上角“＋ 拜访”开始记录</view>
+  </view>
+  <view class="loading" wx:if="{{loading}}">正在加载拜访记录…</view>
+</view>

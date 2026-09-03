@@ -3,11 +3,14 @@
     <view class="header-left">
       <view class="back" bindtap="goBack">‹</view>
       <view>
-        <view class="title">客户</view>
-        <view class="subtitle">我负责的正式客户</view>
+        <view class="title">{{returnMode ? '选择回访客户' : '客户'}}</view>
+        <view class="subtitle">{{returnMode ? '选择本次需要维护的饭店' : '我负责的正式客户'}}</view>
       </view>
     </view>
-    <view class="add" bindtap="addCustomer">＋ 新增</view>
+    <view class="header-actions" wx:if="{{!returnMode}}">
+      <view class="records" bindtap="openReturnVisits">拜访记录</view>
+      <view class="add" bindtap="addCustomer">＋ 新增</view>
+    </view>
   </view>
 
   <view class="search-wrap">

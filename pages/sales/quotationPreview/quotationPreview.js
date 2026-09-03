@@ -1,4 +1,9 @@
 import { getSalesQuotationPreview } from '../../../lib/apiSales.js'
+import apiUrl from '../../../config.js'
+import {
+  buildSalesGoodsCatalog,
+  filterSalesGoodsCatalog
+} from '../../../utils/salesGoodsCatalog.js'
 
 const app = getApp()
 
@@ -12,12 +17,26 @@ function dateLabel(value) {
   return String(value).slice(0, 10)
 }
 
+function imageUrl(path) {
+  if (!path) return '/images/logo.jpg'
+  return /^https?:\/\//.test(path) ? path : apiUrl.server + path
+}
+
 Page({
   data: {
     loading: true,
     shopName: '',
     validUntil: '',
-    items: []
+    businessTypeName: '',
+    businessTypeBannerUrl: '',
+    businessTypeThemeColor: '#176b4d',
+    items: [],
+    categories: [],
+    subCategories: [],
+    visibleItems: [],
+    activeGreatCategoryKey: '',
+    activeSubCategoryKey: 'all',
+    goodsScrollTop: 0
   },
 
   onLoad(options) {
@@ -34,17 +53,58 @@ Page({
         return
       }
       const data = body.data || {}
+      const items = (data.items || []).map(item => Object.assign({}, item, {
+        imageUrl: imageUrl(item.imagePath),
+        priceLabel: item.ourQuotePrice == null
+          ? '价格待确认' : '¥' + item.ourQuotePrice
+      }))
+      const catalog = buildSalesGoodsCatalog(items)
+      const firstCategory = catalog.categories[0] || null
       this.setData({
         shopName: data.shopName || '',
         validUntil: dateLabel(data.validUntil),
-        items: (data.items || []).map(item => Object.assign({}, item, {
-          priceLabel: item.ourQuotePrice == null
-            ? '价格待确认' : '¥' + item.ourQuotePrice
-        }))
+        businessTypeName: data.businessTypeName || '',
+        businessTypeBannerUrl: this.assetUrl(data.businessTypeBannerRef),
+        businessTypeThemeColor: data.businessTypeThemeColor || '#176b4d',
+        items: catalog.items,
+        categories: catalog.categories,
+        subCategories: firstCategory ? firstCategory.subCategories : [],
+        visibleItems: firstCategory ? filterSalesGoodsCatalog(
+          catalog.items, firstCategory.key, 'all') : [],
+        activeGreatCategoryKey: firstCategory ? firstCategory.key : '',
+        activeSubCategoryKey: 'all'
       })
     }).catch(error => wx.showToast({
       title: app.describeSalesRequestError(error, '报价预览加载失败'), icon: 'none'
     })).finally(() => this.setData({ loading: false }))
+  },
+
+  assetUrl(path) {
+    if (!path) return ''
+    return /^https?:\/\//.test(path) ? path : apiUrl.server + path.replace(/^\//, '')
+  },
+
+  selectGreatCategory(e) {
+    const key = String(e.currentTarget.dataset.key)
+    const category = this.data.categories.find(item => item.key === key)
+    if (!category) return
+    this.setData({
+      activeGreatCategoryKey: key,
+      activeSubCategoryKey: 'all',
+      subCategories: category.subCategories,
+      visibleItems: filterSalesGoodsCatalog(this.data.items, key, 'all'),
+      goodsScrollTop: 1
+    }, () => this.setData({ goodsScrollTop: 0 }))
+  },
+
+  selectSubCategory(e) {
+    const key = String(e.currentTarget.dataset.key)
+    this.setData({
+      activeSubCategoryKey: key,
+      visibleItems: filterSalesGoodsCatalog(
+        this.data.items, this.data.activeGreatCategoryKey, key),
+      goodsScrollTop: 1
+    }, () => this.setData({ goodsScrollTop: 0 }))
   },
 
   back() { wx.navigateBack() }

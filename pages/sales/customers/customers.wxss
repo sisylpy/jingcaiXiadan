@@ -5,6 +5,8 @@
 .title { font-size: 38rpx; font-weight: 700; }
 .subtitle { margin-top: 8rpx; font-size: 23rpx; opacity: .78; }
 .add { padding: 13rpx 20rpx; border: 1rpx solid rgba(255,255,255,.5); border-radius: 26rpx; font-size: 24rpx; }
+.header-actions { display: flex; align-items: center; gap: 12rpx; }
+.records { padding: 13rpx 17rpx; border-radius: 26rpx; background: rgba(255,255,255,.14); font-size: 23rpx; }
 .search-wrap { height: 82rpx; margin: -18rpx 24rpx 0; padding: 0 22rpx; display: flex; align-items: center; border-radius: 18rpx; background: #fff; box-shadow: 0 9rpx 25rpx rgba(24,79,58,.1); }
 .search-wrap image { width: 31rpx; height: 31rpx; margin-right: 13rpx; opacity: .55; }
 .search-wrap input { flex: 1; height: 82rpx; font-size: 26rpx; }

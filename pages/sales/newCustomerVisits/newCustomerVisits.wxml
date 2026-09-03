@@ -1,0 +1,103 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="header-left">
+        <view class="back" bindtap="goBack">‹</view>
+        <view class="header-copy">
+          <view class="title">新客户</view>
+          <view class="subtitle">一位客户一张档案，持续推进到成交</view>
+        </view>
+      </view>
+      <view class="add" bindtap="addVisit">＋ 拜访</view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="work-summary">
+      <view class="summary-dot"></view>
+      <view class="summary-text">
+        当前开发 <text>{{developingCount}}</text> 位 · 今天需联系
+        <text>{{todayContactCount}}</text> 位 · 已逾期 <text class="overdue-count">{{overdueCount}}</text> 位
+      </view>
+    </view>
+
+    <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view class="filter-item {{activeFilter === item.code ? 'active' : ''}}"
+          wx:for="{{filters}}" wx:key="code" data-code="{{item.code}}"
+          bindtap="switchFilter">{{item.name}} {{item.count}}</view>
+      </view>
+    </scroll-view>
+
+    <view class="list-head">
+      <view>{{listTitle}}</view>
+      <view class="sort-label">最近拜访优先</view>
+    </view>
+
+    <view class="lead-list">
+      <view class="lead-card" wx:for="{{visibleLeads}}" wx:key="leadId"
+        data-lead-id="{{item.leadId}}" bindtap="openProspect">
+        <view class="customer-main">
+          <view class="customer-photo">
+            <image wx:if="{{item.coverPhoto}}" src="{{item.coverPhoto}}" mode="aspectFill" />
+            <view class="photo-placeholder" wx:else>{{item.shopInitial}}</view>
+          </view>
+          <view class="customer-info">
+            <view class="name-row">
+              <view class="customer-name">{{item.shopName}}</view>
+              <view class="stage {{item.stageCode}}">{{item.stageLabel}}</view>
+            </view>
+            <view class="info-line" wx:if="{{item.businessTypeName}}">
+              <text class="info-icon">业</text><text>{{item.businessTypeName}}</text>
+            </view>
+            <view class="info-line address-line">
+              <text class="info-icon">址</text><text>{{item.address}}</text>
+            </view>
+            <view class="info-line" wx:if="{{item.contactName || item.contactPhone}}">
+              <text class="info-icon">联</text>
+              <text>{{item.contactName || '联系人'}}{{item.contactPhone ? ' · ' + item.contactPhone : ''}}</text>
+            </view>
+          </view>
+          <view class="detail-arrow">›</view>
+        </view>
+
+        <view class="customer-metrics">
+          <view class="metric"><text>最近拜访</text><text>{{item.latestVisitLabel}}</text></view>
+          <view class="metric"><text>拜访</text><text>{{item.visitCount}}次</text></view>
+          <view class="metric"><text>报价</text><text>{{item.quoteCount}}次</text></view>
+        </view>
+
+        <view class="latest-note" wx:if="{{item.latestNote}}">{{item.latestNote}}</view>
+
+        <view class="next-row">
+          <view class="next-main">
+            <view class="next-title-row">
+              <view class="next-title">{{item.nextActionTitle}}</view>
+              <view class="action-status {{item.actionReminderCode}}" wx:if="{{item.hasNextAction}}">
+                {{item.actionReminderLabel}}
+              </view>
+            </view>
+            <view class="next-time {{item.nextActionOverdue ? 'overdue' : ''}}" wx:if="{{item.hasNextAction}}">
+              {{item.nextActionOverdue ? '已逾期 · ' : '跟进时间 · '}}{{item.nextActionTargetLabel}}
+            </view>
+            <view class="next-time" wx:elif="{{item.workflowFinished}}">
+              {{item.stageCode === 'CONVERTED' ? '该客户已进入正式客户名单' : '该客户开发流程已结束'}}
+            </view>
+            <view class="next-time" wx:else>安排一个明确的下一步，客户才不会被遗漏</view>
+          </view>
+          <view class="lead-action {{item.hasNextAction ? '' : 'outline'}}"
+            wx:if="{{item.nextActionButton}}"
+            data-lead-id="{{item.leadId}}" data-action-id="{{item.nextActionId}}"
+            catchtap="handleLeadAction">{{item.nextActionButton}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{!loading && visibleLeads.length === 0}}">
+      <view>当前筛选下没有客户</view>
+      <view class="empty-note">可以切换筛选，或者新增一次陌生拜访</view>
+    </view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">正在加载客户档案…</view>
+</view>

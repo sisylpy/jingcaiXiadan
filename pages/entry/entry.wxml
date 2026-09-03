@@ -1,0 +1,8 @@
+<view class="entry-page" style="padding-top: {{statusBarHeight}}px;">
+  <view class="entry-content">
+    <image class="entry-logo" src="/images/logo.png" mode="aspectFit" />
+    <view class="entry-name">农新乐</view>
+    <view class="entry-message">{{message}}</view>
+    <button wx:if="{{retryVisible}}" class="retry-button" bindtap="retry">重新登录</button>
+  </view>
+</view>

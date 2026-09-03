@@ -10,6 +10,12 @@ function imageUrl(path) {
   return apiUrl.server + path
 }
 
+function assetUrl(path) {
+  if (!path) return ''
+  if (/^https?:\/\//.test(path)) return path
+  return apiUrl.server + path.replace(/^\//, '')
+}
+
 Page({
   data: {
     loading: true,
@@ -17,6 +23,8 @@ Page({
     businessTypeName: '',
     title: '常购原材料',
     sourceLabel: '',
+    bannerImageUrl: '',
+    businessTypeThemeColor: '#176b4d',
     businessTypeStatisticalClaim: false,
     items: [],
     categories: [],
@@ -26,6 +34,7 @@ Page({
     activeSubCategoryKey: 'all',
     goodsScrollTop: 0,
     basketCount: 0,
+    allVisibleSelected: false,
     returnToWorkspace: false
   },
 
@@ -67,6 +76,8 @@ Page({
         this.setData({
           title: data.title || '常购原材料',
           sourceLabel: data.sourceLabel || '',
+          bannerImageUrl: assetUrl(data.bannerImageRef),
+          businessTypeThemeColor: data.themeColor || '#176b4d',
           businessTypeStatisticalClaim: !!data.businessTypeStatisticalClaim,
           algorithmVersion: data.algorithmVersion,
           items: catalog.items,
@@ -76,7 +87,7 @@ Page({
           subCategories: firstCategory ? firstCategory.subCategories : [],
           visibleItems: firstCategory
             ? this.filterItems(catalog.items, firstCategory.key, 'all') : []
-        })
+        }, () => this.updateBasketCount())
       }).catch(error => wx.showToast({
         title: app.describeSalesRequestError(error, '推荐加载失败'), icon: 'none'
       })).finally(() => this.setData({ loading: false }))
@@ -173,7 +184,10 @@ Page({
       subCategories: category.subCategories,
       visibleItems: this.filterItems(this.data.items, key, 'all'),
       goodsScrollTop: 1
-    }, () => this.setData({ goodsScrollTop: 0 }))
+    }, () => {
+      this.updateBasketCount()
+      this.setData({ goodsScrollTop: 0 })
+    })
   },
 
   selectSubCategory(e) {
@@ -183,7 +197,37 @@ Page({
       visibleItems: this.filterItems(
         this.data.items, this.data.activeGreatCategoryKey, key),
       goodsScrollTop: 1
-    }, () => this.setData({ goodsScrollTop: 0 }))
+    }, () => {
+      this.updateBasketCount()
+      this.setData({ goodsScrollTop: 0 })
+    })
+  },
+
+  basketItem(goods) {
+    return {
+      goodsId: goods.goodsId,
+      goodsName: goods.goodsName,
+      specification: goods.specification || '',
+      unit: goods.unit || '',
+      origin: goods.origin || '',
+      imagePath: goods.imagePath || '',
+      greatCategoryId: goods.greatCategoryId,
+      greatCategoryName: goods.greatCategoryName || '其他商品',
+      greatCategorySort: goods.greatCategorySort,
+      subCategoryId: goods.subCategoryId,
+      subCategoryName: goods.subCategoryName || '其他',
+      subCategorySort: goods.subCategorySort,
+      priceStatus: goods.priceStatus,
+      ourQuotePrice: goods.displayPrice || '',
+      customerCurrentPurchasePrice: '',
+      quantity: '1',
+      originalSearchName: this.data.businessTypeName || goods.goodsName,
+      matchScore: '',
+      matchReason: '来自' + (this.data.businessTypeName || '当前业态') + '推荐，业务员已确认',
+      algorithmVersion: goods.algorithmVersion || this.data.algorithmVersion,
+      sourceType: 'MANUAL',
+      salespersonConfirmed: true
+    }
   },
 
   addToQuotation(e) {
@@ -195,32 +239,51 @@ Page({
       wx.showToast({ title: '该商品已在报价中', icon: 'none' })
       return
     }
-    basket.push({
-      goodsId: goods.goodsId,
-      goodsName: goods.goodsName,
-      specification: goods.specification || '',
-      unit: goods.unit || '',
-      origin: goods.origin || '',
-      imagePath: goods.imagePath || '',
-      priceStatus: goods.priceStatus,
-      ourQuotePrice: goods.displayPrice || '',
-      customerCurrentPurchasePrice: '',
-      quantity: '1',
-      originalSearchName: this.data.businessTypeName || goods.goodsName,
-      matchScore: '',
-      matchReason: '来自' + (this.data.businessTypeName || '当前业态') + '推荐，业务员已确认',
-      algorithmVersion: goods.algorithmVersion || this.data.algorithmVersion,
-      sourceType: 'MANUAL',
-      salespersonConfirmed: true
-    })
+    basket.push(this.basketItem(goods))
     wx.setStorageSync(BASKET_KEY, basket)
     this.updateBasketCount()
     wx.showToast({ title: '已加入报价', icon: 'success' })
   },
 
+  selectAllVisible() {
+    const visibleItems = this.filterItems(
+      this.data.items, this.data.activeGreatCategoryKey, this.data.activeSubCategoryKey)
+    if (!visibleItems.length) return
+    const basket = wx.getStorageSync(BASKET_KEY) || []
+    const selected = {}
+    basket.forEach(item => { selected[String(item.goodsId)] = true })
+    let addedCount = 0
+    visibleItems.forEach(goods => {
+      const key = String(goods.goodsId)
+      if (selected[key]) return
+      basket.push(this.basketItem(goods))
+      selected[key] = true
+      addedCount += 1
+    })
+    if (!addedCount) {
+      wx.showToast({ title: '当前商品已全部加入报价', icon: 'none' })
+      return
+    }
+    wx.setStorageSync(BASKET_KEY, basket)
+    this.updateBasketCount()
+    wx.showToast({ title: '已加入' + addedCount + '项商品', icon: 'success' })
+  },
+
   updateBasketCount() {
     const basket = wx.getStorageSync(BASKET_KEY) || []
-    this.setData({ basketCount: basket.length })
+    const selected = {}
+    basket.forEach(item => { selected[String(item.goodsId)] = true })
+    const visibleItems = this.filterItems(
+      this.data.items, this.data.activeGreatCategoryKey, this.data.activeSubCategoryKey)
+      .map(item => Object.assign({}, item, {
+        inQuotation: !!selected[String(item.goodsId)]
+      }))
+    this.setData({
+      basketCount: basket.length,
+      visibleItems,
+      allVisibleSelected: visibleItems.length > 0
+        && visibleItems.every(item => item.inQuotation)
+    })
   },
 
   goQuotation() {

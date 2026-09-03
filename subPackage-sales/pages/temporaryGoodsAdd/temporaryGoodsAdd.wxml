@@ -1,0 +1,59 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-title">添加新商品</view>
+    <view class="nav-space"></view>
+  </view>
+
+  <view class="intro">
+    <view class="intro-title">配送商商品库中没有这个商品</view>
+    <view class="intro-note">保存后会自动返回报价，并选中这个新商品。</view>
+  </view>
+
+  <view class="form-card">
+    <view class="section-label">必填信息</view>
+    <view class="field-row">
+      <text>商品名称</text>
+      <input value="{{form.goodsName}}" data-field="goodsName" bindinput="onFieldInput" placeholder="请输入商品名称" maxlength="40" />
+    </view>
+    <view class="field-row">
+      <text>销售单位</text>
+      <input value="{{form.unit}}" data-field="unit" bindinput="onFieldInput" placeholder="如：斤、袋、箱" maxlength="20" />
+    </view>
+  </view>
+
+  <view class="form-card photo-card">
+    <view class="photo-head"><text>商品图片</text><view>{{photos.length}} / 2</view></view>
+    <view class="photo-note">最多上传2张，第一张作为商品主图。</view>
+    <view class="photo-grid">
+      <view class="photo-item" wx:for="{{photos}}" wx:key="path" data-index="{{index}}" bindtap="previewPhoto">
+        <image src="{{item.path}}" mode="aspectFill" />
+        <view class="photo-saved" wx:if="{{item.uploaded}}">已保存</view>
+        <view class="photo-remove" data-index="{{index}}" catchtap="removePhoto">×</view>
+      </view>
+      <view class="photo-add" wx:if="{{photos.length < 2}}" bindtap="choosePhotos">
+        <text>＋</text><view>添加图片</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="form-card optional-card">
+    <view class="section-label">其他信息（选填）</view>
+    <view class="field-row"><text>单位重量</text><input value="{{form.standardWeight}}" data-field="standardWeight" bindinput="onFieldInput" placeholder="如：500g、1kg" maxlength="30" /></view>
+    <view class="field-row"><text>外包装</text><input value="{{form.cartonUnit}}" data-field="cartonUnit" bindinput="onFieldInput" placeholder="如：箱、盒" maxlength="20" /></view>
+    <view class="field-row"><text>包装数量</text><input type="digit" value="{{form.itemsPerCarton}}" data-field="itemsPerCarton" bindinput="onFieldInput" placeholder="每箱包含的数量" maxlength="20" /></view>
+    <view class="field-row"><text>品牌</text><input value="{{form.brand}}" data-field="brand" bindinput="onFieldInput" placeholder="请输入品牌" maxlength="40" /></view>
+    <view class="field-row"><text>产地</text><input value="{{form.origin}}" data-field="origin" bindinput="onFieldInput" placeholder="请输入产地" maxlength="80" /></view>
+    <view class="detail-field">
+      <text>商品说明</text>
+      <textarea value="{{form.detail}}" data-field="detail" bindinput="onFieldInput" placeholder="可填写等级、包装或其他说明" maxlength="255" />
+    </view>
+  </view>
+
+  <view class="price-tip">商品创建后，本次“我方报价”仍在报价清单中填写。</view>
+  <view class="bottom-bar">
+    <view class="save-button {{canSave && !saving ? 'active' : ''}}" bindtap="save">
+      {{saving ? '正在保存…' : '保存并加入报价'}}
+    </view>
+  </view>
+</view>

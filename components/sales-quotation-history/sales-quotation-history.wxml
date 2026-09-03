@@ -1,0 +1,19 @@
+<view class="quotation-history">
+  <view class="history-head">
+    <view class="history-title">报价历史</view>
+    <view class="history-count">{{rows.length}} 次</view>
+  </view>
+  <view class="history-loading" wx:if="{{loading && !rows.length}}">正在加载报价…</view>
+  <view class="history-empty" wx:elif="{{!rows.length}}">还没有给这个客户报过价</view>
+  <view class="quote-row" wx:for="{{rows}}" wx:key="quotationId"
+    data-id="{{item.quotationId}}" data-status="{{item.statusCode}}" bindtap="openQuotation">
+    <view class="quote-main">
+      <view class="quote-number">{{item.quotationNo}}</view>
+      <view class="quote-meta">{{item.updatedLabel}} · 有效期 {{item.validLabel}}</view>
+    </view>
+    <view class="quote-side">
+      <view class="quote-amount">￥{{item.amountLabel}}</view>
+      <view class="quote-status {{item.statusCode}}">{{item.statusLabel}} ›</view>
+    </view>
+  </view>
+</view>

@@ -420,6 +420,23 @@ export const chefOrderBenefitMethods = {
   },
 
   _afterOrderDataLoaded() {
+    // Boss 小程序进入时只展示客户订单，不触发需要客户身份的优惠券和结算预览接口。
+    if (this.data.isGuestAccess) {
+      var guestBill = this.data.bill;
+      this.setData({
+        showCashSettle: false,
+        billSummary: guestBill && guestBill !== -1
+          ? this._buildBillSummary(guestBill)
+          : null,
+        claimableCoupons: [],
+        claimableCouponViews: [],
+        showClaimableCouponPopup: false,
+        homeBenefitSummary: null,
+        orderPreview: null
+      });
+      return;
+    }
+
     // 不再根据结算类型拦截：优惠券展示与领取交由后台 claimableList 判定。
     var showCashSettle = this._isCashSettle();
     console.log('[chefOrder][_afterOrderDataLoaded] showCashSettle =', showCashSettle, 'disId =', this.data.disId, 'depSettleType =', this.data.depSettleType);

@@ -1,0 +1,188 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="goBack">‹</view>
+    <view class="header-main">
+      <view class="header-title">陌生客户开发</view>
+      <view class="header-subtitle">记录每一次努力，促成每一次成交</view>
+    </view>
+    <view class="map-entry" wx:if="{{lead && lead.canOpenMap}}" bindtap="openLeadLocation">
+      <text>◉</text><text>门店位置</text>
+    </view>
+  </view>
+
+  <view class="content has-toolbar" wx:if="{{lead}}">
+    <block wx:if="{{!showEdit}}">
+      <view class="profile-card">
+        <view class="profile-main">
+          <view class="cover-wrap" wx:if="{{lead.coverPhoto}}">
+            <image class="cover-photo" src="{{lead.coverPhoto}}" mode="aspectFill"
+              data-path="{{lead.coverPhoto}}" bindtap="previewPhotos" />
+            <view class="cover-count">{{photos.length}} / 9</view>
+          </view>
+          <view class="cover-empty" wx:else bindtap="editProspect">
+            <text>＋</text><text>添加照片</text>
+          </view>
+          <view class="profile-info">
+            <view class="profile-head">
+              <view class="shop-name">{{lead.shopName}}</view>
+              <view class="stage">{{stageLabel}}</view>
+            </view>
+            <view class="profile-line">▣ {{lead.businessTypeName || '业态未填写'}}</view>
+            <view class="profile-line address-line">◉ {{lead.address || '地址未填写'}}</view>
+            <view class="contact-line" wx:if="{{lead.hasContact}}">
+              <text wx:if="{{lead.contactName}}">联系人：{{lead.contactName}}</text>
+              <text class="phone" wx:if="{{lead.contactPhone}}" bindtap="callContact">{{lead.contactPhone}}</text>
+            </view>
+            <view class="profile-tags">
+              <text wx:for="{{profileTags}}" wx:key="key">{{item.name}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="profile-status-grid">
+          <view><text>当前阶段</text><text class="profile-status-value">{{stageLabel}}</text></view>
+          <view><text>开发时长</text><text class="profile-status-value">{{lead.developmentDays}}</text></view>
+          <view><text>最近动态</text><text class="profile-status-value">{{lead.latestActivityLabel}}</text></view>
+        </view>
+      </view>
+
+      <view class="data-overview">
+        <view class="overview-item"><text class="overview-icon visit">访</text><text>拜访次数</text><text class="overview-value">{{visitCount}}次</text></view>
+        <view class="overview-item"><text class="overview-icon quote">报</text><text>已定稿报价</text><text class="overview-value">{{quoteCount}}次</text></view>
+        <view class="overview-item"><text class="overview-icon follow">跟</text><text>已完成跟进</text><text class="overview-value">{{completedFollowCount}}次</text></view>
+        <view class="overview-item feedback"><text class="overview-icon feedback-icon">评</text><text>最近反馈</text><text class="overview-value">{{latestFeedback}}</text></view>
+        <view class="overview-item next"><text class="overview-icon next-icon">计</text><text>下一步</text><text class="overview-value">{{nextActionSummary}}</text></view>
+      </view>
+
+      <view class="photo-section" wx:if="{{photos.length}}">
+        <view class="section-head"><text>客户照片</text><text>{{photos.length}} / 9</text></view>
+        <scroll-view class="photo-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="photo-track">
+            <block wx:for="{{photos}}" wx:key="attachmentId">
+              <image class="customer-photo" wx:if="{{item.previewPath}}"
+                src="{{item.previewPath}}" mode="aspectFill"
+                data-path="{{item.previewPath}}" bindtap="previewPhotos" />
+              <view class="customer-photo unavailable" wx:else>照片加载失败</view>
+            </block>
+          </view>
+        </scroll-view>
+      </view>
+
+      <view class="closed-card" wx:if="{{lead.statusCode === 'CLOSED'}}">
+        <view class="closed-title">客户开发已关闭</view>
+        <view class="closed-reason">{{closedActivity.customerFeedback || '未填写关闭原因'}}</view>
+        <view class="closed-time">关闭时间：{{closedActivity.timeLabel || '-'}}</view>
+      </view>
+
+      <view class="journey-section">
+        <view class="journey-head">
+          <view><text>拓客轨迹</text><text class="journey-subtitle">待办置顶 · 最新在前</text></view>
+          <text class="journey-count">共 {{journeyRows.length}} 条</text>
+        </view>
+        <view class="journey-list" wx:if="{{journeyRows.length}}">
+          <view class="journey-row" wx:for="{{journeyRows}}" wx:key="journeyKey">
+            <view class="journey-axis">
+              <view class="journey-number {{item.eventClass}}">{{item.sequenceNo}}</view>
+              <view class="journey-line" wx:if="{{index < journeyRows.length - 1}}"></view>
+            </view>
+            <view class="journey-card {{item.eventClass}}"
+              data-kind="{{item.kind}}" data-id="{{item.sourceId}}" bindtap="openJourney">
+              <view class="journey-card-head">
+                <view><text class="journey-time">{{item.timeLabel}}</text><text class="journey-owner">我</text></view>
+                <text class="journey-status" wx:if="{{item.statusLabel}}">{{item.statusLabel}}</text>
+              </view>
+              <view class="journey-title">{{item.title}}</view>
+              <view class="journey-content" wx:if="{{item.content}}">{{item.content}}</view>
+              <view class="journey-feedback" wx:if="{{item.feedback}}">客户反馈：{{item.feedback}}</view>
+              <view class="journey-open" wx:if="{{item.canOpen}}">查看详情 ›</view>
+            </view>
+          </view>
+        </view>
+        <view class="empty-timeline" wx:else>还没有客户开发记录</view>
+      </view>
+    </block>
+
+    <sales-visit-sheet wx:else visible="{{true}}" mode="edit" inline="{{true}}"
+      business-types="{{businessTypes}}" target="{{lead}}"
+      existing-photos="{{photos}}" existing-photo-count="{{photos.length}}"
+      bind:close="closeEdit" bind:saved="onProspectSaved" />
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">正在加载客户档案…</view>
+
+  <view class="bottom-toolbar" wx:if="{{lead && !showEdit}}">
+    <block wx:if="{{lead.statusCode === 'FOLLOWING'}}">
+      <view class="toolbar-item" bindtap="recordAgain"><text>访</text><text class="toolbar-label">记录拜访</text></view>
+      <view class="toolbar-item" bindtap="createQuote"><text>报</text><text class="toolbar-label">创建报价</text></view>
+      <view class="toolbar-primary" bindtap="handlePrimaryAction">
+        <text>{{currentAction ? '处理下一步' : '安排下一步'}}</text>
+        <text class="toolbar-primary-sub">{{currentAction ? currentAction.actionLabel : '联系 / 拜访 / 报价'}}</text>
+      </view>
+      <view class="toolbar-item" bindtap="openMore"><text>•••</text><text class="toolbar-label">更多</text></view>
+    </block>
+    <block wx:else>
+      <view class="toolbar-primary wide" bindtap="handlePrimaryAction">
+        {{lead.statusCode === 'CONVERTED' ? '进入正式客户' : '重新开启开发'}}
+      </view>
+      <view class="toolbar-item" bindtap="openMore"><text>•••</text><text class="toolbar-label">更多</text></view>
+    </block>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showClose || showReopen || showNextAction || showMore}}" bindtap="closeModals"></view>
+  <view class="more-sheet" wx:if="{{showMore}}" catchtouchmove="noop">
+    <view class="more-title">更多操作</view>
+    <view class="more-option" bindtap="editFromMore">编辑客户资料和照片</view>
+    <view class="more-option" wx:if="{{lead.statusCode === 'FOLLOWING'}}" bindtap="convertFromMore">转为正式客户</view>
+    <view class="more-option danger" wx:if="{{lead.statusCode === 'FOLLOWING'}}" bindtap="closeFromMore">关闭客户开发</view>
+    <view class="more-option danger" wx:if="{{lead.statusCode !== 'CONVERTED'}}" bindtap="deleteProspect">
+      {{deleting ? '正在删除…' : '删除临时客户'}}
+    </view>
+    <view class="more-cancel" bindtap="closeMore">取消</view>
+  </view>
+  <view class="modal-sheet" wx:if="{{showClose}}" catchtouchmove="noop">
+    <view class="modal-title">关闭客户开发</view>
+    <view class="modal-note">关闭后，未完成任务会统一结束为“放弃”，历史记录仍然保留。</view>
+    <view class="reason-grid">
+      <view class="reason {{closeReasonCode === item.code ? 'selected' : ''}}"
+        wx:for="{{closeOptions}}" wx:key="code" data-code="{{item.code}}" bindtap="selectCloseReason">{{item.name}}</view>
+    </view>
+    <textarea class="textarea" maxlength="300" value="{{closeNote}}"
+      placeholder="补充具体情况（选择其他时必填）" data-field="closeNote" bindinput="onInput" />
+    <view class="modal-actions"><view bindtap="closeModals">取消</view><view class="danger-submit" bindtap="submitClose">确认关闭</view></view>
+  </view>
+
+  <view class="modal-sheet" wx:if="{{showReopen}}" catchtouchmove="noop">
+    <view class="modal-title">重新开启开发</view>
+    <view class="field-label">下次联系时间</view>
+    <picker mode="date" value="{{reopenDate}}" data-field="reopenDate" bindchange="onDateChange">
+      <view class="date-picker">{{reopenDate}} ›</view>
+    </picker>
+    <textarea class="textarea" maxlength="300" value="{{reopenNote}}"
+      placeholder="重新开启说明（可选）" data-field="reopenNote" bindinput="onInput" />
+    <view class="modal-actions"><view bindtap="closeModals">取消</view><view class="primary-submit" bindtap="submitReopen">确认开启</view></view>
+  </view>
+
+  <view class="modal-sheet" wx:if="{{showNextAction}}" catchtouchmove="noop">
+    <view class="modal-title">安排下一步</view>
+    <view class="field-label">下一步要做什么</view>
+    <view class="next-action-grid">
+      <view class="next-action-option {{nextActionCode === item.code ? 'selected' : ''}}"
+        wx:for="{{actionOptions}}" wx:key="code"
+        data-code="{{item.code}}" bindtap="selectNextAction">{{item.name}}</view>
+    </view>
+    <view class="field-label">计划时间</view>
+    <view class="datetime-row">
+      <picker mode="date" value="{{nextActionDate}}" start="{{today}}"
+        data-field="nextActionDate" bindchange="onDateChange">
+        <view class="date-picker">{{nextActionDate}} ›</view>
+      </picker>
+      <picker mode="time" value="{{nextActionTime}}"
+        data-field="nextActionTime" bindchange="onDateChange">
+        <view class="date-picker">{{nextActionTime}} ›</view>
+      </picker>
+    </view>
+    <textarea class="textarea" maxlength="300" value="{{nextActionNote}}"
+      placeholder="补充说明（其他事项必填）" data-field="nextActionNote" bindinput="onInput" />
+    <view class="modal-actions"><view bindtap="closeModals">取消</view><view class="primary-submit" bindtap="submitNextAction">确认安排</view></view>
+  </view>
+
+</view>

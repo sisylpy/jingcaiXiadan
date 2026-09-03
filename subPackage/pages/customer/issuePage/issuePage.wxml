@@ -1,0 +1,48 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px">
+    <view class="header-row">
+      <view class="back" bindtap="goBack">‹</view>
+      <view>
+        <view class="title">{{billInfo.departmentName || '账单明细'}}</view>
+        <view class="subtitle">选择有问题的商品提交售后</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bill-summary" wx:if="{{billInfo}}">
+    <view class="summary-top">
+      <view>
+        <view class="summary-date">{{billInfo.billDate}} {{billInfo.billDay}}</view>
+        <view class="summary-no">单号：{{billInfo.tradeNo || '暂无单号'}}</view>
+      </view>
+      <view class="summary-amount"><text>¥</text>{{displayPayAmount}}</view>
+    </view>
+    <view class="summary-hint">点击商品右侧“记录售后”，问题会关联到原订单</view>
+  </view>
+
+  <view class="group" wx:for="{{orderGroups}}" wx:key="departmentId" wx:for-item="group">
+    <view class="group-title" wx:if="{{orderGroups.length > 1}}">{{group.departmentName}}</view>
+    <view class="order-card" wx:for="{{group.orders}}" wx:key="historyOrderId" wx:for-item="order">
+      <view class="order-index">{{index + 1}}</view>
+      <view class="order-main">
+        <view class="goods-name"><text class="brand" wx:if="{{order.brand}}">{{order.brand}}</text>{{order.goodsName}}</view>
+        <view class="goods-meta">{{order.quantity}}{{order.standard}} · ¥{{order.price}}/{{order.standard || '份'}}</view>
+        <view class="goods-subtotal">小计 ¥{{order.subtotal}}</view>
+      </view>
+      <view class="after-sales-button {{order.canCreateAfterSales ? '' : 'disabled'}}"
+        data-id="{{order.historyOrderId}}" bindtap="startAfterSales">
+        {{order.canCreateAfterSales ? '记录售后' : '无法关联'}}
+      </view>
+    </view>
+  </view>
+
+  <view class="amount-card" wx:if="{{billInfo}}">
+    <view class="amount-row"><text>商品小计</text><text>¥{{displayGoodsAmount}}</text></view>
+    <view class="amount-row discount" wx:if="{{showCouponDiscount}}"><text>{{billInfo.couponName || '优惠'}}</text><text>-¥{{displayCouponDiscount}}</text></view>
+    <view class="amount-row" wx:if="{{showDeliveryFee}}"><text>配送费</text><text>¥{{displayDeliveryFee}}</text></view>
+    <view class="amount-row total"><text>实付金额</text><text>¥{{displayPayAmount}}</text></view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && orderGroups.length === 0}}">账单中没有商品记录</view>
+  <view class="loading" wx:if="{{loading}}">正在加载账单明细…</view>
+</view>

@@ -6,6 +6,7 @@ const path = require('path')
 const root = path.resolve(__dirname, '..')
 const wrapperPath = path.join(root, 'lib', 'shopRequest.js')
 const salesWrapperPath = path.join(root, 'lib', 'salesRequest.js')
+const expiryHelperPath = path.join(root, 'lib', 'authExpiry.js')
 const failures = []
 
 function walk(dir) {
@@ -32,8 +33,11 @@ if (failures.length) {
 }
 
 let source = fs.readFileSync(wrapperPath, 'utf8')
+const expiryHelper = fs.readFileSync(expiryHelperPath, 'utf8')
+  .replace(/export function /g, 'function ')
 source = source
   .replace(/^import apiUrl[^\n]*\n/, "const apiUrl = { apiUrl: 'https://example.test/nongxinle/api/', server: 'https://example.test/nongxinle/' }\n")
+  .replace(/^import \{ authTokenNotExpired \}[^\n]*\n/m, expiryHelper + '\n')
   .replace(/export function /g, 'function ')
   + '\nmodule.exports = { shopRequest, shopUploadFile, hasUsableShopToken, clearShopLoginState };\n'
 
@@ -97,6 +101,25 @@ assert.ok(lastRequest.url.includes('/api/nxdepartmentdisgoods/depGetDepGoodsPage
 assert.ok(!lastRequest.url.includes('/api/shop/'))
 assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], undefined)
 
+auth.shopRequest({
+  url: 'https://example.test/nongxinle/api/public/sales/quote-catalog?disId=56',
+  success() {}
+})
+assert.ok(lastRequest.url.includes('/api/public/sales/quote-catalog'))
+assert.ok(!lastRequest.url.includes('/api/shop/'))
+assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], undefined)
+assert.strictEqual(reLaunchUrl, '')
+
+auth.shopRequest({
+  url: 'https://example.test/nongxinle/api/nxdepartmentorders/depGetApplyAiByTime/1151',
+  shopAuth: false,
+  success() {}
+})
+assert.ok(lastRequest.url.includes('/api/nxdepartmentorders/depGetApplyAiByTime/1151'))
+assert.ok(!lastRequest.url.includes('/api/shop/'))
+assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], undefined)
+assert.strictEqual(reLaunchUrl, '')
+
 pageStack = [
   { route: 'pages/ai/customer/chefOrder/chefOrder' },
   { route: 'pages/resGoodsLess/resGoodsLess' }
@@ -119,7 +142,7 @@ requestHandler = options => options.success({
       userInfo: { nxDepartmentUserId: 8 },
       shopAuth: {
         accessToken: 'shop-token',
-        expiresAt: Date.now() + 60000,
+        expiresAt: '2099-01-01 00:00:00',
         userId: 8,
         departmentId: 18,
         departmentFatherId: 18,
@@ -162,6 +185,6 @@ auth.shopRequest({
   fail() {}
 })
 assert.strictEqual(storage.shopAccessToken, undefined)
-assert.strictEqual(reLaunchUrl, '/pages/ai/customer/chefOrder/chefOrder')
+assert.strictEqual(reLaunchUrl, '/pages/entry/entry')
 
 console.log('Shop Token 客户端检查通过')

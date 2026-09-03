@@ -1,0 +1,141 @@
+<view class="page">
+  <view class="nav" style="padding-top: {{statusBarHeight}}px">
+    <view class="back" bindtap="back">‹</view>
+    <view class="nav-copy">
+      <view class="nav-title">AI 智能添加商品</view>
+      <view class="nav-subtitle" wx:if="{{targetName}}">报价给 {{targetName}}</view>
+    </view>
+    <view class="basket-count">已选 {{existingCount}}</view>
+  </view>
+
+  <view wx:if="{{!showReview}}" class="input-stage">
+    <view class="hero-card">
+      <view class="hero-brand"><text>AI</text><view>智能识别报价清单</view></view>
+      <view class="industry-link" bindtap="toggleBusinessTypes">按行业报价 ›</view>
+    </view>
+
+    <view class="business-panel" wx:if="{{showBusinessTypes}}">
+      <view class="business-head"><text>选择客户业态</text><view bindtap="toggleBusinessTypes">收起</view></view>
+      <view class="business-types">
+        <view class="business-type" wx:for="{{businessTypes}}" wx:key="businessTypeId"
+          data-id="{{item.businessTypeId}}" bindtap="chooseBusinessType">
+          <image src="{{item.iconUrl}}" mode="aspectFit" />
+          <text>{{item.typeName}}</text>
+        </view>
+      </view>
+      <view class="panel-empty" wx:if="{{businessTypesLoading}}">正在加载业态…</view>
+      <view class="panel-empty" wx:elif="{{businessTypes.length === 0}}">暂无可选业态</view>
+    </view>
+
+    <view class="editor-card {{isRecording ? 'recording' : ''}}">
+      <view class="editor-header">
+        <text>报价商品清单</text>
+        <view>
+          <text wx:if="{{inputFocused}}" bindtap="finishInput">完成</text>
+          <text wx:elif="{{!inputContent}}" bindtap="useExample">试用示例</text>
+          <text wx:else="" bindtap="clearInput">清空</text>
+        </view>
+      </view>
+      <textarea class="goods-textarea" value="{{inputContent}}" bindinput="onInput"
+        bindfocus="onInputFocus" bindblur="onInputBlur" bindconfirm="finishInput"
+        focus="{{inputFocused}}" maxlength="-1" show-confirm-bar="true" confirm-type="done"
+        disabled="{{isRecording}}"
+        placeholder="直接输入或粘贴清单，例如：&#10;口蘑5斤&#10;香菇3斤&#10;青椒10斤"
+        placeholder-style="color:#9aa6a2;line-height:1.7;" />
+      <view class="record-status {{isRecording ? 'active' : ''}}" wx:if="{{recognitionStatus}}">
+        <text>{{recognitionStatus}}</text><text wx:if="{{isRecording}}">{{duration}}s</text>
+      </view>
+    </view>
+
+    <view class="source-actions">
+      <view class="source-action {{isRecording ? 'active' : ''}}"
+        bindtap="{{isRecording ? 'stopRecord' : 'startRecord'}}">
+        <view class="source-icon voice">{{isRecording ? '■' : '●'}}</view>
+        <text>{{isRecording ? '停止录音' : '语音说单'}}</text>
+      </view>
+      <view class="source-action primary" bindtap="pasteFromClipboard">
+        <view class="source-icon paste">粘</view><text>粘贴清单</text>
+      </view>
+      <view class="source-action" bindtap="openOcr">
+        <view class="source-icon image">图</view><text>图片识别</text>
+      </view>
+    </view>
+
+    <view class="parse-button {{!inputContent || matching || isRecording ? 'disabled' : ''}}" bindtap="parseAndMatch">
+      <text>✦</text>
+      <view>{{matching ? '正在匹配商品和价格…' : (inputContent ? '智能识别并匹配商品' : '请先粘贴或输入商品')}}</view>
+      <text>›</text>
+    </view>
+    <view class="price-note">系统会带出配送商展示价，业务员仍可在确认时修改报价。</view>
+    <view class="existing-basket-bar" wx:if="{{existingCount > 0}}" bindtap="back">
+      <text>报价商品 {{existingCount}} 项</text><view>返回报价工作区 ›</view>
+    </view>
+  </view>
+
+  <view wx:else="" class="review-stage">
+    <view class="review-head">
+      <view><view class="review-title">识别完成</view><text>确认商品、数量和对外报价</text></view>
+      <view class="edit-source" bindtap="editSource">修改原文</view>
+    </view>
+
+    <view class="summary-card">
+      <view><text>{{lines.length}}</text><label>识别商品</label></view>
+      <view><text>{{selectedCount}}</text><label>已匹配</label></view>
+      <view><text>{{lines.length - selectedCount}}</text><label>待处理</label></view>
+    </view>
+
+    <view class="review-list">
+      <view class="review-card {{!item.selectedCandidate ? 'needs-match' : ''}}"
+        wx:for="{{lines}}" wx:key="lineId" wx:for-index="lineIndex">
+        <view class="review-card-head">
+          <view class="sequence">{{lineIndex + 1}}</view>
+          <view class="raw-text">{{item.rawText || '手工添加商品'}}</view>
+          <view class="delete" data-index="{{lineIndex}}" bindtap="deleteLine">删除</view>
+        </view>
+
+        <view class="match-search" wx:if="{{!item.selectedCandidate || item.editingMatch}}">
+          <input value="{{item.goodsKeyword}}" data-index="{{lineIndex}}" data-field="goodsKeyword"
+            bindinput="onLineInput" focus="{{item.editingMatch}}" placeholder="重新输入商品名称" />
+          <view class="search-button" data-index="{{lineIndex}}" bindtap="searchLine">{{item.searching ? '搜索中' : '搜索'}}</view>
+          <view class="create-goods-button" data-index="{{lineIndex}}" bindtap="openTemporaryGoodsAdd">＋</view>
+        </view>
+
+        <view class="selected-goods" wx:if="{{item.selectedCandidate}}">
+          <image src="{{item.selectedCandidate.imageUrl}}" mode="aspectFill" />
+          <view class="selected-main">
+            <view class="selected-name">{{item.selectedCandidate.goodsName}}</view>
+            <view class="selected-meta">{{item.selectedCandidate.specification || '规格待补充'}} · {{item.selectedCandidate.unit || '单位待确认'}}</view>
+            <view class="match-reason">{{item.selectedCandidate.matchReason || '已匹配配送商商品'}}</view>
+          </view>
+          <view class="change-match {{item.editingMatch ? 'editing' : ''}}" data-index="{{lineIndex}}" bindtap="toggleCandidates">{{item.editingMatch ? '取消' : '更换'}}</view>
+        </view>
+
+        <view class="candidate-list" wx:if="{{item.showCandidates}}">
+          <view class="candidate {{item.selectedGoodsId == candidate.goodsId ? 'selected' : ''}}"
+            wx:for="{{item.candidates}}" wx:key="goodsId" wx:for-item="candidate" wx:for-index="candidateIndex"
+            data-line="{{lineIndex}}" data-goods="{{candidate.goodsId}}" bindtap="chooseCandidate">
+            <image src="{{candidate.imageUrl}}" mode="aspectFill" />
+            <view><text>{{candidate.goodsName}}</text><label>{{candidate.priceLabel}}</label></view>
+          </view>
+        </view>
+
+        <view class="edit-grid">
+          <view><text>数量</text><input type="digit" value="{{item.quantity}}" data-index="{{lineIndex}}" data-field="quantity" bindinput="onLineInput" /></view>
+          <view><text>单位</text><input value="{{item.unit}}" data-index="{{lineIndex}}" data-field="unit" bindinput="onLineInput" placeholder="斤" /></view>
+          <view class="price-field"><text>我方报价</text><input type="digit" value="{{item.ourQuotePrice}}" data-index="{{lineIndex}}" data-field="ourQuotePrice" bindinput="onLineInput" placeholder="待确认" /></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="add-line" bindtap="addBlankLine">＋ 添加漏掉的商品</view>
+    <view class="review-tail"></view>
+    <view class="review-bottom">
+      <view class="review-count">本次 {{lines.length}} 项</view>
+      <view class="confirm-add" bindtap="confirmAdd">确认加入报价</view>
+    </view>
+  </view>
+
+  <view class="matching-mask" wx:if="{{matching}}">
+    <view class="matching-card"><view class="matching-orb">AI</view><text>正在识别商品并商品报价…</text></view>
+  </view>
+</view>

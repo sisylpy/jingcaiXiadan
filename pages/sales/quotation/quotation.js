@@ -1,28 +1,24 @@
 import {
-  searchSalesQuotationCandidates,
   createSalesQuotation,
   updateSalesQuotation,
   getSalesQuotation,
   finalizeSalesQuotation,
   closeSalesQuotation,
-  getSalesBusinessTypes,
-  getSalesCustomers,
+  getSalesDepartments,
   getSalesVisits,
-  downloadSalesQuotationAttachment
+  downloadSalesQuotationAttachment,
+  createSalesNextAction
 } from '../../../lib/apiSales.js'
 import apiUrl from '../../../config.js'
+import {
+  buildSalesGoodsCatalog,
+  filterSalesGoodsCatalog
+} from '../../../utils/salesGoodsCatalog.js'
 
 const app = getApp()
 const BASKET_KEY = 'salesQuotationBasket'
+const BASKET_BUSINESS_TYPE_KEY = 'salesQuotationBusinessType'
 const OCR_TRANSFER_KEY = 'salesOcrQuoteTransfer'
-const CATEGORY_ORDER = [
-  'CUISINE', 'HOTPOT', 'BBQ', 'NOODLE_RICE',
-  'BREAKFAST', 'SNACK', 'WESTERN', 'OTHER'
-]
-const CATEGORY_NAMES = {
-  CUISINE: '菜系', HOTPOT: '火锅', BBQ: '烧烤', NOODLE_RICE: '面饭粉',
-  BREAKFAST: '早餐', SNACK: '单品小吃', WESTERN: '异国/西餐', OTHER: '其他'
-}
 
 function dateAfter(days) {
   const date = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
@@ -51,10 +47,10 @@ function statusLabel(status) {
     || status || '未知状态'
 }
 
-function contextMeta(customerId, leadId, visitId, shopName) {
+function contextMeta(departmentId, leadId, visitId, shopName) {
   let targetTypeLabel = '匿名客户'
   let fallbackName = '匿名客户'
-  if (customerId) {
+  if (departmentId) {
     targetTypeLabel = '正式客户'
     fallbackName = '已关联正式客户'
   } else if (visitId) {
@@ -65,10 +61,10 @@ function contextMeta(customerId, leadId, visitId, shopName) {
     fallbackName = '已关联线索门店'
   }
   return {
-    isAnonymous: !customerId && !leadId && !visitId,
+    isAnonymous: !departmentId && !leadId && !visitId,
     targetTypeLabel,
     targetDisplayName: shopName || fallbackName,
-    hasCustomerContext: !!customerId,
+    hasCustomerContext: !!departmentId,
     hasLeadContext: !!leadId,
     hasVisitContext: !!visitId
   }
@@ -84,7 +80,7 @@ Page({
     statusLabel: '草稿',
     locked: false,
     canClose: false,
-    customerId: null,
+    departmentId: null,
     leadId: null,
     visitId: null,
     shopName: '',
@@ -96,13 +92,17 @@ Page({
     hasVisitContext: false,
     validUntil: '',
     remark: '',
-    showBusinessTypes: false,
-    businessTypesLoading: false,
-    businessTypeGroups: [],
-    keyword: '',
-    searching: false,
-    candidates: [],
+    selectedBusinessTypeId: null,
+    selectedBusinessTypeName: '',
+    selectedBusinessTypeBannerUrl: '',
+    selectedBusinessTypeThemeColor: '#76B82A',
     items: [],
+    quoteCategories: [],
+    quoteSubCategories: [],
+    quoteVisibleItems: [],
+    activeQuoteGreatCategoryKey: '',
+    activeQuoteSubCategoryKey: 'all',
+    quoteGoodsScrollTop: 0,
     editingIndex: -1,
     quoteTotalLabel: '0.00',
     totalPricePending: false,
@@ -118,25 +118,37 @@ Page({
   },
 
   onLoad(options) {
-    const customerId = options.customerId ? Number(options.customerId) : null
+    const departmentId = options.departmentId ? Number(options.departmentId) : null
     const leadId = options.leadId ? Number(options.leadId) : null
     const visitId = options.visitId ? Number(options.visitId) : null
     const shopName = decodeURIComponent(options.shopName || '')
-    const meta = contextMeta(customerId, leadId, visitId, shopName)
+    const meta = contextMeta(departmentId, leadId, visitId, shopName)
+    const storedBusinessType = wx.getStorageSync(BASKET_BUSINESS_TYPE_KEY) || {}
     this.setData(Object.assign({
       statusBarHeight: app.globalData.statusBarHeight,
-      customerId,
+      departmentId,
       leadId,
       visitId,
       shopName,
-      validUntil: dateAfter(7)
+      validUntil: dateAfter(7),
+      selectedBusinessTypeId: storedBusinessType.businessTypeId || null,
+      selectedBusinessTypeName: storedBusinessType.typeName || '',
+      selectedBusinessTypeBannerUrl: this.businessTypeAssetUrl(storedBusinessType.bannerImageRef),
+      selectedBusinessTypeThemeColor: storedBusinessType.themeColor || '#76B82A'
     }, meta))
 
-    this.loadBusinessTypes()
     if (options.quotationId) {
       this.loadQuotation(Number(options.quotationId))
     } else {
-      if (customerId || leadId || visitId) wx.removeStorageSync(BASKET_KEY)
+      if (departmentId || leadId || visitId) {
+        wx.removeStorageSync(BASKET_KEY)
+        wx.removeStorageSync(BASKET_BUSINESS_TYPE_KEY)
+        this.setData({
+          selectedBusinessTypeId: null,
+          selectedBusinessTypeName: '',
+          selectedBusinessTypeBannerUrl: ''
+        })
+      }
       this.setQuoteItems(wx.getStorageSync(BASKET_KEY) || [], false)
     }
     this._openOcrOnReady = String(options.openOcr || '') === '1'
@@ -146,43 +158,45 @@ Page({
   onReady() {
     if (this._openIndustryOnReady) {
       this._openIndustryOnReady = false
-      this.setData({ showBusinessTypes: true })
+      this.openGoodsAdder(null, 'industry')
+      return
     }
     if (this._openOcrOnReady) {
       this._openOcrOnReady = false
-      this.openOcr()
+      this.openGoodsAdder(null, 'ocr')
     }
   },
 
   onShow() {
     this.consumeOcrTransfer()
     this.syncBasketFromStorage()
+    this.syncBusinessTypeFromStorage()
   },
 
-  loadBusinessTypes() {
-    this.setData({ businessTypesLoading: true })
-    getSalesBusinessTypes().then(res => {
-      const body = res.result || {}
-      if (body.code !== 0) return
-      this.setData({ businessTypeGroups: this.groupBusinessTypes(body.data || []) })
-    }).catch(() => null).finally(() => this.setData({ businessTypesLoading: false }))
-  },
-
-  groupBusinessTypes(types) {
-    const groups = {}
-    ;(types || []).forEach(item => {
-      const category = item.typeCategory || 'OTHER'
-      if (!groups[category]) groups[category] = []
-      groups[category].push(item)
+  syncBusinessTypeFromStorage() {
+    if (this.data.locked) return
+    const stored = wx.getStorageSync(BASKET_BUSINESS_TYPE_KEY) || {}
+    if (!stored.businessTypeId) return
+    this.setData({
+      selectedBusinessTypeId: stored.businessTypeId,
+      selectedBusinessTypeName: stored.typeName || '',
+      selectedBusinessTypeBannerUrl: this.businessTypeAssetUrl(stored.bannerImageRef),
+      selectedBusinessTypeThemeColor: stored.themeColor || '#76B82A'
     })
-    const order = CATEGORY_ORDER.concat(Object.keys(groups)
-      .filter(category => CATEGORY_ORDER.indexOf(category) < 0))
-    return order.filter(category => groups[category] && groups[category].length)
-      .map(category => ({
-        category,
-        name: CATEGORY_NAMES[category] || '其他',
-        types: groups[category]
-      }))
+  },
+
+  openGoodsAdder(e, mode) {
+    if (this.data.locked) return
+    const requestedMode = mode || e && e.currentTarget && e.currentTarget.dataset.mode || ''
+    let url = '/subPackage-sales/pages/quotationGoodsAdd/quotationGoodsAdd?targetName='
+      + encodeURIComponent(this.data.targetDisplayName || '')
+    if (requestedMode) url += '&mode=' + encodeURIComponent(requestedMode)
+    wx.navigateTo({ url })
+  },
+
+  businessTypeAssetUrl(path) {
+    if (!path) return ''
+    return /^https?:\/\//.test(path) ? path : apiUrl.server + path.replace(/^\//, '')
   },
 
   decorateItem(item) {
@@ -203,7 +217,21 @@ Page({
   },
 
   setQuoteItems(rawItems, persist = true, extraData = {}) {
-    const items = (rawItems || []).map(item => this.decorateItem(item))
+    const decoratedItems = (rawItems || []).map(item => this.decorateItem(item))
+    const catalog = buildSalesGoodsCatalog(decoratedItems)
+    const items = catalog.items
+    let activeGreatCategoryKey = this.data.activeQuoteGreatCategoryKey
+    let activeCategory = catalog.categories.find(
+      category => category.key === activeGreatCategoryKey)
+    if (!activeCategory) {
+      activeCategory = catalog.categories[0] || null
+      activeGreatCategoryKey = activeCategory ? activeCategory.key : ''
+    }
+    let activeSubCategoryKey = this.data.activeQuoteSubCategoryKey || 'all'
+    const quoteSubCategories = activeCategory ? activeCategory.subCategories : []
+    if (!quoteSubCategories.some(category => category.key === activeSubCategoryKey)) {
+      activeSubCategoryKey = 'all'
+    }
     let total = 0
     let totalPricePending = false
     items.forEach(item => {
@@ -217,10 +245,41 @@ Page({
     })
     this.setData(Object.assign({
       items,
+      quoteCategories: catalog.categories,
+      quoteSubCategories,
+      quoteVisibleItems: activeCategory ? filterSalesGoodsCatalog(
+        items, activeGreatCategoryKey, activeSubCategoryKey) : [],
+      activeQuoteGreatCategoryKey: activeGreatCategoryKey,
+      activeQuoteSubCategoryKey: activeSubCategoryKey,
       quoteTotalLabel: total.toFixed(2),
       totalPricePending
     }, extraData))
     if (persist) wx.setStorageSync(BASKET_KEY, items)
+  },
+
+  selectQuoteGreatCategory(e) {
+    const key = String(e.currentTarget.dataset.key)
+    const category = this.data.quoteCategories.find(item => item.key === key)
+    if (!category) return
+    this.setData({
+      activeQuoteGreatCategoryKey: key,
+      activeQuoteSubCategoryKey: 'all',
+      quoteSubCategories: category.subCategories,
+      quoteVisibleItems: filterSalesGoodsCatalog(this.data.items, key, 'all'),
+      quoteGoodsScrollTop: 1,
+      editingIndex: -1
+    }, () => this.setData({ quoteGoodsScrollTop: 0 }))
+  },
+
+  selectQuoteSubCategory(e) {
+    const key = String(e.currentTarget.dataset.key)
+    this.setData({
+      activeQuoteSubCategoryKey: key,
+      quoteVisibleItems: filterSalesGoodsCatalog(
+        this.data.items, this.data.activeQuoteGreatCategoryKey, key),
+      quoteGoodsScrollTop: 1,
+      editingIndex: -1
+    }, () => this.setData({ quoteGoodsScrollTop: 0 }))
   },
 
   syncBasketFromStorage() {
@@ -275,27 +334,6 @@ Page({
     this.setData({ editingIndex: this.data.editingIndex === index ? -1 : index })
   },
 
-  openAddMode(e) {
-    const mode = e.currentTarget.dataset.mode
-    if (mode === 'ocr') this.openOcr()
-    if (mode === 'industry') {
-      this.setData({
-        showBusinessTypes: !this.data.showBusinessTypes
-      })
-    }
-  },
-
-  chooseBusinessType(e) {
-    if (this.data.locked) return
-    this.setData({ showBusinessTypes: false })
-    wx.navigateTo({
-      url: '/pages/sales/recommendations/recommendations?businessTypeId='
-        + e.currentTarget.dataset.id + '&businessTypeName='
-        + encodeURIComponent(e.currentTarget.dataset.name || '')
-        + '&returnToWorkspace=1'
-    })
-  },
-
   openTargetPicker() {
     if (this.data.locked) return
     this.setData({ showTargetPicker: true, targetKeyword: '' })
@@ -313,7 +351,7 @@ Page({
   loadQuoteTargets() {
     this.setData({ targetPickerLoading: true })
     Promise.all([
-      getSalesCustomers(),
+      getSalesDepartments(),
       getSalesVisits({ limit: 100 })
     ]).then(results => {
       const customerBody = results[0].result || {}
@@ -332,7 +370,7 @@ Page({
           targetSubtitle: item.nxDepartmentAddress || '地址未填写',
           avatarText: String(item.nxDepartmentName || '客').slice(0, 1)
         }))
-      const strangerVisits = (visitBody.data || []).filter(item => !item.customerId)
+      const strangerVisits = (visitBody.data || []).filter(item => !item.departmentId)
         .map(item => ({
           targetKey: 'V-' + item.visitId,
           targetId: item.visitId,
@@ -380,12 +418,12 @@ Page({
     const source = kind === 'visit' ? this.data.strangerVisits : this.data.formalCustomers
     const target = source.find(item => Number(item.targetId) === id)
     if (!target) return
-    const customerId = kind === 'customer' ? target.targetId : null
+    const departmentId = kind === 'customer' ? target.targetId : null
     const visitId = kind === 'visit' ? target.targetId : null
     const leadId = kind === 'visit' ? target.leadId : null
-    const meta = contextMeta(customerId, leadId, visitId, target.targetName)
+    const meta = contextMeta(departmentId, leadId, visitId, target.targetName)
     this.setData(Object.assign({
-      customerId,
+      departmentId,
       leadId,
       visitId,
       shopName: target.targetName,
@@ -393,66 +431,6 @@ Page({
       targetKeyword: ''
     }, meta))
     wx.showToast({ title: '报价对象已选择', icon: 'success' })
-  },
-
-  search() {
-    const keyword = (this.data.keyword || '').trim()
-    if (!keyword) {
-      wx.showToast({ title: '请输入商品名称', icon: 'none' })
-      return
-    }
-    this.setData({ searching: true, candidates: [] })
-    searchSalesQuotationCandidates(keyword, 30).then(res => {
-      const body = res.result || {}
-      if (body.code !== 0) {
-        wx.showToast({ title: body.msg || '搜索失败', icon: 'none' })
-        return
-      }
-      this.setData({
-        candidates: (body.data || []).map(item => Object.assign({}, item, {
-          imageUrl: imageUrl(item.imagePath),
-          priceLabel: item.priceStatus === 'PRICE_AVAILABLE'
-            ? '¥' + item.displayPrice + (item.unit ? '/' + item.unit : '')
-            : '价格待确认'
-        }))
-      })
-    }).catch(error => wx.showToast({
-      title: app.describeSalesRequestError(error, '搜索失败'), icon: 'none'
-    })).finally(() => this.setData({ searching: false }))
-  },
-
-  chooseCandidate(e) {
-    if (this.data.locked) return
-    const goodsId = Number(e.currentTarget.dataset.id)
-    const candidate = this.data.candidates.find(item => Number(item.goodsId) === goodsId)
-    if (!candidate) return
-    if (this.data.items.some(item => Number(item.goodsId) === goodsId)) {
-      wx.showToast({ title: '该商品已在报价中', icon: 'none' })
-      return
-    }
-    const items = this.data.items.concat([{
-      goodsId: candidate.goodsId,
-      goodsName: candidate.goodsName,
-      specification: candidate.specification || '',
-      unit: candidate.unit || '',
-      origin: candidate.origin || '',
-      imagePath: candidate.imagePath || '',
-      quantity: '1',
-      ourQuotePrice: candidate.displayPrice || '',
-      customerCurrentPurchasePrice: '',
-      priceStatus: candidate.priceStatus,
-      originalSearchName: this.data.keyword,
-      matchScore: candidate.matchScore,
-      matchReason: candidate.matchReason,
-      algorithmVersion: candidate.algorithmVersion,
-      sourceType: 'MANUAL',
-      salespersonConfirmed: true
-    }])
-    this.setQuoteItems(items, true, {
-      candidates: [],
-      keyword: '',
-      editingIndex: items.length - 1
-    })
   },
 
   removeItem(e) {
@@ -464,9 +442,10 @@ Page({
 
   payload() {
     return {
-      customerId: this.data.customerId || null,
+      departmentId: this.data.departmentId || null,
       leadId: this.data.leadId || null,
       visitId: this.data.visitId || null,
+      businessTypeId: this.data.selectedBusinessTypeId || null,
       shopName: (this.data.shopName || '').trim(),
       validUntil: this.data.validUntil,
       remark: (this.data.remark || '').trim(),
@@ -539,10 +518,41 @@ Page({
         if (body.code !== 0) throw { businessMessage: body.msg || '定稿失败' }
         this.applyQuotation(body.data || {})
         wx.showToast({ title: '报价已定稿', icon: 'success' })
+        const activity = (body.data || {}).activity
+        if (activity && activity.activityId) {
+          setTimeout(() => this.askQuotationFollowUp(activity), 350)
+        }
       }).catch(error => wx.showToast({
         title: error.businessMessage || app.describeSalesRequestError(error, '定稿失败'),
         icon: 'none'
       })).finally(() => this.setData({ saving: false }))
+  },
+
+  askQuotationFollowUp(activity) {
+    wx.showModal({
+      title: '安排下一步',
+      content: '是否生成一条3天后的报价跟进任务？',
+      cancelText: '暂不安排',
+      confirmText: '生成任务',
+      confirmColor: '#176b4d',
+      success: result => {
+        if (!result.confirm) return
+        createSalesNextAction(activity.activityId, {
+          actionType: 'QUOTE',
+          title: '报价跟进',
+          description: '询问客户对本次报价的反馈',
+          targetAt: dateAfter(3) + ' 09:00:00'
+        }).then(response => {
+          const body = response.result || {}
+          if (body.code !== 0) throw { businessMessage: body.msg || '跟进任务生成失败' }
+          wx.showToast({ title: '跟进任务已生成', icon: 'success' })
+        }).catch(error => wx.showToast({
+          title: error.businessMessage
+            || app.describeSalesRequestError(error, '跟进任务生成失败'),
+          icon: 'none'
+        }))
+      }
+    })
   },
 
   closeQuotation() {
@@ -589,6 +599,12 @@ Page({
       unit: item.unitSnapshot || '',
       origin: item.originSnapshot || '',
       imagePath: item.imageRefSnapshot || '',
+      greatCategoryId: item.greatCategoryIdSnapshot,
+      greatCategoryName: item.greatCategoryNameSnapshot || '其他商品',
+      greatCategorySort: item.greatCategorySortSnapshot,
+      subCategoryId: item.subCategoryIdSnapshot,
+      subCategoryName: item.subCategoryNameSnapshot || '其他',
+      subCategorySort: item.subCategorySortSnapshot,
       quantity: String(item.quantity == null ? '' : item.quantity),
       ourQuotePrice: item.ourQuotePrice == null ? '' : String(item.ourQuotePrice),
       customerCurrentPurchasePrice: item.customerCurrentPurchasePrice == null
@@ -609,7 +625,7 @@ Page({
     }))
     const locked = quotation.statusCode !== 'DRAFT'
     const meta = contextMeta(
-      quotation.customerId,
+      quotation.departmentId,
       quotation.leadId,
       quotation.visitId,
       quotation.shopNameSnapshot || ''
@@ -621,17 +637,20 @@ Page({
       statusLabel: statusLabel(quotation.statusCode),
       locked,
       canClose: quotation.statusCode === 'FINALIZED' || quotation.statusCode === 'EXPIRED',
-      customerId: quotation.customerId,
+      departmentId: quotation.departmentId,
       leadId: quotation.leadId,
       visitId: quotation.visitId,
+      selectedBusinessTypeId: quotation.businessTypeId || null,
+      selectedBusinessTypeName: quotation.businessTypeNameSnapshot || '',
+      selectedBusinessTypeBannerUrl: this.businessTypeAssetUrl(
+        quotation.businessTypeBannerRefSnapshot),
+      selectedBusinessTypeThemeColor: quotation.businessTypeThemeColorSnapshot || '#76B82A',
       shopName: quotation.shopNameSnapshot || '',
       validUntil: dateLabel(quotation.validUntil),
       remark: quotation.remark || '',
       previewToken: '',
       attachments,
-      editingIndex: -1,
-      candidates: [],
-      showBusinessTypes: false
+      editingIndex: -1
     }, meta))
     this.setQuoteItems(items)
     this.loadAttachmentImages(quotation.quotationId, attachments)
@@ -673,11 +692,6 @@ Page({
     wx.navigateTo({
       url: '/pages/sales/quotationPreview/quotationPreview?quotationId=' + this.data.quotationId
     })
-  },
-
-  openOcr() {
-    if (this.data.locked) return
-    wx.navigateTo({ url: '/pages/sales/ocrQuotePreview/ocrQuotePreview' })
   },
 
   back() { wx.navigateBack() }

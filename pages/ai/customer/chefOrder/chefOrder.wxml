@@ -1,12 +1,12 @@
 <view class="flex flex-column page-bg">
 
-  <main-navbar style="height: {{navBarHeight + 110}}rpx;" title="{{userInfo == null  ? depInfo.nxDistributerEntity.nxDistributerName : userInfo.nxDuWxNickName}}" avatar="{{userInfo == null ? '/images/logo.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" show-back="{{isSalesAgent}}" bind:backtap="backFromSalesAgent" bindnavbuttontap="onNavButtonTap" bind:sortby="onSortByChange" bind:searchinput="onSearchInput" bind:searchcancel="onSearchCancel" searchValue="{{searchValue}}"></main-navbar>
+  <main-navbar style="height: {{navBarHeight + 110}}rpx;" title="{{(userInfo && userInfo.nxDuWxNickName) || (depInfo.nxDistributerEntity && depInfo.nxDistributerEntity.nxDistributerName) || '订货'}}" avatar="{{userInfo == null ? '/images/logo.png' : url + userInfo.nxDuWxAvartraUrl}}" button-text="设置" show-back="{{isSalesAgent}}" bind:backtap="backFromSalesAgent" bindnavbuttontap="onNavButtonTap" bind:sortby="onSortByChange" bind:searchinput="onSearchInput" bind:searchcancel="onSearchCancel" searchValue="{{searchValue}}"></main-navbar>
 
   <view class="content flex-1 flex-column">
     <!-- <block wx:if="{{depInfo.fatherDepartmentEntity == null}}">
       <view class="flex-column-center" style="padding: 10rpx 0; font-size: 34rpx; font-weight: 500;">{{depInfo.nxDepartmentName}}-订货单</view>
     </block> -->
-    <block wx:if="{{depInfo.fatherDepartmentEntity !== null}}">
+    <block wx:if="{{depInfo.fatherDepartmentEntity}}">
       <view class="flex-column-center">
         <view class="flex-row" style="padding: 10rpx 0; font-size: 34rpx; font-weight: 500;" bind:tap="toSwitchDep">
           <text>{{depInfo.fatherDepartmentEntity.nxDepartmentName}}</text>
@@ -130,7 +130,7 @@
   <view class='popup' style="width:{{windowWidth/3 * 2}}rpx; ">
     <!-- 分店列表 -->
     <view class=" bg-white">
-      <view class=" flex-row border-bottom p-30 " wx:for="{{depArr}}" wx:key="depId" wx:for-item="dep" bindtap="selectDepartment" data-item="{{dep}}" hover-class="hover">
+      <view class=" flex-row border-bottom p-30 " wx:for="{{depArr}}" wx:key="depId" wx:for-item="dep" bindtap="selectDepartment" data-index="{{index}}" hover-class="hover">
         <text class=''>{{dep.depName}}</text>
       </view>
     </view>

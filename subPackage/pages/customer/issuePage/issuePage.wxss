@@ -1,0 +1,29 @@
+.page { min-height: 100vh; padding-bottom: 48rpx; color: #17251f; background: #f3f6f4; }
+.header { min-height: 142rpx; padding-right: 28rpx; padding-bottom: 34rpx; padding-left: 24rpx; box-sizing: border-box; color: #fff; background: linear-gradient(145deg, #174c38, #247653); }
+.header-row { display: flex; align-items: flex-end; }
+.back { width: 58rpx; height: 58rpx; margin-right: 4rpx; font-size: 54rpx; font-weight: 300; line-height: 50rpx; text-align: center; }
+.title { max-width: 520rpx; overflow: hidden; font-size: 37rpx; font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+.subtitle { margin-top: 8rpx; font-size: 23rpx; opacity: .78; }
+.bill-summary { margin: -18rpx 24rpx 20rpx; padding: 24rpx; border-radius: 20rpx; background: #fff; box-shadow: 0 10rpx 28rpx rgba(24,79,58,.1); }
+.summary-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.summary-date { font-size: 27rpx; font-weight: 680; }
+.summary-no { margin-top: 8rpx; color: #829087; font-size: 21rpx; }
+.summary-amount { margin-left: 20rpx; font-size: 37rpx; font-weight: 730; }
+.summary-amount text { margin-right: 2rpx; font-size: 21rpx; }
+.summary-hint { margin-top: 20rpx; padding-top: 16rpx; border-top: 1rpx solid #edf1ef; color: #36775d; font-size: 21rpx; }
+.group { margin: 0 24rpx 20rpx; }
+.group-title { padding: 8rpx 6rpx 14rpx; color: #52645b; font-size: 25rpx; font-weight: 680; }
+.order-card { min-height: 138rpx; margin-bottom: 12rpx; padding: 20rpx; display: flex; align-items: center; box-sizing: border-box; border: 1rpx solid #e1e9e4; border-radius: 18rpx; background: #fff; }
+.order-index { width: 40rpx; flex: none; color: #91a097; font-size: 22rpx; }
+.order-main { min-width: 0; flex: 1; }
+.goods-name { overflow: hidden; font-size: 28rpx; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+.brand { margin-right: 8rpx; padding: 3rpx 7rpx; border-radius: 6rpx; color: #2a7456; background: #e8f4ed; font-size: 18rpx; font-weight: 500; }
+.goods-meta { margin-top: 8rpx; color: #7f8b84; font-size: 21rpx; }
+.goods-subtotal { margin-top: 7rpx; color: #4c6257; font-size: 22rpx; }
+.after-sales-button { margin-left: 14rpx; padding: 14rpx 18rpx; flex: none; border-radius: 24rpx; color: #fff; background: #1f7b57; font-size: 22rpx; font-weight: 650; }
+.after-sales-button.disabled { color: #97a19c; background: #edf1ef; }
+.amount-card { margin: 10rpx 24rpx 0; padding: 10rpx 24rpx; border-radius: 18rpx; background: #fff; }
+.amount-row { padding: 17rpx 0; display: flex; justify-content: space-between; border-bottom: 1rpx solid #edf1ef; color: #58675f; font-size: 24rpx; }
+.amount-row.discount { color: #e56543; }
+.amount-row.total { border-bottom: 0; color: #17251f; font-size: 28rpx; font-weight: 720; }
+.empty, .loading { padding: 90rpx 30rpx; color: #89948e; text-align: center; font-size: 24rpx; }

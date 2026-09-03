@@ -6,14 +6,56 @@
   </view>
 
   <view class="paper">
-    <view class="paper-title">原材料报价</view>
-    <view class="shop" wx:if="{{shopName}}">{{shopName}}</view>
-    <view class="valid">有效期至 {{validUntil}}</view>
-    <view class="line" wx:for="{{items}}" wx:key="index">
-      <view class="goods-name">{{item.goodsName}}</view>
-      <view class="goods-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
-      <view class="price">{{item.priceLabel}} / {{item.unit || '单位待确认'}}</view>
+    <view class="paper-head {{businessTypeBannerUrl ? 'has-banner' : ''}}" style="background-color: {{businessTypeThemeColor}};">
+      <image class="paper-banner" wx:if="{{businessTypeBannerUrl}}" src="{{businessTypeBannerUrl}}" mode="aspectFill" />
+      <view class="paper-banner-mask" wx:if="{{businessTypeBannerUrl}}"></view>
+      <view class="paper-head-copy">
+        <view class="paper-title">{{businessTypeName ? businessTypeName + '常用食材报价' : '原材料报价'}}</view>
+        <view class="paper-subtitle" wx:if="{{businessTypeName}}">新鲜食材 · 透明报价 · 配送及时</view>
+        <view class="shop" wx:if="{{shopName}}">报价对象：{{shopName}}</view>
+        <view class="valid">有效期至 {{validUntil}}</view>
+      </view>
     </view>
+
+    <view class="quote-catalog" wx:if="{{items.length}}">
+      <scroll-view class="great-category-list" scroll-y="true" enhanced="true" show-scrollbar="false">
+        <view wx:for="{{categories}}" wx:key="key" wx:for-item="category"
+          class="great-category {{activeGreatCategoryKey === category.key ? 'active' : ''}}"
+          data-key="{{category.key}}" bindtap="selectGreatCategory">
+          <text class="great-category-name">{{category.name}}</text>
+          <text class="great-category-count">({{category.count}})</text>
+        </view>
+      </scroll-view>
+
+      <view class="catalog-main">
+        <scroll-view class="sub-category-scroll" scroll-x="true" enhanced="true" show-scrollbar="false">
+          <view class="sub-category-row">
+            <view wx:for="{{subCategories}}" wx:key="key" wx:for-item="subCategory"
+              class="sub-category {{activeSubCategoryKey === subCategory.key ? 'active' : ''}}"
+              data-key="{{subCategory.key}}" bindtap="selectSubCategory">
+              {{subCategory.name}}({{subCategory.count}})
+            </view>
+          </view>
+        </scroll-view>
+
+        <scroll-view class="goods-scroll" scroll-y="true" enhanced="true" show-scrollbar="false"
+          scroll-top="{{goodsScrollTop}}">
+          <view class="goods-list">
+            <view class="goods-card" wx:for="{{visibleItems}}" wx:key="sourceIndex">
+              <image class="goods-image" src="{{item.imageUrl}}" mode="aspectFill" />
+              <view class="goods-main">
+                <view class="goods-name">{{item.goodsName}}</view>
+                <view class="goods-meta">{{item.specification || '规格待补充'}} · {{item.unit || '单位待确认'}}</view>
+                <view class="goods-meta">产地：{{item.origin || '未填写'}}</view>
+                <view class="price">{{item.priceLabel}}<text wx:if="{{item.unit}}"> / {{item.unit}}</text></view>
+              </view>
+            </view>
+            <view class="goods-tail"></view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{!loading && items.length === 0}}">暂无报价商品</view>
     <view class="privacy">本预览不展示客户当前采购价。</view>
   </view>
   <view class="loading" wx:if="{{loading}}">正在生成预览…</view>

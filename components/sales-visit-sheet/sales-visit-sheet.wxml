@@ -1,11 +1,20 @@
-<view class="mask" wx:if="{{visible}}" bindtap="close"></view>
-<view class="sheet" wx:if="{{visible}}" catchtouchmove="noop">
-  <view class="sheet-head">
-    <view class="sheet-title">记录一次拜访</view>
+<view class="mask" wx:if="{{visible && !standalone && !inline}}" bindtap="close"></view>
+<view class="sheet {{standalone ? 'standalone' : ''}} {{inline ? 'inline' : ''}}" wx:if="{{visible}}"
+  style="{{standalone ? 'padding-top:' + statusBarHeight + 'px' : ''}}">
+  <view class="sheet-head standalone-head" wx:if="{{standalone}}">
+    <view class="sheet-back" bindtap="close">‹</view>
+    <view>
+      <view class="sheet-title">{{standaloneTitle}}</view>
+      <view class="standalone-subtitle">{{mode === 'edit' ? '修改客户基本资料与照片' : (target && target.leadId ? '记录客户最新沟通结果' : '记录首次门店拜访')}}</view>
+    </view>
+  </view>
+  <view class="sheet-head" wx:else>
+    <view class="sheet-title">{{mode === 'edit' ? '编辑临时客户' : (mode === 'return' ? '客户回访' : '开发新客户')}}</view>
     <view class="sheet-close" bindtap="close">×</view>
   </view>
 
-  <scroll-view scroll-y class="sheet-scroll">
+  <scroll-view scroll-y="{{!inline}}" class="sheet-scroll">
+    <block wx:if="{{mode !== 'return'}}">
     <view class="field">
       <text class="field-label">门店名称</text>
       <input value="{{shopName}}" placeholder="例如：王记火锅" data-field="shopName" bindinput="onInput" />
@@ -28,65 +37,98 @@
     </view>
 
     <view class="visit-photo-block">
-      <view class="visit-photo-title">门店现场照片</view>
-      <image class="visit-photo" wx:if="{{visitPhotoLocalPath}}" src="{{visitPhotoLocalPath}}" mode="aspectFill" bindtap="previewVisitPhoto" />
-      <view class="visit-photo-empty" wx:else bindtap="chooseVisitPhoto">＋ 拍摄门店现场</view>
-      <view class="visit-photo-actions">
-        <view bindtap="chooseVisitPhoto">{{visitPhotoLocalPath ? '重新拍摄' : '拍照或选择图片'}}</view>
-        <view class="photo-remove" wx:if="{{visitPhotoLocalPath}}" bindtap="removeVisitPhoto">删除</view>
+      <view class="visit-photo-head">
+        <view class="visit-photo-title">客户照片</view>
+        <view class="visit-photo-count">{{savedPhotos.length + visitPhotoLocalPaths.length}} / 9</view>
       </view>
-      <view class="photo-gap-note" wx:if="{{visitPhotoLocalPath}}">当前照片仅为前端采集预览；Visit 附件接口完成前不会伪装成已上传。</view>
+      <view class="visit-photo-grid">
+        <view class="visit-photo-item" wx:for="{{savedPhotos}}" wx:key="attachmentId">
+          <image class="visit-photo" wx:if="{{item.previewPath}}" src="{{item.previewPath}}"
+            mode="aspectFill" data-path="{{item.previewPath}}" bindtap="previewVisitPhoto" />
+          <view class="visit-photo-unavailable" wx:else>历史照片</view>
+          <view class="photo-remove" wx:if="{{mode === 'edit'}}"
+            data-index="{{index}}" catchtap="removeSavedPhoto">×</view>
+        </view>
+        <view class="visit-photo-item" wx:for="{{visitPhotoLocalPaths}}" wx:key="*this">
+          <image class="visit-photo" src="{{item}}" mode="aspectFill"
+            data-path="{{item}}" bindtap="previewVisitPhoto" />
+          <view class="photo-remove" data-index="{{index}}" catchtap="removeVisitPhoto">×</view>
+        </view>
+        <view class="visit-photo-empty"
+          wx:if="{{savedPhotos.length + visitPhotoLocalPaths.length < 9}}"
+          bindtap="chooseVisitPhoto">
+          <text>＋</text><text>拍照/相册</text>
+        </view>
+      </view>
+      <view class="photo-gap-note" wx:if="{{savedPhotos.length}}">已有照片会保留，本次还可添加 {{9 - savedPhotos.length - visitPhotoLocalPaths.length}} 张。</view>
+      <view class="photo-gap-note" wx:elif="{{visitPhotoLocalPaths.length}}">保存拜访时会同时上传所选照片。</view>
     </view>
 
-    <view class="block-title">这次拜访结果</view>
-    <view class="option-grid result-grid">
+    <view class="block-title" wx:if="{{mode !== 'edit'}}">这次拜访结果</view>
+    <view class="option-grid result-grid" wx:if="{{mode !== 'edit'}}">
       <view class="option {{resultCode === item.code ? 'selected' : ''}}"
         wx:for="{{resultOptions}}" wx:key="code" data-code="{{item.code}}" bindtap="selectResult">
         {{item.name}}
       </view>
     </view>
 
-    <view class="block-title">意向</view>
-    <view class="option-grid intent-grid">
-      <view class="option {{intentCode === item.code ? 'selected' : ''}}"
-        wx:for="{{intentOptions}}" wx:key="code" data-code="{{item.code}}" bindtap="selectIntent">
-        {{item.name}}
-      </view>
-    </view>
+    </block>
 
-    <view class="switch-row">
+    <block wx:else>
+      <view class="return-customer">
+        <view class="return-name">{{shopName}}</view>
+        <view class="return-address">{{address || '地址未填写'}}</view>
+      </view>
+      <view class="return-summary" wx:if="{{returnSummary}}">
+        <view><text>合作时间</text><text>{{returnSummary.cooperationLabel}}</text></view>
+        <view><text>最近订单</text><text>{{returnSummary.recentOrderLabel}}</text></view>
+        <view><text>最近问题</text><text>{{returnSummary.recentProblemLabel}}</text></view>
+        <view><text>历史报价</text><text>{{returnSummary.quotationLabel}}</text></view>
+        <view><text>客户等级</text><text>{{returnSummary.customerLevelLabel}}</text></view>
+      </view>
+      <view class="block-title">本次反馈</view>
+      <view class="option-grid feedback-grid">
+        <view class="option {{feedbackCode === item.code ? 'selected' : ''}}"
+          wx:for="{{feedbackOptions}}" wx:key="code"
+          data-code="{{item.code}}" bindtap="selectFeedback">{{item.name}}</view>
+      </view>
+    </block>
+
+    <view class="switch-row" wx:if="{{mode !== 'edit'}}">
       <text>需要再跟进？</text>
       <switch checked="{{followUpRequired}}" color="#20704e" bindchange="onFollowChange" />
     </view>
-    <view class="field" wx:if="{{followUpRequired}}">
+    <view class="field" wx:if="{{mode === 'return' && followUpRequired}}">
       <text class="field-label">下次跟进</text>
       <picker mode="date" value="{{nextFollowDate}}" bindchange="onDateChange">
         <view class="picker-value">{{nextFollowDate}} ›</view>
       </picker>
     </view>
-
-    <view class="contact-toggle" bindtap="toggleContact">
-      {{contactExpanded ? '收起联系人' : '＋ 留下了联系人'}}
-    </view>
-    <view wx:if="{{contactExpanded}}">
-      <view class="field">
-        <text class="field-label">联系人</text>
-        <input value="{{contactName}}" placeholder="可不填" data-field="contactName" bindinput="onInput" />
-      </view>
-      <view class="field">
-        <text class="field-label">电话</text>
-        <input type="number" value="{{contactPhone}}" placeholder="可不填" data-field="contactPhone" bindinput="onInput" />
-      </view>
+    <view class="follow-arrange-note"
+      wx:if="{{mode !== 'edit' && mode !== 'return' && followUpRequired}}">
+      保存后在客户档案中安排具体事项
     </view>
 
-    <view class="note-field">
-      <text class="field-label">备注（可选）</text>
-      <textarea maxlength="500" value="{{note}}" placeholder="只记一句关键情况即可" data-field="note" bindinput="onInput" />
+    <view class="note-field" wx:if="{{mode !== 'edit'}}">
+      <text class="field-label">{{mode === 'return' ? '回访总结（可选）' : '备注（可选）'}}</text>
+      <textarea maxlength="500" value="{{note}}"
+        placeholder="{{mode === 'return' ? '记录客户反馈、问题和本次沟通结论' : '只记一句关键情况即可'}}"
+        data-field="note" bindinput="onInput" />
+    </view>
+
+    <view class="announcement-block" wx:if="{{mode === 'return'}}">
+      <view class="switch-row announcement-switch">
+        <view>
+          <view class="announcement-title">提交公司公告</view>
+          <view class="announcement-note">提交后由老板或录单员确认发布</view>
+        </view>
+        <switch checked="{{announcementRequested}}" color="#20704e" bindchange="onAnnouncementChange" />
+      </view>
     </view>
   </scroll-view>
 
   <view class="sheet-actions">
     <button class="cancel" bindtap="close" disabled="{{submitting}}">取消</button>
-    <button class="save" bindtap="submit" loading="{{submitting}}" disabled="{{submitting}}">保存拜访</button>
+    <button class="save" bindtap="submit" loading="{{submitting}}" disabled="{{submitting}}">{{mode === 'edit' ? '保存修改' : (mode === 'return' ? '保存回访' : '保存拜访')}}</button>
   </view>
 </view>
