@@ -10,7 +10,7 @@
 
       <view wx:if="{{showSkeleton}}" class="ai-loading">
         <view animation="{{fadeAnimation}}" class="ai-bubble">
-          <image src="/images/CE.png" class="ai-icon" />
+          <image src="/images/CE.svg" class="ai-icon" />
           <text class="loading-text">智能分析中{{dots}}</text>
         </view>
       </view>

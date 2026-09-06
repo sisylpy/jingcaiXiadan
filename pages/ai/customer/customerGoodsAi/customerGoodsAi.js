@@ -4,20 +4,14 @@ import apiUrl from '../../../../config.js'
 var dateUtils = require('../../../../utils/dateUtil');
 
 import {
-  depGetApplyAiByTime,
-  saveOrder,
-  subDepGetApplyAiByTime
+  saveOrder
 }
 from '../../../../lib/apiRestraunt'
 
 import {
-  getDepartmentGoodsOrderCatalog,
-  getOrderReminderCatalog,
-  getOrderReminderForecast
+  getShopDepartmentReplenishment
 }
 from '../../../../lib/apiPrediction'
-
-const BASELINE = 'V8_REPLENISHMENT_STATE';
 
 Page({
 
@@ -121,39 +115,15 @@ Page({
     });
 
     load.showLoading("获取数据");
+    var errorMessage = '';
     try {
-      if (!this.data.depId || !this.data.disId) {
-        throw new Error('部门或配送商信息不完整');
-      }
-      var catalog = this._requireData(
-        await getOrderReminderCatalog(this.data.disId),
-        '预测日期读取失败'
+      if (!this.data.depId) throw new Error('订货部门信息不完整');
+      var result = this._requireData(
+        await getShopDepartmentReplenishment(this.data.depId),
+        'AI 推算订单读取失败'
       );
-      if (!catalog.businessDate) {
-        throw new Error('服务端没有返回当前营业日');
-      }
-
-      var result = await Promise.all([
-        getOrderReminderForecast({
-          distributerId: this.data.disId,
-          departmentId: this.data.depId,
-          predictionDate: catalog.businessDate,
-          predictionEndDate: catalog.businessDate,
-          historyWindowDays: 30,
-          algorithmVersion: BASELINE
-        }),
-        getDepartmentGoodsOrderCatalog(this.data.depId, this.data.disId),
-        this._loadActualOrders()
-      ]);
-
-      var forecast = this._requireData(result[0], 'AI 推算订单读取失败');
-      var departmentGoods = this._requireData(result[1], '部门商品读取失败');
-      var actualOrders = this._requireData(result[2], '当天订单读取失败');
-      this._forecastGoods = this._buildForecastGoods(
-        forecast,
-        departmentGoods,
-        actualOrders
-      );
+      this._forecastGoods = result && Array.isArray(result.items)
+        ? result.items : [];
       this._appendForecastPage();
     } catch (err) {
       console.error('AI 推算订单读取失败:', err);
@@ -163,113 +133,14 @@ Page({
         hasMore: false,
         showSkeleton: false
       });
-      wx.showToast({
-        title: err && err.message ? err.message : '获取数据失败',
-        icon: 'none'
-      });
+      errorMessage = err && err.message ? err.message : '获取数据失败';
     } finally {
       load.hideLoading();
       this.setData({ isLoading: false });
     }
-  },
-
-  _loadActualOrders() {
-    if (Number(this.data.depId) === Number(this.data.depFatherId)) {
-      return depGetApplyAiByTime(this.data.depFatherId);
+    if (errorMessage) {
+      wx.showToast({ title: errorMessage, icon: 'none' });
     }
-    return subDepGetApplyAiByTime(this.data.depId);
-  },
-
-  _buildForecastGoods(forecast, departmentGoods, actualOrderPayload) {
-    var relationsByGoodsId = {};
-    (Array.isArray(departmentGoods) ? departmentGoods : []).forEach(relation => {
-      if (Number(relation.nxDdgDepartmentId) !== Number(this.data.depId)) {
-        return;
-      }
-      var goodsId = Number(relation.nxDdgDisGoodsId
-        || (relation.nxDistributerGoodsEntity
-          && relation.nxDistributerGoodsEntity.nxDistributerGoodsId));
-      if (goodsId > 0) {
-        if (!relationsByGoodsId[goodsId]) relationsByGoodsId[goodsId] = [];
-        relationsByGoodsId[goodsId].push(relation);
-      }
-    });
-
-    var orderedGoodsIds = this._actualOrderGoodsIds(actualOrderPayload);
-    var seenGoodsIds = {};
-    var rows = [];
-    (forecast && Array.isArray(forecast.items) ? forecast.items : []).forEach(item => {
-      var goodsId = Number(item.goodsId);
-      var forecastUnit = String(item.predictedUnit || item.unit || '').trim();
-      var relations = relationsByGoodsId[goodsId] || [];
-      var relation = forecastUnit
-        ? relations.find(candidate => this._relationUnit(candidate) === forecastUnit)
-        : relations[0];
-      var quantity = Number(item.predictedQuantity);
-      var level = item.policy && item.policy.level;
-      var lifecycle = item.replenishmentLifecycleStatus
-        || (item.channelEvidence && item.channelEvidence.REPLENISHMENT_LIFECYCLE
-          && item.channelEvidence.REPLENISHMENT_LIFECYCLE.status);
-      if (!relation || seenGoodsIds[goodsId] || orderedGoodsIds[goodsId]
-        || level !== 'LEVEL_A' || !Number.isFinite(quantity) || quantity <= 0
-        || lifecycle === 'NOT_DUE' || lifecycle === 'ANOMALOUS') {
-        return;
-      }
-
-      var relationUnit = this._relationUnit(relation);
-      forecastUnit = forecastUnit || relationUnit;
-
-      var state = item.channelEvidence && item.channelEvidence.REPLENISHMENT_STATE || {};
-      var lifecycleEvidence = item.channelEvidence
-        && item.channelEvidence.REPLENISHMENT_LIFECYCLE || {};
-      var daysSinceLast = lifecycleEvidence.daysSinceLast;
-      if (daysSinceLast === null || daysSinceLast === undefined) {
-        daysSinceLast = state.daysSinceLast;
-      }
-      seenGoodsIds[goodsId] = true;
-      rows.push(Object.assign({}, relation, {
-        aiOrderQuantity: this._numberText(quantity),
-        aiOrderStandard: forecastUnit || relationUnit,
-        // 新预测接口不提供旧页面这两个库存口径，不能用预测量反推伪造。
-        aiDailyUsage: '—',
-        aiSafetyStock: '—',
-        aiDaysSinceLastOrder: daysSinceLast === null || daysSinceLast === undefined
-          ? '—' : String(daysSinceLast),
-        _candidateRank: Number(item.candidateRank) || 999999
-      }));
-    });
-    rows.sort((left, right) => left._candidateRank - right._candidateRank);
-    return rows;
-  },
-
-  _relationUnit(relation) {
-    if (!relation) return '';
-    return String(relation.nxDdgOrderStandard
-      || relation.nxDdgDepGoodsStandardname
-      || (relation.nxDistributerGoodsEntity
-        && relation.nxDistributerGoodsEntity.nxDgGoodsStandardname)
-      || '').trim();
-  },
-
-  _actualOrderGoodsIds(payload) {
-    var result = {};
-    var source = payload && Array.isArray(payload.arr)
-      ? payload.arr : (Array.isArray(payload) ? payload : []);
-    var orders = [];
-    source.forEach(item => {
-      if (Array.isArray(item.depOrders)) {
-        orders = orders.concat(item.depOrders);
-      } else {
-        orders.push(item);
-      }
-    });
-    orders.forEach(order => {
-      var goodsId = Number(order.nxDoDisGoodsId
-        || (order.nxDistributerGoodsEntity
-          && order.nxDistributerGoodsEntity.nxDistributerGoodsId));
-      if (goodsId > 0) result[goodsId] = true;
-    });
-    return result;
   },
 
   _appendForecastPage() {
@@ -285,12 +156,6 @@ Page({
       totalPage: Math.ceil(rows.length / limit),
       hasMore: start + pageRows.length < rows.length
     });
-  },
-
-  _numberText(value) {
-    var number = Number(value);
-    if (!Number.isFinite(number)) return '—';
-    return number.toFixed(2).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
   },
 
   _requireData(response, fallback) {

@@ -167,6 +167,14 @@ assert.ok(lastRequest.url.includes('/api/shop/nxdepartmentorders/getBooks'))
 assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], 'shop-token')
 assert.strictEqual(lastRequest.header['X-NX-Shop-Client'], 'nxl-shop-mini')
 
+auth.shopRequest({
+  url: 'https://example.test/nongxinle/api/purchase-prediction-lab/departments/1152/replenishment',
+  success() {}
+})
+assert.ok(lastRequest.url.includes(
+  '/api/shop/purchase-prediction-lab/departments/1152/replenishment'))
+assert.strictEqual(lastRequest.header['X-NX-Shop-Token'], 'shop-token')
+
 uploadHandler = options => options.success({ statusCode: 200, data: '{"code":0}' })
 auth.shopUploadFile({
   url: 'https://example.test/nongxinle/api/nxdepartmentuser/updateDepUserWithFile',

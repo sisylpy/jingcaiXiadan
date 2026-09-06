@@ -14,26 +14,28 @@ const pageStyle = read('pages/ai/customer/customerGoodsAi/customerGoodsAi.wxss')
 const apiSource = read('lib/apiPrediction.js')
 
 assert(!pageSource.includes('disGetSubDepAiOrder'), 'AI 补货页不能继续使用旧版推荐接口')
-assert(pageSource.includes('getOrderReminderCatalog')
-  && pageSource.includes('getOrderReminderForecast'), 'AI 补货页必须使用桌面端同源预测接口')
-assert(pageSource.includes("const BASELINE = 'V8_REPLENISHMENT_STATE'"), '预测算法基线未与桌面端统一')
-assert(pageSource.includes('departmentId: this.data.depId'), '预测必须使用当前订货部门 ID')
-assert(pageSource.includes('getDepartmentGoodsOrderCatalog(this.data.depId, this.data.disId)'),
-  '商品关系必须按当前部门和配送商精确查询')
+assert(pageSource.includes('getShopDepartmentReplenishment(this.data.depId)'),
+  'AI 补货页必须只请求一次 Shop 部门智能补货接口')
+assert(!pageSource.includes('Promise.all(')
+  && !pageSource.includes('getOrderReminderCatalog')
+  && !pageSource.includes('getOrderReminderForecast')
+  && !pageSource.includes('getDepartmentGoodsOrderCatalog'),
+  '预测、当天订单排除和部门商品匹配必须在后台完成')
 assert(!pageSource.includes('getCustomerGoodsProfile'), '智能补货页不应加载主客户全部商品画像')
-assert(pageSource.includes("level !== 'LEVEL_A'")
-  && pageSource.includes("lifecycle === 'NOT_DUE'")
-  && pageSource.includes('orderedGoodsIds[goodsId]'), '商品列表必须只保留当前待提醒商品')
-assert(pageSource.includes('this._relationUnit(candidate) === forecastUnit'),
-  '预测商品必须按当前部门商品关系的订货单位精确匹配')
+assert(!pageSource.includes('_buildForecastGoods')
+  && !pageSource.includes('_relationUnit')
+  && !pageSource.includes('orderedGoodsIds'),
+  '小程序页面不能再承担预测商品合并和当天订单排除任务')
 
-assert(apiSource.includes('purchase-prediction-lab/catalog')
-  && apiSource.includes('purchase-prediction-lab/reconciliation-forecasts'), '预测 API 路径不正确')
-assert(apiSource.includes('nxdepartmentdisgoods/disGetDepartmentGoods/'),
-  '当前部门商品关系接口路径不正确')
+assert(apiSource.includes('purchase-prediction-lab/departments/')
+  && apiSource.includes("+ '/replenishment'"), 'Shop 专用智能补货 API 路径不正确')
+assert(!apiSource.includes('purchase-prediction-lab/shop/departments/'),
+  '业务路径不能包含 /shop/，否则客户端会跳过 Shop 登录网关')
 assert(apiSource.includes('getApp().shopRequest'), '接口必须经过 Shop 身份校验')
 
 assert(pageView.includes('goods_back')
+  && pageView.includes('/images/CE.svg')
+  && !pageView.includes('/images/CE.png')
   && pageView.includes('建议订货:')
   && pageView.includes('近期平均用量/天:')
   && pageView.includes('安全库存:')
