@@ -6,7 +6,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "npm run check:secrets && npm run check:auth && npm run check:entry && npm run check:sales-ocr && npm run check:sales-workflow && npm run check:sales-home && npm run check:sales-business-types && npm run check:chef-order && npm run check:customer-reminder",
+    "test": "npm run check:secrets && npm run check:auth && npm run check:entry && npm run check:sales-ocr && npm run check:sales-workflow && npm run check:sales-home && npm run check:sales-business-types && npm run check:sales-commercial && npm run check:chef-order && npm run check:customer-reminder",
     "check:secrets": "./scripts/check-client-secrets.sh",
     "check:auth": "node scripts/verify-shop-auth.js",
     "check:entry": "node scripts/verify-entry-routing.js",
@@ -14,6 +14,7 @@
     "check:sales-workflow": "node scripts/verify-sales-next-action-detail.js",
     "check:sales-home": "node scripts/verify-sales-home.js",
     "check:sales-business-types": "node scripts/verify-sales-business-types.js",
+    "check:sales-commercial": "node scripts/verify-sales-commercial-phase4.js",
     "check:chef-order": "node scripts/verify-chef-order-components.js",
     "check:customer-reminder": "node scripts/verify-customer-order-reminder.js"
   },

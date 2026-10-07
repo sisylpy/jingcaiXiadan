@@ -1,4 +1,5 @@
 import { registerSalesUser } from '../../lib/apiRestraunt.js'
+import { persistSalesAuth } from '../../lib/shopRequest.js'
 
 const app = getApp()
 
@@ -79,13 +80,18 @@ Page({
       try { result = typeof result === 'string' ? JSON.parse(result) : result } catch (e) {}
       wx.hideLoading()
       if (result && result.code == 0) {
+        if (!persistSalesAuth(result)) {
+          this.setData({ submitting: false })
+          wx.showToast({ title: '业务员会话创建失败，请重新登录', icon: 'none' })
+          return
+        }
         this.setData({ submitting: false, registered: true })
         wx.showModal({
           title: '注册成功',
           content: '你已成为业务员，现在可以进入业务员工作台。',
           showCancel: false,
           success: () => wx.reLaunch({
-            url: '/pages/ai/customer/chefOrder/chefOrder'
+            url: '/pages/sales/home/home'
           })
         })
         return
